@@ -1,0 +1,70 @@
+{
+  "cSpell.words": [
+    "bradlc",
+    "closeblock",
+    "closevariable",
+    "collectstatic",
+    "cookiecutter",
+    "devcontainer",
+    "devcontainers",
+    "diskcache",
+    "djlint",
+    "djstripe",
+    "Glassdoor",
+    "grug",
+    "Gunicorn",
+    "Hetzner",
+    "HTMX",
+    "Instrumentor",
+    "isort",
+    "Meilisearch",
+    "mypy",
+    "nostatic",
+    "openblock",
+    "opentelemetry",
+    "openvariable",
+    "orgtorii",
+    "pipenv",
+    "runserver",
+    "Spatia",
+    "startapp",
+    "startproject",
+    "Subresource",
+    "templatetag",
+    "testid",
+    "webauthn",
+    "Whitenoise",
+    "WSGI"
+  ],
+  "cSpell.ignoreWords": [
+    "Ejkgq",
+    "PWDEBUG",
+    "TOTP",
+    "allauth",
+    "batisteo",
+    "borgmatic",
+    "codezombiech",
+    "debugpy",
+    "entr",
+    "esbenp",
+    "geistmann",
+    "pylance",
+    "sorl",
+    "tailwindcss"
+  ],
+  "[html][django-html][handlebars][hbs][mustache][jinja][jinja-html][nj][njk][nunjucks][twig]": {
+    "editor.defaultFormatter": "monosans.djlint"
+  },
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+  "makefile.configureOnOpen": false,
+  "files.associations": {
+    "*.py-tpl": "python"
+  }
+}

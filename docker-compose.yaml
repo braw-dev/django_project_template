@@ -1,0 +1,13 @@
+---
+services:
+  app:
+    image: hello-world
+
+  web:
+    image: caddy:2
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+
+  queue:
+    image: bitnami/valkey:7.2

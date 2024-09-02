@@ -1,0 +1,12 @@
+from ninja import NinjaAPI, Schema
+
+api = NinjaAPI(version="1.0.0")
+
+
+class HealthResponse(Schema):
+    status: str
+
+
+@api.get("/health", response={200: HealthResponse})
+def health(request):
+    return {"status": "ok"}

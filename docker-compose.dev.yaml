@@ -1,0 +1,17 @@
+---
+name: {{ project_name }}-dev
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    # needed for non-root playwright
+    # https://playwright.dev/docs/docker
+    ipc: host
+    security_opt:
+      - seccomp:./docker/seccomp_profile.json
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/workspace:cached
+    command: /bin/sh -c "while sleep 1000; do :; done"

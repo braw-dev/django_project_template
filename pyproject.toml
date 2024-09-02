@@ -1,0 +1,59 @@
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+# Disable conflicting linting/formatting checks
+# https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+# Don't use them all but disable them just in case that changes
+ignore = [
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+    "COM819",
+    "ISC001",
+    "ISC002",
+]
+
+[tool.djlint]
+profile="django"
+ignore="H030,H031,H021"
+
+[tool.mypy]
+mypy_path = "{{ project_name }}"
+plugins = ["mypy_django_plugin.main"]
+exclude = '''(?x)(
+    \/migrations\/.*\.py$    # migration files
+)'''
+
+[tool.django-stubs]
+django_settings_module = "{{ project_name }}.settings"

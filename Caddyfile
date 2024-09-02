@@ -1,0 +1,6 @@
+# Todo(ewan): Write the Caddyfile
+
+# This Caddyfile is responsible for:
+# - Takes non-static (non JS/CSS etc.) requests from the project host and forwards it to Gunicorn (e.g. example.com)
+# - Takes requests for static assets from the dedicated static URL (e.g. static.example.com) and forwards them to Gunicorn/Whitenoise
+# - Uses DNS challenge to automatically renew SSL certificates (so can be behind a CDN)

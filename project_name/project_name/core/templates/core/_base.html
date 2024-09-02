@@ -1,0 +1,52 @@
+{% load static meta core sri %}
+<!DOCTYPE html>
+<html lang="en">
+    <head {% meta_namespaces %}>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {% comment %} Fallback to project_display_name if there is no meta title {% endcomment %}
+        {% if meta.title %}
+            <title>{{ meta.title }}</title>
+        {% else %}
+            <title>{% project_display_name %}</title>
+        {% endif %}
+        {% comment %} Tailwind & DaisyUI {% endcomment %}
+        <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css"
+              rel="stylesheet"
+              type="text/css" />
+        <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"
+                defer></script>
+        <script defer>
+            tailwind.config = {
+              theme: {
+                fontFamily: {
+                    sans: ['Noto Sans', 'sans-serif'],
+                    serif: ['Gelasio', 'serif'],
+                  },
+                extend: {
+                }
+              }
+            }
+        </script>
+        {% comment %} Custom fonts {% endcomment %}
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=noto-sans:200,200i,400,400i,600,600i,800,800i,900,900i|gelasio:400,400i,600,600i,700,700i"
+              rel="stylesheet" />
+        {% comment %} Additional meta from django-meta {% endcomment %}
+        {% include "meta/meta.html" %}
+        {% comment %} HTMX {% endcomment %}
+        <script src="{% sri_static "core/js/htmx.min.js" %}" defer></script>
+    </head>
+    <body>
+        {% block header %}
+            {% comment %} Include the header partial by default {% endcomment %}
+            {% include "core/partials/header.html" %}
+        {% endblock header %}
+        {% block body %}
+        {% endblock body %}
+        {% block footer %}
+            {% comment %} Include the footer partial by default {% endcomment %}
+            {% include "core/partials/footer.html" %}
+        {% endblock footer %}
+    </body>
+</html>
