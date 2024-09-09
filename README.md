@@ -83,6 +83,10 @@ Deployment is also opinionated and is expected to be deployed to a VPS/Dedicated
 
 <!-- Todo(kisamoto): Add ansible scripts for setup and deployment -->
 
+#### Auxiliary services
+
+This project is designed to work with [`braw-dev/django_auxiliary_services`](https://github.com/braw-dev/django_auxiliary_services).
+
 ## Example app
 
 An example django-app is available under example_app. By default it is not registered in the `INSTALLED_APPS` section of `settings.py` however it can be added as `example_app`.
@@ -319,6 +323,10 @@ django-admin startproject --template ../django_project_template --extension 'py,
 If in doubt, check [awesome django](https://github.com/wsvincent/awesome-django) for libraries.
 
 Always remember the [grug developer](https://grugbrain.dev/).
+
+---
+
+- [Django for startup founders](https://alexkrupp.typepad.com/sensemaking/2021/06/django-for-startup-founders-a-better-software-architecture-for-saas-startups-and-consumer-apps.html)
 
 ## Todo
 
