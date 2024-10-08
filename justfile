@@ -61,6 +61,10 @@ install:
 	@pipenv install --dev
 	{{PIPENV_RUN}} pre-commit install
 
+# Use Ansible to setup the development environment and install dependencies
+setup-dev-environment: install
+    {{PIPENV_RUN}} ansible-playbook ansible/00-dev-env-setup.yaml
+
 # Install Playwright dependencies
 playwright-install:
 	@{{PIPENV_RUN}} playwright install
