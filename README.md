@@ -8,7 +8,7 @@ To get started, make sure you have Django installed (5.1 at time of writing) and
 django-admin startproject \
     --template=https://github.com/braw-dev/django_project_template/archive/main.zip \
     --extension 'py,yaml,md,template,toml,json' \
-    --name Makefile \
+    --name justfile \
     --exclude '.ruff_cache' \
     project_name
 ```
@@ -68,8 +68,8 @@ A non-exhaustive list of what is included when starting with this template:
   - HTMX for incremental HTML updates with fragments
   - Tailwind CSS & Daisy UI for styling
   - Re-usable HTML components using [`django-cotton`](https://django-cotton.com/)
-- `Makefile` for repetitive commands
-  - Simply run `make` to see the targets available
+- `justfile` for repetitive commands
+  - Simply run `just` to see the targets available
 - Code style enforced
   - Ruff linting and formatting built in to editor and run at commit time with pre-commit
 
@@ -140,7 +140,7 @@ This section contains instructions about what to do after you've started your pr
 > **Note**: We recommend `Python3.12`
 
 ```
-$ make install
+$ just install
 ```
 
 This creates a virtual environment, installs the dependencies and installs `pre-commit`.
@@ -160,10 +160,10 @@ All sensitive settings should be modified for use on the production environment.
 
 ```shell
 $ # Collect static files for serving via Whitenoise
-$ make collectstatic
+$ just collectstatic
 
 $ # Run the local django development server
-$ make runserver
+$ just runserver
 ```
 
 ### Keeping to the style guide
@@ -259,13 +259,13 @@ If you discover a security vulnerability we encourage you to please disclose thi
 ### Prerequisites
 
 - [`pipenv`](https://pipenv.pypa.io/en/latest/) for python dependency management
-- [`entr`](https://github.com/eradman/entr) for hot reloading tests (`make test-watch`)
+- [`entr`](https://github.com/eradman/entr) for hot reloading tests (`just test-watch`)
 - [`rg`](https://github.com/BurntSushi/ripgrep) for finding the python and html files suitable for hot reloading
 
 ### Setup
 
 1. Clone repo
-1. `make install` (this will setup a virtual environment and install dependencies)
+1. `just install` (this will setup a virtual environment and install dependencies)
 
 ### Debugging
 
@@ -315,7 +315,7 @@ Use [`nh3`](https://github.com/messense/nh3) to sanitise user input as soon as i
 ## How to use this template
 
 ```
-django-admin startproject --template ../django_project_template --extension 'py,yaml,yml,md,template,json' --name Makefile --exclude '.ruff_cache'
+django-admin startproject --template ../django_project_template --extension 'py,yaml,yml,md,template,json' --name justfile --exclude '.ruff_cache'
 ```
 
 ---
