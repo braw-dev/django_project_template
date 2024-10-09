@@ -5,11 +5,12 @@ This is an opinionated Django template focused on getting rid of the boilerplate
 To get started, make sure you have Django installed (5.1 at time of writing) and run the following command (where `project_name` is the slug of your new project):
 
 ```
-django-admin startproject \
+pipenv run django-admin startproject \
     --template=https://github.com/braw-dev/django_project_template/archive/main.zip \
     --extension 'py,yaml,md,template,toml,json' \
     --name justfile \
     --exclude '.ruff_cache' \
+    --exclude 'dev' \
     project_name
 ```
 
@@ -315,7 +316,13 @@ Use [`nh3`](https://github.com/messense/nh3) to sanitise user input as soon as i
 ## How to use this template
 
 ```
-django-admin startproject --template ../django_project_template --extension 'py,yaml,yml,md,template,json' --name justfile --exclude '.ruff_cache'
+pipenv run django-admin startproject \
+    --template=django_project_template \
+    --extension 'py,yaml,md,template,toml,json' \
+    --name justfile \
+    --exclude '.ruff_cache' \
+    --exclude 'dev' \
+    {{ project_name }} {{ path }}
 ```
 
 ### Developing on the template
@@ -325,7 +332,7 @@ If developing on the template directly, need to be able to quickly use the templ
 _Note: Will need to have `pipenv` installed and do a `pipenv install --dev`_
 
 ```
-pipenv run ansible-playbook ./ansible/01-test-project-template.yaml
+pipenv run ansible-playbook ./dev/01-test-project-template.yaml
 ```
 
 This will automatically create a new django project using this template in a temporary directory.
