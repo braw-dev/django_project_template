@@ -35,7 +35,7 @@
         {% comment %} Additional meta from django-meta {% endcomment %}
         {% include "meta/meta.html" %}
         {% comment %} HTMX {% endcomment %}
-        <script src="{% sri_static "core/js/htmx.min.js" %}" defer></script>
+        {% sri_static "core/js/htmx.min.js" 'defer' %}
     </head>
     <body>
         {% block header %}
