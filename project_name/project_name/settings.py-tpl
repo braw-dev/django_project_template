@@ -18,7 +18,9 @@ import environ
 
 env = environ.Env()
 
-PROJECT_DISPLAY_NAME = "{{ project_name }}"  # Used for public display e.g as default in <title> tags
+PROJECT_DISPLAY_NAME = (
+    "{{ project_name }}"  # Used for public display e.g as default in <title> tags
+)
 PROJECT_SLUG = "{{ project_name }}"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -72,8 +74,22 @@ INSTALLED_APPS = [
     "meta",  # SEO metadata
     "djstripe",  # Stripe integration
     "django_htmx",  # HTMX integration
-    "sri", # Sub resource Integrity for JS
-    "django_cotton", # Javascript style components
+    "sri",  # Sub resource Integrity for JS
+    "django_cotton",  # Javascript style components
+    # Wagtail CMS
+    "wagtail.contrib.forms",
+    "wagtail.contrib.redirects",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
+    "wagtail",
+    "taggit",
+    "modelcluster",
     # Project apps
     "{{ project_name }}.users",
     "{{ project_name }}.core",
@@ -91,6 +107,8 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",  # adds request.htmx attribute
     # allauth account middleware:
     "allauth.account.middleware.AccountMiddleware",
+    # wagtail middleware:
+    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
 if not TESTING:
@@ -156,18 +174,18 @@ if TESTING:
 # For databases, if using SQLITE, add the following options
 # https://gcollazo.com/optimal-sqlite-settings-for-django/
 SQLITE_OPTIONS = {
-            "init_command": (
-                "PRAGMA foreign_keys=ON;"
-                "PRAGMA journal_mode = WAL;"
-                "PRAGMA synchronous = NORMAL;"
-                "PRAGMA busy_timeout = 500;"  # 500ms
-                "PRAGMA temp_store = MEMORY;"
-                f"PRAGMA mmap_size = {128 * 1024 * 1024};"  # 128MB
-                f"PRAGMA journal_size_limit = {64 * 1024 * 1024};"  # 64MB
-                f"PRAGMA cache_size = -{8 * 1024 * 1024};"  # 8MB of 4096 bytes pages
-            ),
-            "transaction_mode": "IMMEDIATE",
-        }
+    "init_command": (
+        "PRAGMA foreign_keys=ON;"
+        "PRAGMA journal_mode = WAL;"
+        "PRAGMA synchronous = NORMAL;"
+        "PRAGMA busy_timeout = 500;"  # 500ms
+        "PRAGMA temp_store = MEMORY;"
+        f"PRAGMA mmap_size = {128 * 1024 * 1024};"  # 128MB
+        f"PRAGMA journal_size_limit = {64 * 1024 * 1024};"  # 64MB
+        f"PRAGMA cache_size = -{8 * 1024 * 1024};"  # 8MB of 4096 bytes pages
+    ),
+    "transaction_mode": "IMMEDIATE",
+}
 for db in DATABASES.values():
     if db["ENGINE"] == "django_prometheus.db.backends.sqlite3":
         db["OPTIONS"] = SQLITE_OPTIONS.update(db.get("OPTIONS", {}))
@@ -362,6 +380,20 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Wagtail settings
+# This is the human-readable name of your Wagtail install
+# which welcomes users upon login to the Wagtail admin.
+WAGTAIL_SITE_NAME = "{{ project_name }}"
+
+# Allowed file extensions for documents in the document library.
+# This can be omitted to allow all files, but note that this may present a security risk
+# if untrusted users are allowed to upload files -
+# see https://docs.wagtail.org/en/stable/advanced_topics/deploying.html#user-uploaded-files
+WAGTAILDOCS_EXTENSIONS = ["csv", "docx", "key", "odt", "pdf", "pptx", "rtf", "txt", "xlsx", "zip"]
+
+# Reverse the default case-sensitive handling of tags
+TAGGIT_CASE_INSENSITIVE = True
+
 # Production settings
 # HTTPS settings: https://docs.djangoproject.com/en/5.1/topics/security/#ssl-https
 # Recommendations from Mozilla: https://infosec.mozilla.org/guidelines/web_security.html
@@ -388,7 +420,7 @@ if IS_PRODUCTION:
     # https://docs.djangoproject.com/en/5.1/ref/settings/#secure-hsts-include-subdomains
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     # https://docs.djangoproject.com/en/5.1/ref/settings/#secure-hsts-seconds
-    SECURE_HSTS_SECONDS = 60 # Start small, increase to 60 * 60 * 24 * 365 for 1 year
+    SECURE_HSTS_SECONDS = 60  # Start small, increase to 60 * 60 * 24 * 365 for 1 year
     # Add the preload header to be submitted to the HSTS preload list
     # https://docs.djangoproject.com/en/5.1/ref/settings/#secure-hsts-preload
     SECURE_HSTS_PRELOAD = True

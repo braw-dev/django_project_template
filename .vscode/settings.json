@@ -20,6 +20,7 @@
     "isort",
     "justfile",
     "Meilisearch",
+    "modelcluster",
     "mypy",
     "nostatic",
     "openblock",
@@ -33,6 +34,7 @@
     "startapp",
     "startproject",
     "Subresource",
+    "taggit",
     "tempfile",
     "templatetag",
     "testid",
@@ -55,7 +57,9 @@
     "geistmann",
     "pylance",
     "sorl",
-    "tailwindcss"
+    "tailwindcss",
+    "wagtailadmin",
+    "wagtaildocs"
   ],
   "[html][django-html][handlebars][hbs][mustache][jinja][jinja-html][nj][njk][nunjucks][twig]": {
     "editor.defaultFormatter": "monosans.djlint"

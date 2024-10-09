@@ -27,6 +27,7 @@ opentelemetry-sdk = "*"
 pillow = "*"
 typeid-python = "*"
 whitenoise = {extras = ["brotli"], version = "*"}
+wagtail = "*"
 
 [dev-packages]
 coverage = "*" 

@@ -17,7 +17,11 @@ Including another URLconf
 
 from debug_toolbar.toolbar import debug_toolbar_urls
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+
+from wagtail import urls as wagtail_urls
+from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.documents import urls as wagtaildocs_urls
 
 from {{ project_name }}.core import views as core_views
 from {{ project_name }}.core.api import api_v1
@@ -25,8 +29,12 @@ from {{ project_name }}.core.api import api_v1
 from . import views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("api/v1/", api_v1.urls), # Django Ninja API
+    # Django admin
+    path("django-admin/", admin.site.urls),
+    # Wagtail management
+    path("admin/", include(wagtailadmin_urls)),
+    path("documents/", include(wagtaildocs_urls)),
+    path("api/v1/", api_v1.urls),  # Django Ninja API
     path("auth/", include("allauth.urls")),  # Django allauth
     path("stripe/", include("djstripe.urls", namespace="djstripe")),  # dj-stripe
     path("pricing/", views.pricing, name="pricing"),
@@ -64,4 +72,7 @@ urlpatterns = [
         ),
     ),
     path("", views.homepage, name="homepage"),
+    # For anything not caught by a more specific rule above, hand over to
+    # Wagtail's serving mechanism
+    re_path(r"", include(wagtail_urls)),
 ] + debug_toolbar_urls()
