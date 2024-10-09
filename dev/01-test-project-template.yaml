@@ -7,7 +7,7 @@
   vars:
     clean_up: true
     project_name: temp_project
-    install_project_dependencies: false
+    install_project_dependencies: true
 
   tasks:
     - name: Generate a temporary directory for this test
@@ -67,6 +67,11 @@
         - name: Init a git repository for pre-commit
           command:
             cmd: git init
+            chdir: "{{ temp_dir.path }}"
+
+        - name: Make an initial commit
+          ansible.builtin.shell:
+            cmd: git add . && git commit -m 'initial commit'
             chdir: "{{ temp_dir.path }}"
 
         - name: Install project dependencies
