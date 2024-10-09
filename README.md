@@ -318,6 +318,18 @@ Use [`nh3`](https://github.com/messense/nh3) to sanitise user input as soon as i
 django-admin startproject --template ../django_project_template --extension 'py,yaml,yml,md,template,json' --name justfile --exclude '.ruff_cache'
 ```
 
+### Developing on the template
+
+If developing on the template directly, need to be able to quickly use the template to see what the output looks like. To do this, ansible playbooks are provided.
+
+_Note: Will need to have `pipenv` installed and do a `pipenv install --dev`_
+
+```
+pipenv run ansible-playbook ./ansible/01-test-project-template.yaml
+```
+
+This will automatically create a new django project using this template in a temporary directory.
+
 ---
 
 If in doubt, check [awesome django](https://github.com/wsvincent/awesome-django) for libraries.

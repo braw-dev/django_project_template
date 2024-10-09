@@ -1,0 +1,75 @@
+---
+# This playbook is used to test the project template by executing the
+# django-admin startproject command.
+- hosts: localhost
+  connection: local
+
+  vars:
+    clean_up: true
+    project_name: temp_project
+    install_project_dependencies: false
+
+  tasks:
+    - name: Generate a temporary directory for this test
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: ansible_django_project_template
+      register: temp_dir
+
+    - name: Clean up old temporary directories
+      when: clean_up
+      block:
+        - name: Find all temp directories
+          ansible.builtin.find:
+            paths:
+              - "{{ (temp_dir.path, '..') | path_join }}"
+            patterns:
+              - "ansible_django_project_template*"
+            file_type: directory
+          register: temp_dirs
+
+        - name: Remove temp directories
+          ansible.builtin.file:
+            state: absent
+            path: "{{ item }}"
+          with_items: "{{ temp_dirs.files | map(attribute='path') }}"
+
+    - name: Create the temporary directory
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: directory
+      when: temp_dir.changed
+
+    - name: Use the template to start a new Django project
+      command:
+        cmd: |
+          pipenv run django-admin startproject
+            --template=django_project_template
+            --extension 'py,yaml,md,template,toml,json'
+            --name justfile
+            --exclude '.ruff_cache'
+            --exclude 'dev'
+            {{ project_name }} {{ temp_dir.path }}
+        chdir: "{{ playbook_dir }}/../.."
+
+    - name: Share the name of the temporary directory with the user
+      debug:
+        msg: "The new project is in {{ temp_dir.path }}"
+
+    - name: Open the directory (on macOS)
+      command:
+        cmd: open "{{ temp_dir.path }}"
+      when: ansible_os_family == 'Darwin'
+
+    - name: Install dependencies
+      when: install_project_dependencies
+      block:
+        - name: Init a git repository for pre-commit
+          command:
+            cmd: git init
+            chdir: "{{ temp_dir.path }}"
+
+        - name: Install project dependencies
+          command:
+            cmd: just install
+            chdir: "{{ temp_dir.path }}"

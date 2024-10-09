@@ -11,5 +11,15 @@
       with_items:
         - entr # File watcher
         - ripgrep # Fast search tool
+        - just # Task runner
       when: ansible_os_family == 'Debian'
       become: yes
+
+    - name: Install dependencies (macOS)
+      homebrew:
+        name: "{{ item }}"
+      with_items:
+        - entr # File watcher
+        - ripgrep # Fast search tool
+        - just # Task runner
+      when: ansible_os_family == 'Darwin'
