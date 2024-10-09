@@ -2,6 +2,8 @@
 
 This is an opinionated Django template focused on getting rid of the boilerplate/setup stages when writing SaaS MVPs. The aim is to start a new project with this template and go straight into writing business logic. It is designed to be production ready (secure with monitoring and backups) but also cheap to run and host.
 
+But building is easy, getting (and retaining) customers is hard. That's why this template is also focused on including Django powered tools for support, payments marketing, translations, monitoring and more.
+
 To get started, make sure you have Django installed (5.1 at time of writing) and run the following command (where `project_name` is the slug of your new project):
 
 ```
