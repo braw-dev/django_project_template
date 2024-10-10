@@ -6,10 +6,28 @@
 
   vars:
     clean_up: true
-    project_name: temp_project
+    project_name: TEST_PROJECT_NAME
+    django_version: "5.1.2"
     install_project_dependencies: true
 
   tasks:
+    - name: Check if the django-admin command is available
+      ansible.builtin.command:
+        cmd: django-admin --version
+      register: django_admin_version
+      failed_when: django_admin_version.rc != 0
+
+    - name: Check if .env file exists as this seems to fail if it isn't
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/../../django_project_template/project_name/.env"
+      register: env_file
+
+    - name: Make a copy of .env.template to .env if not already present
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../django_project_template/project_name/.env.template"
+        dest: "{{ playbook_dir }}/../../django_project_template/project_name/.env"
+      when: env_file.stat.exists == false
+
     - name: Generate a temporary directory for this test
       ansible.builtin.tempfile:
         state: directory
@@ -36,37 +54,32 @@
 
     - name: Create the temporary directory
       ansible.builtin.file:
-        path: "{{ temp_dir.path }}"
+        path: "{{ item }}"
         state: directory
-      when: temp_dir.changed
+      with_items:
+        - "{{ temp_dir.path }}"
+
+    - name: Share the name of the temporary directory with the user
+      debug:
+        msg: "{{ temp_dir.path }}"
 
     - name: Use the template to start a new Django project
       ansible.builtin.command:
-        # By setting PIPENV_VENV_IN_PROJECT=1, we ensure that the virtual
-        # environment is created in the project directory and can easily be
-        # removed later.
         cmd: |
-          PIPENV_VENV_IN_PROJECT=1
-          pipenv run django-admin startproject
-            --template=django_project_template
+          django-admin startproject
+            --template={{ playbook_dir }}/../../django_project_template
             --extension 'py,yaml,md,template,toml,json'
             --name justfile
             --exclude '.ruff_cache'
             --exclude 'dev'
             {{ project_name }} {{ temp_dir.path }}
-        chdir: "{{ playbook_dir }}/../.."
 
     - name: For testing purposes, make sure the just commands have the PIPENV environment variable set
       ansible.builtin.lineinfile:
-        todo
-        content: |
-          [env]
-          PIPENV_VENV_IN_PROJECT=1
-        dest: "{{ temp_dir.path }}/.justfile"
-
-    - name: Share the name of the temporary directory with the user
-      debug:
-        msg: "The new project is in {{ temp_dir.path }}"
+        line: 'export PIPENV_VENV_IN_PROJECT := "1"'
+        path: "{{ temp_dir.path }}/justfile"
+        search_string: "export PIPENV_VENV_IN_PROJECT"
+        validate: just --unstable --fmt --check --justfile %s
 
     - name: Open the directory (on macOS)
       ansible.builtin.command:
@@ -88,5 +101,5 @@
 
         - name: Install project dependencies
           ansible.builtin.command:
-            cmd: PIPENV_VENV_IN_PROJECT=1 just install
+            cmd: just install
             chdir: "{{ temp_dir.path }}"
