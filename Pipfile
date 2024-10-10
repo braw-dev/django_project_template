@@ -44,6 +44,7 @@ ruff = "*"
 sphinx = "*" 
 tblib = "*" # for better tracebacks when parallel testing
 ansible = "*"
+django-polyglot-translator = "*"
 
 [requires]
 python_version = "3.12"

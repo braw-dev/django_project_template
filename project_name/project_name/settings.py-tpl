@@ -15,6 +15,7 @@ from email.utils import getaddresses
 from pathlib import Path
 
 import environ
+from django.utils.translation import gettext_lazy as _
 
 env = environ.Env()
 
@@ -90,6 +91,8 @@ INSTALLED_APPS = [
     "wagtail",
     "taggit",
     "modelcluster",
+    # Polygot translation with DeepL
+    "djangoPolyglot",
     # Project apps
     "{{ project_name }}.users",
     "{{ project_name }}.core",
@@ -302,6 +305,13 @@ MFA_TOTP_ISSUER = PROJECT_DISPLAY_NAME
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/{{ docs_version }}/howto/static-files/
 STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": BASE_DIR / "media",
+            "base_url": "/media/",
+        },
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
@@ -351,13 +361,30 @@ SRI_ALGORITHM = "sha512"
 
 LANGUAGE_CODE = "en-us"
 
+# Used by Polyglot to know what to create
+# https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/#languages
+LANGUAGES = [
+    ("de", _("German")),
+    ("fr", _("French")),
+    ("es", _("Spanish")),
+    ("pt", _("Portuguese")),
+    ("en", _("English")),
+]
+
+# Where to put the translations
+LOCALE_PATHS = [
+    BASE_DIR / "locale",
+]
+
 TIME_ZONE = "UTC"
 
 USE_I18N = True
 
 USE_TZ = True
 
-# https://docs.djangoproject.com/en/{{ docs_version }}/ref/templates/builtins/#std-templatefilter-date
+POLYGLOT_DEEPL_LICENSE = env.str("POLYGLOT_DEEPL_LICENSE")
+
+# https://docs.djangoproject.com/en/{{ docs_version }}/ref/templates/builtins/#std-templatefilter-date  # noqa: E501
 DATE_FORMAT = "d E Y"
 SHORT_DATE_FORMAT = "Y/m/d"
 DATETIME_FORMAT = "d E Y H:i:s"
@@ -365,7 +392,7 @@ SHORT_DATETIME_FORMAT = "Y/m/d H:i"
 
 USE_THOUSAND_SEPARATOR = True
 
-# https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/#std:setting-FORMS_URLFIELD_ASSUME_HTTPS
+# https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/#std:setting-FORMS_URLFIELD_ASSUME_HTTPS  # noqa: E501
 # Silences some console warnings
 FORMS_URLFIELD_ASSUME_HTTPS = True
 

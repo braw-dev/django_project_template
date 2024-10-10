@@ -1,10 +1,12 @@
 {
   "cSpell.words": [
     "bradlc",
+    "Chatwoot",
     "closeblock",
     "closevariable",
     "collectstatic",
     "cookiecutter",
+    "DEEPL",
     "devcontainer",
     "devcontainers",
     "diskcache",
@@ -28,6 +30,7 @@
     "openvariable",
     "orgtorii",
     "pipenv",
+    "polygot",
     "ripgrep",
     "runserver",
     "Spatia",
@@ -55,6 +58,7 @@
     "entr",
     "esbenp",
     "geistmann",
+    "howto",
     "pylance",
     "sorl",
     "tailwindcss",

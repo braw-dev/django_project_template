@@ -40,17 +40,19 @@ test-watch:
 ## Django management
 ###############################################
 
+manage := "cd " + SAAS_DIR +";" + PIPENV_RUN + " python manage.py"
+
 # Run the development server
 runserver:
-	@cd {% templatetag openvariable %}SAAS_DIR{% templatetag closevariable %}; {% templatetag openvariable %}PIPENV_RUN{% templatetag closevariable %} python manage.py runserver
+	@{% templatetag openvariable %}manage{% templatetag closevariable %} runserver
 
 # Run Django migrations
 migrate:
-	@cd {% templatetag openvariable %}SAAS_DIR{% templatetag closevariable %}; {% templatetag openvariable %}PIPENV_RUN{% templatetag closevariable %} python manage.py migrate
+	@{% templatetag openvariable %}manage{% templatetag closevariable %} migrate
 
 # Collect static files
 collectstatic:
-	@cd {% templatetag openvariable %}SAAS_DIR{% templatetag closevariable %}; {% templatetag openvariable %}PIPENV_RUN{% templatetag closevariable %} python manage.py collectstatic --noinput
+	@{% templatetag openvariable %}manage{% templatetag closevariable %} collectstatic --noinput
 
 ###############################################
 ## Development
@@ -71,7 +73,7 @@ playwright-install:
 
 # Create Django migrations
 makemigrations:
-	@cd {% templatetag openvariable %}SAAS_DIR{% templatetag closevariable %}; {% templatetag openvariable %}PIPENV_RUN{% templatetag closevariable %} python manage.py makemigrations
+	@{% templatetag openvariable %}manage{% templatetag closevariable %} makemigrations
 
 # Run the linter and formatter
 format:
@@ -80,7 +82,7 @@ format:
 
 # Create a Django superuser
 createsuperuser:
-	@cd {% templatetag openvariable %}SAAS_DIR{% templatetag closevariable %}; {% templatetag openvariable %}PIPENV_RUN{% templatetag closevariable %} python manage.py createsuperuser
+	@{% templatetag openvariable %}manage{% templatetag closevariable %} createsuperuser
 
 # Remove all Django migrations
 rm-migrations:
@@ -89,8 +91,12 @@ rm-migrations:
 
 # Reset the database
 reset-db:
-	@cd {% templatetag openvariable %}SAAS_DIR{% templatetag closevariable %}; {% templatetag openvariable %}PIPENV_RUN{% templatetag closevariable %} python manage.py reset_db --noinput
+	@{% templatetag openvariable %}manage{% templatetag closevariable %} reset_db --noinput
 
 # Run type checking with mypy
 typecheck: 
 	@{% templatetag openvariable %}PIPENV_RUN{% templatetag closevariable %} mypy {% templatetag openvariable %}SAAS_DIR{% templatetag closevariable %}
+
+# Translate any i18n strings with DeepL (requires a DeepL API key)
+translate:
+    @{% templatetag openvariable %}manage{% templatetag closevariable %} django-polyglot translate
