@@ -18,6 +18,14 @@ pipenv run django-admin startproject \
 
 To understand what's going on we can refer to the [Django documentation on `startproject`/`startapp`](https://docs.djangoproject.com/en/5.1/ref/django-admin/#cmdoption-startapp-template).
 
+## Things to do in the new project
+
+There are some tweaks that need to be done after creating a new project to get it up and running for your project.
+
+- [ ] Configure environment variables (API keys, Debug etc.) by copying `{{ project_name }}/.env.template` to `{{ project_name }}/.env` and customizing
+- [ ] Review the `{{ project_name }}/{{ project_name }}/settings.py` settings to ensure display names are correct
+- [ ] Run the tests with `just test`
+
 ## What's included?
 
 A non-exhaustive list of what is included when starting with this template:
@@ -46,8 +54,7 @@ A non-exhaustive list of what is included when starting with this template:
   - Accept Stripe payments and sync with [`dj-stripe`](https://github.com/dj-stripe/dj-stripe)
 - Support multiple languages
   - Using the inbuilt Django i18n framework to extract strings
-  - Auto translated into different languages via DeepL
-  <!-- todo(kisamoto): add auto translation -->
+  - Auto translated into different languages via DeepL and [`polygot-translator`](https://pypi.org/project/django-polyglot-translator/)
 - Minimal external services
   - SQLite for the database (although can be changed via environment variables)
   - [Diskcache](https://pypi.org/project/diskcache/) for SSD based caching
