@@ -41,8 +41,12 @@
       when: temp_dir.changed
 
     - name: Use the template to start a new Django project
-      command:
+      ansible.builtin.command:
+        # By setting PIPENV_VENV_IN_PROJECT=1, we ensure that the virtual
+        # environment is created in the project directory and can easily be
+        # removed later.
         cmd: |
+          PIPENV_VENV_IN_PROJECT=1
           pipenv run django-admin startproject
             --template=django_project_template
             --extension 'py,yaml,md,template,toml,json'
@@ -52,12 +56,20 @@
             {{ project_name }} {{ temp_dir.path }}
         chdir: "{{ playbook_dir }}/../.."
 
+    - name: For testing purposes, make sure the just commands have the PIPENV environment variable set
+      ansible.builtin.lineinfile:
+        todo
+        content: |
+          [env]
+          PIPENV_VENV_IN_PROJECT=1
+        dest: "{{ temp_dir.path }}/.justfile"
+
     - name: Share the name of the temporary directory with the user
       debug:
         msg: "The new project is in {{ temp_dir.path }}"
 
     - name: Open the directory (on macOS)
-      command:
+      ansible.builtin.command:
         cmd: open "{{ temp_dir.path }}"
       when: ansible_os_family == 'Darwin'
 
@@ -65,7 +77,7 @@
       when: install_project_dependencies
       block:
         - name: Init a git repository for pre-commit
-          command:
+          ansible.builtin.command:
             cmd: git init
             chdir: "{{ temp_dir.path }}"
 
@@ -75,6 +87,6 @@
             chdir: "{{ temp_dir.path }}"
 
         - name: Install project dependencies
-          command:
-            cmd: just install
+          ansible.builtin.command:
+            cmd: PIPENV_VENV_IN_PROJECT=1 just install
             chdir: "{{ temp_dir.path }}"
