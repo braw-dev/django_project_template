@@ -44,20 +44,3 @@ class ComingSoonTestCase(PlaywrightTestCase):
 
         # So he closes his browser and waits for updates
         page.close()
-
-    def test_submit_early_review_form(self):
-        # Howie wants to submit an early review of his previous or current employers
-        context = self.browser.new_context()
-        page = context.new_page()
-
-        # He goes to the homepage
-        page.goto(self.server_url)
-
-        # He sees a form to submit a simple review
-
-        # He enters his name, the review, his employer details and the rating
-
-        # He submits the form
-
-        # He sees a confirmation message that his review has been submitted
-        pass
