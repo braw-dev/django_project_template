@@ -82,8 +82,8 @@ format:
     @{% templatetag openvariable %} PIPENV_RUN {% templatetag closevariable %} ruff format
 
 # Create a Django superuser
-createsuperuser:
-    @{% templatetag openvariable %} manage {% templatetag closevariable %} createsuperuser
+createsuperuser *FLAGS:
+    @{% templatetag openvariable %} manage {% templatetag closevariable %} createsuperuser {% templatetag openvariable %} FLAGS {% templatetag closevariable %}
 
 # Remove all Django migrations
 rm-migrations:
