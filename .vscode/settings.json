@@ -6,6 +6,7 @@
     "closevariable",
     "collectstatic",
     "cookiecutter",
+    "createsuperuser",
     "DEEPL",
     "devcontainer",
     "devcontainers",
