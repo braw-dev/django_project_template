@@ -9,6 +9,7 @@
     project_name: TEST_PROJECT_NAME
     django_version: "5.1.2"
     install_project_dependencies: true
+    setup_project: true
 
   tasks:
     - name: Check if the django-admin command is available
@@ -74,17 +75,23 @@
             --exclude 'dev'
             {{ project_name }} {{ temp_dir.path }}
 
-    - name: For testing purposes, make sure the just commands have the PIPENV environment variable set
+    - name: Set some django settings for testing purposes
+      ansible.builtin.lineinfile:
+        search_string: "{{ item.search }}"
+        line: "{{ item.replacement }}"
+        path: "{{ temp_dir.path }}/{{ project_name }}/.env"
+      with_items:
+        - search: "DEBUG="
+          replacement: "DEBUG=True"
+        - search: "ENVIRONMENT="
+          replacement: "ENVIRONMENT=development"
+
+    - name: Make sure the just commands have the pipenv environment variable set in Justfile
       ansible.builtin.lineinfile:
         line: 'export PIPENV_VENV_IN_PROJECT := "1"'
         path: "{{ temp_dir.path }}/justfile"
         search_string: "export PIPENV_VENV_IN_PROJECT"
         validate: just --unstable --fmt --check --justfile %s
-
-    - name: Open the directory (on macOS)
-      ansible.builtin.command:
-        cmd: open "{{ temp_dir.path }}"
-      when: ansible_os_family == 'Darwin'
 
     - name: Install dependencies
       when: install_project_dependencies
@@ -103,3 +110,36 @@
           ansible.builtin.command:
             cmd: just install
             chdir: "{{ temp_dir.path }}"
+
+    - name: Setup project
+      when: setup_project
+      block:
+        - name: Run migrations
+          ansible.builtin.command:
+            cmd: just migrate
+            chdir: "{{ temp_dir.path }}"
+
+        - name: Collect static files
+          ansible.builtin.command:
+            cmd: just collectstatic
+            chdir: "{{ temp_dir.path }}"
+
+        - name: Create an insecure superuser
+          ansible.builtin.command:
+            cmd: just createsuperuser --noinput --username admin
+            chdir: "{{ temp_dir.path }}"
+          environment:
+            DJANGO_SUPERUSER_PASSWORD: password
+
+    - name: Open the directory
+      block:
+        - name: Check if open command exists
+          ansible.builtin.command:
+            cmd: which open
+          register: open_command
+          ignore_errors: yes
+
+        - name: Open the directory
+          ansible.builtin.command:
+            cmd: open "{{ temp_dir.path }}"
+          when: open_command.rc == 0
