@@ -30,31 +30,21 @@ There are some tweaks that need to be done after creating a new project to get i
 
 A non-exhaustive list of what is included when starting with this template:
 
+### Development
+
 - A custom Django user with MFA
 - Increased security
   - Minimum password length increased
   - Password hashing by Argon2id
   - Subresource Integrity SHA512 hashes added to JS and CSS files
   - User submitted content sanitized via `nh3`
-- Simple environment variable driven configuration
+- Simple, environment variable driven configuration
   - Uses [`django-environ`](https://django-environ.readthedocs.io/en/latest/quickstart.html)
   - Reads a `.env` file or environment variables
+  - Single `settings.py` file
 - Common SaaS models & structure
   - Users live within Teams (which are Django Groups)
   - A Team can have different permissions based on what they've paid for
-- Market your service
-  - Wagtail CMS for writing blog articles
-  - SEO optimisations for all views with [`django-meta`](https://django-meta.readthedocs.io/en/latest/)
-  - Privacy policy and Terms & Conditions pages out the box via inbuilt static pages
-- Capture user interest
-  - Newsletter sign-up page & components saves email to your Django database
-- Support your customers
-  - Embedded [Chatwoot](https://www.chatwoot.com/) for customer support (requires additional self hosting)
-- Take payments
-  - Accept Stripe payments and sync with [`dj-stripe`](https://github.com/dj-stripe/dj-stripe)
-- Support multiple languages
-  - Using the inbuilt Django i18n framework to extract strings
-  - Auto translated into different languages via DeepL and [`polygot-translator`](https://pypi.org/project/django-polyglot-translator/)
 - Minimal external services
   - SQLite for the database (although can be changed via environment variables)
   - [Diskcache](https://pypi.org/project/diskcache/) for SSD based caching
@@ -66,14 +56,9 @@ A non-exhaustive list of what is included when starting with this template:
   - Coverage support
 - Static typing to catch bugs early
   - `mypy` with `django-stubs` for type checking
-- Deploy to a VPS
-  - Containerised and run via Podman & Systemctl
-  - Infrastructure as code via Ansible for server setup and deployments
-  - Supports multiple sites on a single VPS
-- Caddy as a web server with automatic HTTPS
+- Static assets served simply and efficiently
   - Static files served with Python via Whitenoise
   - Static files hashed (versioned) and compressed in collectstatic step
-  - Cache headers sent to static CDN URL
 - Frontend ready to develop
   - HTMX for incremental HTML updates with fragments
   - Tailwind CSS & Daisy UI for styling
@@ -82,6 +67,29 @@ A non-exhaustive list of what is included when starting with this template:
   - Simply run `just` to see the targets available
 - Code style enforced
   - Ruff linting and formatting built in to editor and run at commit time with pre-commit
+
+### Marketing
+
+- Market your service
+  - Wagtail CMS for writing blog articles
+  - SEO optimisations for all views with [`django-meta`](https://django-meta.readthedocs.io/en/latest/)
+  - Privacy policy and Terms & Conditions pages out the box via inbuilt static pages
+- Capture user interest
+  - Newsletter sign-up page & components saves email to your Django database
+- Support your customers
+  - Embedded [Chatwoot](https://www.chatwoot.com/) for customer support (requires additional self hosting)
+
+### Business development
+
+- Take payments
+  - Accept Stripe payments and sync with [`dj-stripe`](https://github.com/dj-stripe/dj-stripe)
+- Support multiple languages
+  - Using the inbuilt Django i18n framework to extract strings
+  - Auto translated into different languages via DeepL and [`polygot-translator`](https://pypi.org/project/django-polyglot-translator/)
+- Deploy to a VPS
+  - Containerised and run via Podman & Systemctl
+  - Infrastructure as code via Ansible for server setup and deployments
+  - Supports multiple sites on a single VPS
 
 These decisions are primarily based on my own experience when bootstrapping projects. I am open to improvements and suggestions or if you disagree/do things differently then please feel free to fork and make your own adjustments.
 
