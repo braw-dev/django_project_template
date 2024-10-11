@@ -19,9 +19,9 @@ from django.utils.translation import gettext_lazy as _
 
 env = environ.Env()
 
-PROJECT_DISPLAY_NAME = (
-    "{{ project_name }}"  # Used for public display e.g as default in <title> tags
-)
+# Used for public display e.g as default in <title> tags
+PROJECT_DISPLAY_NAME = "{{ project_name }}"
+
 PROJECT_SLUG = "{{ project_name }}"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
