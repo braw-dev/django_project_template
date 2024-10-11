@@ -27,51 +27,56 @@ from {{ project_name }}.core.api import api_v1
 
 from . import views
 
-urlpatterns = [
-    # Django admin
-    path("django-admin/", admin.site.urls),
-    # Wagtail management
-    path("admin/", include(wagtailadmin_urls)),
-    path("documents/", include(wagtaildocs_urls)),
-    path("api/v1/", api_v1.urls),  # Django Ninja API
-    path("auth/", include("allauth.urls")),  # Django allauth
-    path("stripe/", include("djstripe.urls", namespace="djstripe")),  # dj-stripe
-    path("pricing/", views.pricing, name="pricing"),
-    path(
-        "newsletter/",
-        include(
-            (
-                [
-                    path("", core_views.newsletter_signup, name="signup"),
-                    path("success", core_views.newsletter_success, name="signup_success"),
-                ],
-                "newsletter",
+urlpatterns = (
+    [
+        # Django admin
+        path("django-admin/", admin.site.urls),
+        # Wagtail management
+        path("admin/", include(wagtailadmin_urls)),
+        path("documents/", include(wagtaildocs_urls)),
+        path("api/v1/", api_v1.urls),  # Django Ninja API
+        path("auth/", include("allauth.urls")),  # Django allauth
+        path("stripe/", include("djstripe.urls", namespace="djstripe")),  # dj-stripe
+        path("pricing/", views.pricing, name="pricing"),
+        path(
+            "newsletter/",
+            include(
+                (
+                    [
+                        path("", core_views.newsletter_signup, name="signup"),
+                        path("success", core_views.newsletter_success, name="signup_success"),
+                    ],
+                    "newsletter",
+                ),
+                namespace="newsletter",
             ),
-            namespace="newsletter",
         ),
-    ),
-    path(
-        "",
-        include(
-            (
-                [
-                    path("coming-soon", core_views.coming_soon, name="coming_soon"),
-                ],
-                "core",
+        path(
+            "",
+            include(
+                (
+                    [
+                        path("coming-soon", core_views.coming_soon, name="coming_soon"),
+                    ],
+                    "core",
+                ),
+                namespace="core",
             ),
-            namespace="core",
         ),
-    ),
-    path("", include("django_prometheus.urls")),
-    path(
-        "",
-        include(
-            ([path("dashboard", view=views.dashboard, name="dashboard")], "account"),
-            namespace="account",
+        path("", include("django_prometheus.urls")),
+        path(
+            "",
+            include(
+                ([path("dashboard", view=views.dashboard, name="dashboard")], "account"),
+                namespace="account",
+            ),
         ),
-    ),
-    path("", views.homepage, name="homepage"),
-    # For anything not caught by a more specific rule above, hand over to
-    # Wagtail's serving mechanism
-    re_path(r"", include(wagtail_urls)),
-] + debug_toolbar_urls()
+        path("", views.homepage, name="homepage"),
+    ]
+    + debug_toolbar_urls()
+    + [
+        # For anything not caught by a more specific rule above, hand over to
+        # Wagtail's serving mechanism
+        re_path(r"", include(wagtail_urls)),
+    ]
+)
