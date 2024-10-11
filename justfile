@@ -14,7 +14,7 @@ PIPENV_RUN := "pipenv run"
 ## Testing related targets
 ###############################################
 
-test_command := PIPENV_RUN + " python -Wa manage.py test"
+test_command := PIPENV_RUN + " python manage.py test"
 test_options := " --shuffle --parallel=auto"
 
 # Run fast tests (excludes browser tests)
