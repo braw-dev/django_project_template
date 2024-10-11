@@ -34,7 +34,8 @@ class NewsletterTestCase(TestCase):
         core_models.NewsletterSignup.objects.create(email=different_email)
         self.client.post(reverse("newsletter:signup"), {"email": different_email})
         self.assertEqual(
-            core_models.NewsletterSignup.objects.filter(email=different_email).count(), 1
+            core_models.NewsletterSignup.objects.filter(email=different_email).count(),
+            1,
         )
 
     def test_newsletter_signup_shows_client_error_on_invalid_email(self):
