@@ -38,11 +38,12 @@ class PriceFactory(factory.django.DjangoModelFactory):
 ###############################################
 class HomepageTestCase(TestCase):
     def test_uses_home_template(self):
-        response = self.client.get(reverse("homepage"))
+        response = self.client.get(reverse("core:homepage"))
         self.assertTemplateUsed(response, "core/pages/homepage.html")
 
 
 class AuthTestCase(TestCase):
+    username = "jane"
     email = "jane@example.com"
     password = "iKDt6EFwyQEjkgqSzCdvFdC7imS5JN0H"
 
@@ -52,28 +53,28 @@ class AuthTestCase(TestCase):
         self.assertTemplateUsed(response, "account/signup.html")
 
     def test_register_successfully_registers_user(self):
-        form_data = {"email": self.email, "password1": self.password}
+        form_data = {"username": self.username, "password1": self.password}
 
         self.client.post(
             reverse("account_signup"),
             data=form_data,
         )
 
-        users = User.objects.filter(email=self.email)
+        users = User.objects.filter(username=self.username)
         self.assertEqual(users.count(), 1)
 
     def test_register_redirects_on_valid_data(self):
-        form_data = {"email": self.email, "password1": self.password}
+        form_data = {"username": self.username, "password1": self.password}
 
         response = self.client.post(
             reverse("account_signup"),
             data=form_data,
         )
 
-        self.assertRedirects(response, reverse("account_email_verification_sent"))
+        self.assertRedirects(response, reverse("account:dashboard"))
 
     def test_register_shows_error_on_invalid_password(self):
-        form_data = {"email": self.email, "password1": ""}
+        form_data = {"username": self.username, "password1": ""}
 
         response = self.client.post(
             reverse("account_signup"),
@@ -83,8 +84,8 @@ class AuthTestCase(TestCase):
         self.assertTemplateUsed(response, "account/signup.html")
         self.assertContains(response, "This field is required")
 
-    def test_register_shows_error_on_invalid_email(self):
-        form_data = {"email": "invalid-email", "password1": self.password}
+    def test_register_shows_error_on_invalid_username(self):
+        form_data = {"username": "d", "password1": self.password}
 
         response = self.client.post(
             reverse("account_signup"),
@@ -92,7 +93,7 @@ class AuthTestCase(TestCase):
         )
 
         self.assertTemplateUsed(response, "account/signup.html")
-        self.assertContains(response, "Enter a valid email address")
+        self.assertContains(response, "Ensure this value has at least 3 characters (it has 1)")
 
     def test_dashboard_view(self):
         response = self.client.get(reverse("account:dashboard"))
