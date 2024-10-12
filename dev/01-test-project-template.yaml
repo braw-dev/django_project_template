@@ -73,7 +73,16 @@
             --name justfile
             --exclude '.ruff_cache'
             --exclude 'dev'
+            --exclude '.env'
+            --exclude 'db.sqlite3'
             {{ project_name }} {{ temp_dir.path }}
+
+    - name: Clear out any files that shouldn't have been copied over
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "{{ temp_dir.path }}/{{ project_name }}/db.sqlite3"
 
     - name: Set some django settings for testing purposes
       ansible.builtin.lineinfile:
@@ -114,14 +123,19 @@
     - name: Setup project
       when: setup_project
       block:
-        - name: Run migrations
-          ansible.builtin.command:
-            cmd: just migrate
-            chdir: "{{ temp_dir.path }}"
-
         - name: Collect static files
           ansible.builtin.command:
             cmd: just collectstatic
+            chdir: "{{ temp_dir.path }}"
+
+        - name: Create migrations
+          ansible.builtin.command:
+            cmd: just makemigrations
+            chdir: "{{ temp_dir.path }}"
+
+        - name: Run migrations
+          ansible.builtin.command:
+            cmd: just migrate
             chdir: "{{ temp_dir.path }}"
 
         - name: Create an insecure superuser
@@ -129,7 +143,7 @@
             cmd: just createsuperuser --noinput --username admin
             chdir: "{{ temp_dir.path }}"
           environment:
-            DJANGO_SUPERUSER_PASSWORD: password
+            DJANGO_SUPERUSER_PASSWORD: admin
 
     - name: Open the directory
       block:
