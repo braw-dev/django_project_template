@@ -30,9 +30,9 @@ from . import views
 urlpatterns = (
     [
         # Django admin
-        path("django-admin/", admin.site.urls),
+        path("admin/", admin.site.urls),
         # Wagtail management
-        path("admin/", include(wagtailadmin_urls)),
+        path("wagtail/", include(wagtailadmin_urls)),
         path("documents/", include(wagtaildocs_urls)),
         path("api/v1/", api_v1.urls),  # Django Ninja API
         path("auth/", include("allauth.urls")),  # Django allauth
