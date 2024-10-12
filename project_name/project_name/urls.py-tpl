@@ -22,47 +22,19 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
-from {{ project_name }}.core import views as core_views
 from {{ project_name }}.core.api import api_v1
 
 from . import views
 
 urlpatterns = (
     [
-        # Django admin
-        path("admin/", admin.site.urls),
-        # Wagtail management
-        path("wagtail/", include(wagtailadmin_urls)),
-        path("documents/", include(wagtaildocs_urls)),
         path("api/v1/", api_v1.urls),  # Django Ninja API
-        path("auth/", include("allauth.urls")),  # Django allauth
+        path("admin/", admin.site.urls), # Django admin
+        path("wagtail/", include(wagtailadmin_urls)), # Wagtail management
+        path("documents/", include(wagtaildocs_urls)), # Wagtail documents
+        path("accounts/", include("allauth.urls")),  # Django allauth
         path("stripe/", include("djstripe.urls", namespace="djstripe")),  # dj-stripe
-        path("pricing/", views.pricing, name="pricing"),
-        path(
-            "newsletter/",
-            include(
-                (
-                    [
-                        path("", core_views.newsletter_signup, name="signup"),
-                        path("success", core_views.newsletter_success, name="signup_success"),
-                    ],
-                    "newsletter",
-                ),
-                namespace="newsletter",
-            ),
-        ),
-        path(
-            "",
-            include(
-                (
-                    [
-                        path("coming-soon", core_views.coming_soon, name="coming_soon"),
-                    ],
-                    "core",
-                ),
-                namespace="core",
-            ),
-        ),
+        path("pricing/", views.pricing, name="pricing"), # Pricing page
         path("", include("django_prometheus.urls")),
         path(
             "",
@@ -71,12 +43,12 @@ urlpatterns = (
                 namespace="account",
             ),
         ),
-        path("", views.homepage, name="homepage"),
     ]
     + debug_toolbar_urls()
     + [
         # For anything not caught by a more specific rule above, hand over to
         # Wagtail's serving mechanism
         re_path(r"", include(wagtail_urls)),
+        path("", views.homepage, name="homepage"), # Finally, homepage
     ]
 )
