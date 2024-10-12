@@ -39,9 +39,9 @@ A non-exhaustive list of what is included when starting with this template:
   - Subresource Integrity SHA512 hashes added to JS and CSS files
   - User submitted content sanitized via `nh3`
 - Simple, environment variable driven configuration
+  - Single `settings.py` file
   - Uses [`django-environ`](https://django-environ.readthedocs.io/en/latest/quickstart.html)
   - Reads a `.env` file or environment variables
-  - Single `settings.py` file
 - Common SaaS models & structure
   - Users live within Teams (which are Django Groups)
   - A Team can have different permissions based on what they've paid for
