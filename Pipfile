@@ -7,7 +7,7 @@ verify_ssl = true
 diskcache = "*"
 dj-stripe = "*"
 django = {extras = ["argon2"], version = "*"}
-django-allauth = {extras = ["mfa"], version = "*"}
+django-allauth = {extras = ["mfa", "socialaccount"], version = "*"}
 django-braces = "*"
 django-cotton = "*"
 django-environ = "*"
