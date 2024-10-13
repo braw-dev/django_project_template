@@ -2,21 +2,27 @@
 <!DOCTYPE html>
 <html lang="en">
     <head {% meta_namespaces %}>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        {% comment %} Fallback to project_display_name if there is no meta title {% endcomment %}
-        {% if meta.title %}
-            <title>{{ meta.title }}</title>
-        {% else %}
-            <title>{% project_display_name %}</title>
-        {% endif %}
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        {% comment %} head_title comes from django-allauth so needs to keep this name {% endcomment %}
+        <title>
+            {% block head_title %}
+                {% if meta.title %}
+                    {{ meta.title }}
+                {% else %}
+                    {% comment %} Fallback to project_display_name if there is no meta title {% endcomment %}
+                    {% project_display_name %}
+                {% endif %}
+            {% endblock head_title %}
+        </title>
         {% comment %} Tailwind & DaisyUI {% endcomment %}
-        <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css"
+        <link rel="preconnect" href="https://cdn.jsdelivr.net">
+        <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.13/dist/full.min.css"
               rel="stylesheet"
-              type="text/css" />
-        <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"
-                defer></script>
-        <script defer>
+              type="text/css">
+        <link rel="preconnect" href="https://cdn.tailwindcss.com">
+        <script src="https://cdn.tailwindcss.com?plugins=typography,aspect-ratio,container-queries"></script>
+        <script>
             tailwind.config = {
               theme: {
                 fontFamily: {
@@ -36,6 +42,8 @@
         {% include "meta/meta.html" %}
         {% comment %} HTMX {% endcomment %}
         {% sri_static "core/js/htmx.min.js" 'defer' %}
+        {% block extra_head %}
+        {% endblock extra_head %}
     </head>
     <body>
         {% block header %}

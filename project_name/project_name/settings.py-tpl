@@ -95,6 +95,7 @@ INSTALLED_APPS = [
     "djangoPolyglot",
     # Project apps
     "{{ project_name }}.users",
+    "{{ project_name }}.brand",
     "{{ project_name }}.core",
 ]
 
