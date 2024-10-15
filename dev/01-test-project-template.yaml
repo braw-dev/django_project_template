@@ -5,7 +5,7 @@
   connection: local
 
   vars:
-    clean_up: true
+    clean_up: false
     project_name: TEST_PROJECT_NAME
     django_version: "5.1.2"
     install_project_dependencies: true
@@ -94,6 +94,8 @@
           replacement: "DEBUG=True"
         - search: "ENVIRONMENT="
           replacement: "ENVIRONMENT=development"
+        - search: "SEND_EMAILS="
+          replacement: "SEND_EMAILS=False"
 
     - name: Make sure the just commands have the pipenv environment variable set in Justfile
       ansible.builtin.lineinfile:
