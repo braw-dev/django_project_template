@@ -8,6 +8,7 @@ _default:
 
 export PIPENV_VENV_IN_PROJECT := ""
 SAAS_DIR := "{{project_name}}"
+PROJECT_DIR := SAAS_DIR + "/" + SAAS_DIR
 PIPENV_RUN := "pipenv run"
 
 ###############################################
@@ -43,6 +44,10 @@ test-watch:
 
 manage := "cd " + SAAS_DIR + ";" + PIPENV_RUN + " python manage.py"
 
+# Shortcut to run Django management commands
+manage *ARGS:
+    @{% templatetag openvariable %} manage {% templatetag closevariable %} {% templatetag openvariable %} ARGS {% templatetag closevariable %}
+
 # Run the development server
 runserver:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} runserver
@@ -54,6 +59,12 @@ migrate:
 # Collect static files
 collectstatic:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} collectstatic --noinput
+
+# Create a new Django app in the correct directory
+startapp APP_NAME:
+    @cd {% templatetag openvariable %} PROJECT_DIR {% templatetag closevariable %} && mkdir -p {% templatetag openvariable %} APP_NAME {% templatetag closevariable %}
+    @{% templatetag openvariable %} manage {% templatetag closevariable %} startapp {% templatetag openvariable %} APP_NAME {% templatetag closevariable %} {% templatetag openvariable %} SAAS_DIR {% templatetag closevariable %}/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}
+    @cd {% templatetag openvariable %} PROJECT_DIR {% templatetag closevariable %} && sed -i '' 's/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/{% templatetag openvariable %} SAAS_DIR {% templatetag closevariable %}\.{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/g' {% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/apps.py
 
 ###############################################
 ## Development
