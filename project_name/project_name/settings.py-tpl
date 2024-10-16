@@ -250,7 +250,7 @@ AUTHENTICATION_BACKENDS = (
 )
 
 LOGIN_REDIRECT_URL = "account:dashboard"
-LOGOUT_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "/"
 
 # Allauth user account settings
 # https://docs.allauth.org/en/latest/account/configuration.html
