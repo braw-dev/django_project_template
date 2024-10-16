@@ -95,7 +95,8 @@ INSTALLED_APPS = [
     "djangoPolyglot",
     # Project apps
     "{{ project_name }}.users",
-    "{{ project_name }}.brand",
+    "{{ project_name }}.brand",  # Brand colours and logo
+    "{{ project_name }}.marketing",  # Marketing content (incl. homepage) from Wagtail CMS
     "{{ project_name }}.core",
 ]
 
