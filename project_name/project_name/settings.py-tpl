@@ -309,7 +309,7 @@ else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 DEFAULT_FROM_EMAIL = f"noreply@{env.str("EMAIL_DOMAIN")}"
-SERVER_EMAIL = f"root@{env.str('EMAIL_DOMAIN')}"
+SERVER_EMAIL = f"django@{env.str('EMAIL_DOMAIN')}"
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-timeout
 EMAIL_TIMEOUT = 5
