@@ -117,25 +117,18 @@ MIDDLEWARE = [
 ]
 
 if not TESTING:
+    # Don't add prometheus in testing mode
+    # and
     # Don't add debug toolbar in testing mode
     # https://django-debug-toolbar.readthedocs.io/en/latest/installation.html#disable-the-toolbar-when-running-tests-optional
     INSTALLED_APPS = [
         *INSTALLED_APPS,
+        "django_prometheus",
         "debug_toolbar",
     ]
     MIDDLEWARE = [
-        "debug_toolbar.middleware.DebugToolbarMiddleware",
-        *MIDDLEWARE,
-    ]
-
-if not TESTING:
-    # Don't add prometheus in testing mode
-    INSTALLED_APPS = [
-        *INSTALLED_APPS,
-        "django_prometheus",
-    ]
-    MIDDLEWARE = [
         "django_prometheus.middleware.PrometheusBeforeMiddleware",
+        "debug_toolbar.middleware.DebugToolbarMiddleware",
         *MIDDLEWARE,
         "django_prometheus.middleware.PrometheusAfterMiddleware",
     ]
