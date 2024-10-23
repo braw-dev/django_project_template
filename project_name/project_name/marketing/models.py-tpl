@@ -1,9 +1,10 @@
 from django.db import models
-from meta.models import ModelMeta
 from wagtail import blocks
 from wagtail.admin import panels
 from wagtail.images.blocks import ImageChooserBlock
 from wagtail.models import Page, StreamField
+
+from .metadata import MetadataPageMixin
 
 
 class CustomerLogoBlock(blocks.StructBlock):
@@ -12,7 +13,7 @@ class CustomerLogoBlock(blocks.StructBlock):
     website = blocks.URLBlock()
 
 
-class HomePage(ModelMeta, Page):
+class HomePage(MetadataPageMixin, Page):
     # Hero
     hero_title = models.CharField(max_length=255)
     hero_subtitle = models.CharField(max_length=255)
@@ -171,49 +172,7 @@ class HomePage(ModelMeta, Page):
         ),
     ]
 
-    # _metadata = {
-    #     "title": False,
-    #     "og_title": False,
-    #     "twitter_title": False,
-    #     "schemaorg_title": False,
-    #     "description": False,
-    #     "og_description": False,
-    #     "twitter_description": False,
-    #     "schemaorg_description": False,
-    #     "keywords": False,
-    #     "image": get_setting("DEFAULT_IMAGE"),
-    #     "image_object": None,
-    #     "image_width": False,
-    #     "image_height": False,
-    #     "object_type": get_setting("DEFAULT_TYPE"),
-    #     "og_type": get_setting("FB_TYPE"),
-    #     "og_app_id": get_setting("FB_APPID"),
-    #     "og_profile_id": get_setting("FB_PROFILE_ID"),
-    #     "og_publisher": get_setting("FB_PUBLISHER"),
-    #     "og_author_url": get_setting("FB_AUTHOR_URL"),
-    #     "fb_pages": get_setting("FB_PAGES"),
-    #     "twitter_type": get_setting("TWITTER_TYPE"),
-    #     "twitter_site": get_setting("TWITTER_SITE"),
-    #     "twitter_author": get_setting("TWITTER_AUTHOR"),
-    #     "schemaorg_type": get_setting("SCHEMAORG_TYPE"),
-    #     "published_time": False,
-    #     "modified_time": False,
-    #     "expiration_time": False,
-    #     "tag": False,
-    #     "url": False,
-    #     "locale": False,
-    #     "custom_namespace": get_setting("OG_NAMESPACES"),
-    # }
-
-    _metadata = {
-        "title": "seo_title",
-        "description": "search_description",
-        # "keywords": "hero_subtitle",
-        "published_time": False,
-        "modified_time": False,
-        "expiration_time": False,
-        "url": False,
-    }
+    promote_panels = Page.promote_panels + MetadataPageMixin.panels
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)

@@ -1,0 +1,194 @@
+"""As the wagtail-metadata-mixin has not been updated in some years
+we copy the models here so we can make our own adjustments.
+
+https://github.com/bashu/wagtail-metadata-mixin/blob/develop/wagtailmetadata/models.py
+with the additional changes from the Wagtail 3.0 PR:
+https://github.com/bashu/wagtail-metadata-mixin/pull/18/files
+which should align with the Wagtail 3.0 changes.
+"""
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+from meta import utils
+from meta.models import ModelMeta
+from meta.settings import get_setting as get_meta_setting
+from wagtail.admin.panels import FieldPanel
+from wagtail.images import get_image_model_string
+
+
+class MetadataMixin(ModelMeta):
+    context_meta_name = "meta"
+
+    object_type = None
+    schemaorg_type = None
+    custom_namespace = None
+
+    _metadata_default = {
+        "custom_namespace": "get_meta_custom_namespace",
+        "description": "get_meta_description",
+        # "expiration_time": False,
+        "fb_pages": get_meta_setting("FB_PAGES"),
+        # "image_height": False,
+        # "image_object": None,
+        # "image_width": False,
+        "image": "get_meta_image",
+        "keywords": "get_meta_keywords",
+        "locale": "get_meta_locale",
+        # "modified_time": False,
+        "object_type": "get_meta_object_type",
+        "og_app_id": get_meta_setting("FB_APPID"),
+        "og_author_url": "get_author_url",
+        "og_description": "get_og_description",
+        "og_profile_id": get_meta_setting("FB_PROFILE_ID"),
+        "og_publisher": get_meta_setting("FB_PUBLISHER"),
+        "og_title": "get_og_title",
+        "og_type": get_meta_setting("FB_TYPE"),
+        # "published_time": False,
+        "schemaorg_description": "get_schemaorg_description",
+        "schemaorg_title": "get_schemaorg_title",
+        "schemaorg_type": "get_meta_schemaorg_type",
+        "title": "get_meta_title",
+        "twitter_author": "get_meta_twitter_creator",
+        "twitter_description": False,
+        "twitter_site": "get_meta_twitter_site",
+        "twitter_title": False,
+        "twitter_type": get_meta_setting("TWITTER_TYPE"),
+        "url": "get_meta_url",
+    }
+
+    def get_schemaorg_title(self):
+        return self.get_og_title()
+
+    def get_schemaorg_description(self):
+        return self.get_og_description()
+
+    def get_og_title(self):
+        return self.get_meta_title()
+
+    def get_og_description(self):
+        return self.get_meta_description()
+
+    def get_meta_title(self):
+        return False
+
+    def get_meta_description(self):
+        return False
+
+    def get_meta_keywords(self):
+        return []
+
+    def get_meta_url(self):
+        return False
+
+    def get_meta_image(self):
+        if bool(get_meta_setting("DEFAULT_IMAGE")) is True:
+            return self.build_absolute_uri(get_meta_setting("DEFAULT_IMAGE"))
+        return None
+
+    def get_meta_object_type(self):
+        return self.object_type or get_meta_setting("SITE_TYPE")
+
+    def get_meta_schemaorg_type(self):
+        return self.schemaorg_type or get_meta_setting("SCHEMAORG_TYPE")
+
+    def get_meta_twitter_site(self):
+        return get_meta_setting("TWITTER_SITE")
+
+    def get_meta_twitter_creator(self):
+        return self.get_author_twitter()
+
+    def get_meta_twitter_card(self):
+        if self.get_meta_image() is not None:
+            return "summary_large_image"
+        return "summary"
+
+    def get_meta_locale(self):
+        return getattr(settings, "LANGUAGE_CODE", "en_US")
+
+    def get_meta_custom_namespace(self):
+        return self.custom_namespace or get_meta_setting("OG_NAMESPACES")
+
+    def get_author(self):
+        class Author:
+            fb_url = get_meta_setting("FB_AUTHOR_URL")
+            twitter_profile = get_meta_setting("TWITTER_AUTHOR")
+            schemaorg_profile = None
+
+            def get_full_name(self):  # pragma: no cover
+                return None
+
+        return Author()
+
+    def build_absolute_uri(self, url):
+        request = utils.get_request()
+        if request is not None:
+            return request.build_absolute_uri(url)
+
+        if url.startswith("http"):
+            return url
+
+        site = self.get_site()
+        if site is not None:
+            return "{}{}".format(site.root_url, url if url.startswith("/") else "/" + url)
+
+        raise NotImplementedError
+
+    def get_context(self, request):
+        context = super().get_context(request)
+        context[self.context_meta_name] = self.as_meta(request)
+        return context
+
+
+class MetadataPageMixin(MetadataMixin, models.Model):
+    search_image = models.ForeignKey(
+        get_image_model_string(),
+        verbose_name=_("search image"),
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+
+    panels = [FieldPanel("search_image")]
+
+    _metadata = {
+        "published_time": "published_time",
+        "modified_time": "latest_revision_created_at",
+        "expiration_time": "expire_at",
+    }
+
+    class Meta:
+        abstract = True
+
+    @property
+    def published_time(self):
+        return self.go_live_at or self.first_published_at
+
+    def get_meta_title(self):
+        return self.seo_title or self.title
+
+    def get_meta_description(self):
+        return self.search_description
+
+    def get_meta_keywords(self):
+        return []
+
+    def get_meta_url(self):
+        return self.build_absolute_uri(self.url)
+
+    def get_meta_image(self):
+        if self.search_image is not None:
+            return self.build_absolute_uri(
+                self.search_image.get_rendition(
+                    getattr(settings, "META_SEARCH_IMAGE_RENDITION", "fill-800x450")
+                ).url
+            )
+        return super().get_meta_image()
+
+    def get_author(self):
+        author = super().get_author()
+        if hasattr(self, "owner") and isinstance(self.owner, get_user_model()):
+            author.get_full_name = self.owner.get_full_name
+        return author
