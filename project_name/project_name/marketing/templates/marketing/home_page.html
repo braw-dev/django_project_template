@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+{% block body %}
+    <div class="hero bg-base-200 min-h-screen lg:min-h-fit lg:py-40">
+        <div class="hero-content text-center">
+            <div class="max-w-md">
+                <h1 class="text-5xl font-bold">Hello there</h1>
+                <p class="py-6">
+                    Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi exercitationem
+                    quasi. In deleniti eaque aut repudiandae et a id nisi.
+                </p>
+                <button class="btn btn-primary">Get Started</button>
+            </div>
+        </div>
+    </div>
+    {% if not page.frequent_questions_disabled and page.frequent_questions %}
+        {% include "partials/faq-list.html" with faqs=page.frequent_questions %}
+    {% endif %}
+{% endblock body %}

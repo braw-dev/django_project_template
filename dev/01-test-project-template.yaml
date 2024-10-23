@@ -96,6 +96,8 @@
           replacement: "ENVIRONMENT=development"
         - search: "SEND_EMAILS="
           replacement: "SEND_EMAILS=False"
+        - search: "LOG_LEVEL="
+          replacement: "LOG_LEVEL=DEBUG"
 
     - name: Make sure the just commands have the pipenv environment variable set in Justfile
       ansible.builtin.lineinfile:

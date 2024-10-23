@@ -1,0 +1,222 @@
+from django.db import models
+from meta.models import ModelMeta
+from wagtail import blocks
+from wagtail.admin import panels
+from wagtail.images.blocks import ImageChooserBlock
+from wagtail.models import Page, StreamField
+
+
+class CustomerLogoBlock(blocks.StructBlock):
+    logo = ImageChooserBlock()
+    customer_name = blocks.CharBlock()
+    website = blocks.URLBlock()
+
+
+class HomePage(ModelMeta, Page):
+    # Hero
+    hero_title = models.CharField(max_length=255)
+    hero_subtitle = models.CharField(max_length=255)
+    # Social proof
+    logo_cloud_disabled = models.BooleanField(default=False)
+    logo_cloud = StreamField(
+        [("logos", blocks.ListBlock(CustomerLogoBlock(), label="Customer logos"))],
+        block_counts={"logos": {"max_num": 1}},
+        blank=True,
+        help_text="Add social proof by displaying customer logos",
+    )
+    # Features
+    features_disabled = models.BooleanField(default=False)
+    features = StreamField(
+        [
+            (
+                "feature",
+                blocks.StructBlock(
+                    [
+                        ("icon", ImageChooserBlock()),
+                        ("title", blocks.CharBlock()),
+                        ("description", blocks.TextBlock()),
+                    ]
+                ),
+            ),
+        ],
+        block_counts={"feature": {"max_num": 3}},
+        blank=True,
+        help_text="",
+    )
+    # Benefits section
+    benefits_disabled = models.BooleanField(default=False)
+    benefits = StreamField(
+        [
+            (
+                "benefit",
+                blocks.ListBlock(
+                    blocks.StructBlock(
+                        [
+                            ("icon", ImageChooserBlock()),
+                            ("title", blocks.CharBlock()),
+                            ("description", blocks.TextBlock()),
+                        ]
+                    ),
+                    label="Benefits",
+                ),
+            ),
+        ],
+        block_counts={"benefit": {"max_num": 4}},
+        blank=True,
+    )
+    # How it works
+    how_it_works_disabled = models.BooleanField(default=False)
+    how_it_works = StreamField(
+        [
+            (
+                "step",
+                blocks.StructBlock(
+                    [
+                        ("icon", ImageChooserBlock()),
+                        ("title", blocks.CharBlock()),
+                        ("description", blocks.TextBlock()),
+                    ]
+                ),
+            ),
+        ],
+        block_counts={"step": {"max_num": 4}},
+        blank=True,
+    )
+
+    # FAQ
+    frequent_questions_disabled = models.BooleanField(default=False)
+    frequent_questions = StreamField(
+        [
+            (
+                "question",
+                blocks.StructBlock(
+                    [
+                        ("question", blocks.CharBlock()),
+                        ("answer", blocks.RichTextBlock()),
+                    ]
+                ),
+            ),
+        ],
+        block_counts={"question": {"max_num": 10}},
+        blank=True,
+    )
+
+    # Make sure we can edit these fields in the Wagtail admin
+    content_panels = Page.content_panels + [
+        panels.MultiFieldPanel(
+            children=[
+                panels.FieldRowPanel(
+                    children=[
+                        panels.FieldPanel("hero_title"),
+                        panels.FieldPanel("hero_subtitle"),
+                    ]
+                )
+            ],
+            heading="Hero",
+        ),
+        panels.MultiFieldPanel(
+            children=[
+                panels.FieldRowPanel(
+                    children=[
+                        panels.FieldPanel("logo_cloud_disabled"),
+                        panels.FieldPanel("logo_cloud"),
+                    ]
+                )
+            ],
+            heading="Social proof",
+        ),
+        panels.MultiFieldPanel(
+            children=[
+                panels.FieldRowPanel(
+                    children=[
+                        panels.FieldPanel("features_disabled"),
+                        panels.FieldPanel("features"),
+                    ]
+                )
+            ],
+            heading="Features",
+        ),
+        panels.MultiFieldPanel(
+            children=[
+                panels.FieldRowPanel(
+                    children=[
+                        panels.FieldPanel("benefits_disabled"),
+                        panels.FieldPanel("benefits"),
+                    ]
+                )
+            ],
+            heading="Benefits of using {{ project_name }}",
+        ),
+        panels.MultiFieldPanel(
+            children=[
+                panels.FieldRowPanel(
+                    children=[
+                        panels.FieldPanel("how_it_works_disabled"),
+                        panels.FieldPanel("how_it_works"),
+                    ]
+                )
+            ],
+            heading="How it works",
+        ),
+        panels.MultiFieldPanel(
+            children=[
+                panels.FieldRowPanel(
+                    children=[
+                        panels.FieldPanel("frequent_questions_disabled"),
+                        panels.FieldPanel("frequent_questions"),
+                    ]
+                )
+            ],
+            heading="Frequently asked questions",
+        ),
+    ]
+
+    # _metadata = {
+    #     "title": False,
+    #     "og_title": False,
+    #     "twitter_title": False,
+    #     "schemaorg_title": False,
+    #     "description": False,
+    #     "og_description": False,
+    #     "twitter_description": False,
+    #     "schemaorg_description": False,
+    #     "keywords": False,
+    #     "image": get_setting("DEFAULT_IMAGE"),
+    #     "image_object": None,
+    #     "image_width": False,
+    #     "image_height": False,
+    #     "object_type": get_setting("DEFAULT_TYPE"),
+    #     "og_type": get_setting("FB_TYPE"),
+    #     "og_app_id": get_setting("FB_APPID"),
+    #     "og_profile_id": get_setting("FB_PROFILE_ID"),
+    #     "og_publisher": get_setting("FB_PUBLISHER"),
+    #     "og_author_url": get_setting("FB_AUTHOR_URL"),
+    #     "fb_pages": get_setting("FB_PAGES"),
+    #     "twitter_type": get_setting("TWITTER_TYPE"),
+    #     "twitter_site": get_setting("TWITTER_SITE"),
+    #     "twitter_author": get_setting("TWITTER_AUTHOR"),
+    #     "schemaorg_type": get_setting("SCHEMAORG_TYPE"),
+    #     "published_time": False,
+    #     "modified_time": False,
+    #     "expiration_time": False,
+    #     "tag": False,
+    #     "url": False,
+    #     "locale": False,
+    #     "custom_namespace": get_setting("OG_NAMESPACES"),
+    # }
+
+    _metadata = {
+        "title": "seo_title",
+        "description": "search_description",
+        # "keywords": "hero_subtitle",
+        "published_time": False,
+        "modified_time": False,
+        "expiration_time": False,
+        "url": False,
+    }
+
+    def get_context(self, request, *args, **kwargs):
+        context = super().get_context(request, *args, **kwargs)
+        context["meta"] = self.as_meta(request)
+
+        return context

@@ -160,6 +160,94 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "{{ project_name }}.wsgi.application"
 
+LOG_LEVEL = env.str("LOG_LEVEL", default="ERROR")
+LOGS_SAVE_TO_FILE = env.bool("LOGS_SAVE_TO_FILE", default=False)
+LOGS_DIR = BASE_DIR.parent / "logs"
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"},
+        "no_error_messages": {"()": "{{ project_name }}.logging.filters.NonError"},
+        "require_save_to_file": {"()": "{{ project_name }}.logging.filters.RequireSaveToFile"},
+    },
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+        "json": {
+            "()": "{{ project_name }}.logging.formatters.JSON",
+            "fmt_keys": {
+                # key = value in the JSON log message output output
+                # value = logging variable that will be used
+                "level": "levelname",
+                "timestamp": "asctime",
+                "msg": "message",
+                "logger": "name",
+                "pid": "process",
+                "tid": "thread",
+                "exception": "exc_info",
+            },
+        },
+    },
+    "handlers": {
+        "mail_admins": {
+            "level": "ERROR",
+            "filters": ["require_debug_false"],
+            "class": "django.utils.log.AdminEmailHandler",
+        },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "debug_file": {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "debug.log",
+            "formatter": "json",
+            "maxBytes": 1024 * 1024 * 5,  # 5MB
+            "backupCount": 3,
+            "encoding": "utf-8",
+            "filters": ["require_save_to_file", "no_error_messages"],
+        },
+        "error_file": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "error.log",
+            "formatter": "json",
+            "maxBytes": 1024 * 1024 * 5,  # 5MB
+            "backupCount": 3,
+            "encoding": "utf-8",
+            "filters": ["require_save_to_file"],
+        },
+    },
+    "root": {"level": LOG_LEVEL, "handlers": ["console", "debug_file", "error_file"]},
+    "loggers": {
+        "django": {
+            "handlers": [
+                "console",
+            ],
+            "propagate": True,
+        },
+        "django.request": {
+            "handlers": ["mail_admins"],
+            "level": "ERROR",
+            "propagate": True,
+        },
+        "django.security.DisallowedHost": {
+            "level": "ERROR",
+            "handlers": ["console", "mail_admins"],
+            "propagate": True,
+        },
+    },
+}
+
 
 # Database
 # https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/#databases

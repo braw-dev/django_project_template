@@ -1,0 +1,21 @@
+import logging
+from typing import override
+
+from django.conf import settings
+
+
+class NonError(logging.Filter):
+    """Filter for logging module to only include non-error and non-critical logs."""
+
+    @override
+    def filter(self, record: logging.LogRecord) -> bool | logging.LogRecord:
+        return record.levelno <= logging.WARNING
+
+
+class RequireSaveToFile(logging.Filter):
+    """Filter for logging module to only include logs when the save to file setting
+    has been enabled in the Django settings."""
+
+    @override
+    def filter(self, record: logging.LogRecord) -> bool | logging.LogRecord:
+        return getattr(settings, "LOGS_SAVE_TO_FILE", False) is True
