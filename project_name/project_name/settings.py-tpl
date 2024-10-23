@@ -168,12 +168,12 @@ LOGGING = {
     "disable_existing_loggers": False,
     "filters": {
         "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"},
-        "no_error_messages": {"()": "{{ project_name }}.logging.filters.NonError"},
-        "require_save_to_file": {"()": "{{ project_name }}.logging.filters.RequireSaveToFile"},
+        "no_error_messages": {"()": "{{ project_name }}.utils.log.NonErrorFilter"},
+        "require_save_to_file": {"()": "{{ project_name }}.utils.log.RequireSaveToFileFilter"},
     },
     "formatters": {
         "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "format": "{levelname} {asctime} {module} {message}",
             "style": "{",
         },
         "simple": {
@@ -181,7 +181,7 @@ LOGGING = {
             "style": "{",
         },
         "json": {
-            "()": "{{ project_name }}.logging.formatters.JSON",
+            "()": "{{ project_name }}.utils.log.JSONFormatter",
             "fmt_keys": {
                 # key = value in the JSON log message output output
                 # value = logging variable that will be used

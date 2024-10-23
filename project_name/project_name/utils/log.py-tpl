@@ -3,6 +3,26 @@ import json
 import logging
 from typing import override
 
+from django.conf import settings
+
+
+class NonErrorFilter(logging.Filter):
+    """Filter for logging module to only include non-error and non-critical logs."""
+
+    @override
+    def filter(self, record: logging.LogRecord) -> bool | logging.LogRecord:
+        return record.levelno <= logging.WARNING
+
+
+class RequireSaveToFileFilter(logging.Filter):
+    """Filter for logging module to only include logs when the save to file setting
+    has been enabled in the Django settings."""
+
+    @override
+    def filter(self, record: logging.LogRecord) -> bool | logging.LogRecord:
+        return getattr(settings, "LOGS_SAVE_TO_FILE", False) is True
+
+
 LOG_RECORD_BUILTIN_ATTRS = {
     "args",
     "asctime",
@@ -30,7 +50,7 @@ LOG_RECORD_BUILTIN_ATTRS = {
 }
 
 
-class JSON(logging.Formatter):
+class JSONFormatter(logging.Formatter):
     """JSON formatting for logging module.
 
     - https://github.com/mCodingLLC/VideosSampleCode/blob/master/videos/135_modern_logging/mylogger.py
