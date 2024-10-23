@@ -226,8 +226,20 @@ LOGGING = {
             "encoding": "utf-8",
             "filters": ["require_save_to_file"],
         },
+        "file_queue": {
+            "level": "DEBUG",
+            "class": "logging.handlers.QueueHandler",
+            "handlers": ["debug_file", "error_file"],
+            "respect_handler_level": True,
+        },
+        "email_queue": {
+            "level": "ERROR",
+            "class": "logging.handlers.QueueHandler",
+            "handlers": ["mail_admins"],
+            "respect_handler_level": True,
+        },
     },
-    "root": {"level": LOG_LEVEL, "handlers": ["console", "debug_file", "error_file"]},
+    "root": {"level": LOG_LEVEL, "handlers": ["console", "file_queue"]},
     "loggers": {
         "django": {
             "handlers": [
@@ -236,18 +248,19 @@ LOGGING = {
             "propagate": True,
         },
         "django.request": {
-            "handlers": ["mail_admins"],
+            "handlers": ["email_queue"],
             "level": "ERROR",
             "propagate": True,
         },
         "django.security.DisallowedHost": {
             "level": "ERROR",
-            "handlers": ["console", "mail_admins"],
+            "handlers": ["console", "email_queue"],
             "propagate": True,
         },
     },
 }
 
+LOGGING_CONFIG = "{{ project_name }}.utils.log.load_logging_config_start_listener"
 
 # Database
 # https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/#databases

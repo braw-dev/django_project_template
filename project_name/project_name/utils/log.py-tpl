@@ -6,6 +6,16 @@ from typing import override
 from django.conf import settings
 
 
+def load_logging_config_start_listener(config):
+    logging.config.dictConfig(config)
+    file_queue_handler = logging.getHandlerByName("file_queue")
+    if file_queue_handler is not None:
+        file_queue_handler.listener.start()
+    email_queue_handler = logging.getHandlerByName("email_queue")
+    if email_queue_handler is not None:
+        email_queue_handler.listener.start()
+
+
 class NonErrorFilter(logging.Filter):
     """Filter for logging module to only include non-error and non-critical logs."""
 
