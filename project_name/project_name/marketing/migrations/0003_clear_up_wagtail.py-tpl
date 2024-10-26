@@ -1,0 +1,26 @@
+from django.db import migrations
+
+
+def remove_auto_created_page(apps, schema_editor):
+    Page = apps.get_model("wagtailcore", "Page")
+    Page.objects.filter(title="Homepage").delete()
+
+def create_marketing_homepage(apps, schema_editor):
+    Homepage = apps.get_model("marketing", "Homepage")
+    Homepage.objects.create(
+        hero_title="Welcome to our website",
+        hero_subtitle="We are here to help you",
+    )
+
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("marketing", "0002_homepage_benefits_homepage_benefits_disabled_and_more"),
+    ]
+
+    operations = [
+        migrations.RunPython(remove_auto_created_page),
+        migrations.RunPython(create_marketing_homepage),
+    ]
