@@ -5,11 +5,12 @@
   connection: local
 
   vars:
-    clean_up: false
+    clean_up: true
     project_name: TEST_PROJECT_NAME
     django_version: "5.1.2"
     install_project_dependencies: true
     setup_project: true
+    project_dir: null
 
   tasks:
     - name: Check if the django-admin command is available
@@ -29,40 +30,47 @@
         dest: "{{ playbook_dir }}/../../django_project_template/project_name/.env"
       when: env_file.stat.exists == false
 
-    - name: Generate a temporary directory for this test
-      ansible.builtin.tempfile:
-        state: directory
-        prefix: ansible_django_project_template
-      register: temp_dir
-
-    - name: Clean up old temporary directories
-      when: clean_up
+    - name: Use a temporary directory if project_dir is not set
+      when: not project_dir | bool
       block:
-        - name: Find all temp directories
-          ansible.builtin.find:
-            paths:
-              - "{{ (temp_dir.path, '..') | path_join }}"
-            patterns:
-              - "ansible_django_project_template*"
-            file_type: directory
-          register: temp_dirs
+        - name: Generate a temporary directory for this test
+          ansible.builtin.tempfile:
+            state: directory
+            prefix: ansible_django_project_template
+          register: temp_dir
 
-        - name: Remove temp directories
-          ansible.builtin.file:
-            state: absent
-            path: "{{ item }}"
-          with_items: "{{ temp_dirs.files | map(attribute='path') }}"
+        - name: Set the temp_dir as the project_dir
+          set_fact:
+            project_dir: "{{ temp_dir.path }}"
 
-    - name: Create the temporary directory
+        - name: Clean up old temporary directories
+          when: clean_up
+          block:
+            - name: Find all temp directories
+              ansible.builtin.find:
+                paths:
+                  - "{{ (temp_dir.path, '..') | path_join }}"
+                patterns:
+                  - "ansible_django_project_template*"
+                file_type: directory
+              register: temp_dirs
+
+            - name: Remove temp directories
+              ansible.builtin.file:
+                state: absent
+                path: "{{ item }}"
+              with_items: "{{ temp_dirs.files | map(attribute='path') }}"
+
+    - name: Create the project directory
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
       with_items:
-        - "{{ temp_dir.path }}"
+        - "{{ project_dir }}"
 
     - name: Share the name of the temporary directory with the user
       debug:
-        msg: "{{ temp_dir.path }}"
+        msg: "{{ project_dir }}"
 
     - name: Use the template to start a new Django project
       ansible.builtin.command:
@@ -75,20 +83,20 @@
             --exclude 'dev'
             --exclude '.env'
             --exclude 'db.sqlite3'
-            {{ project_name }} {{ temp_dir.path }}
+            {{ project_name }} {{ project_dir }}
 
     - name: Clear out any files that shouldn't have been copied over
       ansible.builtin.file:
         path: "{{ item }}"
         state: absent
       with_items:
-        - "{{ temp_dir.path }}/{{ project_name }}/db.sqlite3"
+        - "{{ project_dir }}/{{ project_name }}/db.sqlite3"
 
     - name: Set some django settings for testing purposes
       ansible.builtin.lineinfile:
         search_string: "{{ item.search }}"
         line: "{{ item.replacement }}"
-        path: "{{ temp_dir.path }}/{{ project_name }}/.env"
+        path: "{{ project_dir }}/{{ project_name }}/.env"
       with_items:
         - search: "DEBUG="
           replacement: "DEBUG=True"
@@ -102,7 +110,7 @@
     - name: Make sure the just commands have the pipenv environment variable set in Justfile
       ansible.builtin.lineinfile:
         line: 'export PIPENV_VENV_IN_PROJECT := "1"'
-        path: "{{ temp_dir.path }}/justfile"
+        path: "{{ project_dir }}/justfile"
         search_string: "export PIPENV_VENV_IN_PROJECT"
         validate: just --unstable --fmt --check --justfile %s
 
@@ -112,17 +120,17 @@
         - name: Init a git repository for pre-commit
           ansible.builtin.command:
             cmd: git init
-            chdir: "{{ temp_dir.path }}"
+            chdir: "{{ project_dir }}"
 
         - name: Make an initial commit
           ansible.builtin.shell:
             cmd: git add . && git commit -m 'initial commit'
-            chdir: "{{ temp_dir.path }}"
+            chdir: "{{ project_dir }}"
 
         - name: Install project dependencies
           ansible.builtin.command:
             cmd: just install
-            chdir: "{{ temp_dir.path }}"
+            chdir: "{{ project_dir }}"
 
     - name: Setup project
       when: setup_project
@@ -130,22 +138,22 @@
         - name: Collect static files
           ansible.builtin.command:
             cmd: just collectstatic
-            chdir: "{{ temp_dir.path }}"
+            chdir: "{{ project_dir }}"
 
         - name: Create migrations
           ansible.builtin.command:
             cmd: just makemigrations
-            chdir: "{{ temp_dir.path }}"
+            chdir: "{{ project_dir }}"
 
         - name: Run migrations
           ansible.builtin.command:
             cmd: just migrate
-            chdir: "{{ temp_dir.path }}"
+            chdir: "{{ project_dir }}"
 
         - name: Create an insecure superuser
           ansible.builtin.command:
             cmd: just createsuperuser --noinput --username admin
-            chdir: "{{ temp_dir.path }}"
+            chdir: "{{ project_dir }}"
           environment:
             DJANGO_SUPERUSER_PASSWORD: admin
 
@@ -159,5 +167,5 @@
 
         - name: Open the directory
           ansible.builtin.command:
-            cmd: open "{{ temp_dir.path }}"
+            cmd: open "{{ project_dir }}"
           when: open_command.rc == 0
