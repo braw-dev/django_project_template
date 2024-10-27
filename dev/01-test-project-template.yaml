@@ -49,7 +49,7 @@
             - name: Find all temp directories
               ansible.builtin.find:
                 paths:
-                  - "{{ (temp_dir.path, '..') | path_join }}"
+                  - "{{ (project_dir, '..') | path_join }}"
                 patterns:
                   - "ansible_django_project_template*"
                 file_type: directory
