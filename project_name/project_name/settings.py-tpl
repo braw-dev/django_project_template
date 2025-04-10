@@ -73,7 +73,6 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.mfa",  # Multi-factor authentication extension
     "meta",  # SEO metadata
-    "djstripe",  # Stripe integration
     "django_htmx",  # HTMX integration
     "sri",  # Sub resource Integrity for JS
     "django_cotton",  # Javascript style components
@@ -303,7 +302,7 @@ else:
     # Use console backend for development
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-DEFAULT_FROM_EMAIL = f"noreply@{env.str("EMAIL_DOMAIN")}"
+DEFAULT_FROM_EMAIL = f"noreply@{env.str('EMAIL_DOMAIN')}"
 SERVER_EMAIL = f"django@{env.str('EMAIL_DOMAIN')}"
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-timeout
@@ -427,13 +426,12 @@ META_USE_SITES = True
 # https://django-cotton.com/docs/configuration
 COTTON_DIR = "components"
 
-# Django Stripe settings
+# Stripe settings
 # https://dj-stripe.dev/2.8/reference/settings/
 STRIPE_LIVE_SECRET_KEY = env.str("STRIPE_LIVE_SECRET_KEY")
 STRIPE_TEST_SECRET_KEY = env.str("STRIPE_TEST_SECRET_KEY")
 STRIPE_LIVE_MODE = env.bool("STRIPE_LIVE_MODE")
-DJSTRIPE_WEBHOOK_SECRET = env.str("STRIPE_WEBHOOK_SECRET")
-DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
+STRIPE_WEBHOOK_SECRET = env.str("STRIPE_WEBHOOK_SECRET")
 
 # Django SRI settings
 # https://github.com/RealOrangeOne/django-sri
