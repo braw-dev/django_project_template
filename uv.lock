@@ -723,22 +723,6 @@ wheels = [
 ]
 
 [[package]]
-name = "djangorestframework-stubs"
-version = "3.15.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django-stubs" },
-    { name = "requests" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c1/08/e86db66dbed67bd4e70dc7d059b338ad1a0cadfd15314ad09c554c31fb83/djangorestframework_stubs-3.15.3.tar.gz", hash = "sha256:e7bdec722d98b8a8049bad9f8bb5ead0931f4f64010ffb3c4538c9ae0f35ef2a", size = 34818 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/3f/4d2233e7a6eb5617f377b9cb943c2f6482a2671bdb3b134b955e78b2b946/djangorestframework_stubs-3.15.3-py3-none-any.whl", hash = "sha256:3add29ac343292ffc926a3f3984af42de237cca214c69ca0489d124315a803bc", size = 54609 },
-]
-
-[[package]]
 name = "djlint"
 version = "1.36.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1358,7 +1342,6 @@ dev = [
     { name = "django-debug-toolbar" },
     { name = "django-polyglot-translator" },
     { name = "django-stubs", extra = ["compatible-mypy"] },
-    { name = "djangorestframework-stubs" },
     { name = "djlint" },
     { name = "factory-boy" },
     { name = "lefthook" },
@@ -1404,7 +1387,6 @@ dev = [
     { name = "django-debug-toolbar" },
     { name = "django-polyglot-translator" },
     { name = "django-stubs", extras = ["compatible-mypy"] },
-    { name = "djangorestframework-stubs" },
     { name = "djlint" },
     { name = "factory-boy" },
     { name = "lefthook", specifier = ">=1.11.8" },
@@ -1851,18 +1833,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/2d/68/609eed7402f87c9874af39d35942744e39646d1ea9011765ec87b01b2a3c/types_pyyaml-6.0.12.20250402.tar.gz", hash = "sha256:d7c13c3e6d335b6af4b0122a01ff1d270aba84ab96d1a1a1063ecba3e13ec075", size = 17282 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ed/56/1fe61db05685fbb512c07ea9323f06ea727125951f1eb4dff110b3311da3/types_pyyaml-6.0.12.20250402-py3-none-any.whl", hash = "sha256:652348fa9e7a203d4b0d21066dfb00760d3cbd5a15ebb7cf8d33c88a49546681", size = 20329 },
-]
-
-[[package]]
-name = "types-requests"
-version = "2.32.0.20250328"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "urllib3" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/00/7d/eb174f74e3f5634eaacb38031bbe467dfe2e545bc255e5c90096ec46bc46/types_requests-2.32.0.20250328.tar.gz", hash = "sha256:c9e67228ea103bd811c96984fac36ed2ae8da87a36a633964a21f199d60baf32", size = 22995 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cc/15/3700282a9d4ea3b37044264d3e4d1b1f0095a4ebf860a99914fd544e3be3/types_requests-2.32.0.20250328-py3-none-any.whl", hash = "sha256:72ff80f84b15eb3aa7a8e2625fffb6a93f2ad5a0c20215fc1dcfa61117bcb2a2", size = 20663 },
 ]
 
 [[package]]

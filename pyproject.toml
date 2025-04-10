@@ -96,7 +96,6 @@ dev = [
     "django-coverage-plugin",
     "django-debug-toolbar",
     "django-stubs[compatible-mypy]",
-    "djangorestframework-stubs",
     "djlint",
     "factory-boy",
     "mypy",
