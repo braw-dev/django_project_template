@@ -101,10 +101,10 @@ dev = [
     "factory-boy",
     "mypy",
     "playwright",
-    "pre-commit",
     "ruff",
     "sphinx",
     "tblib",
     "ansible",
     "django-polyglot-translator",
+    "lefthook>=1.11.8",
 ]
