@@ -346,18 +346,6 @@ wheels = [
 ]
 
 [[package]]
-name = "deepl"
-version = "1.21.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6a/ed/cdcfd43568b83179d20cb087c9f95f605de98f1f79a2271541cbc3172693/deepl-1.21.1.tar.gz", hash = "sha256:ba71af13a054d5a3cd8f74d346c1c0ebb5e956b8934feb93459eeac0df087b54", size = 42782 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/21/c9207409bd6b69cc1e2a35a0a7e55f2bb96d81f50f7fdd8c61389d90a00e/deepl-1.21.1-py3-none-any.whl", hash = "sha256:7a912ea6accafc396c090d4871ac5a455ead0c740fc918803bd931d154de77fe", size = 38866 },
-]
-
-[[package]]
 name = "defusedxml"
 version = "0.7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -590,19 +578,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/94/4b/364fe61a161ead607dc6af311901ba8e62f537f8fdab94b5252cb6efe6d7/django-permissionedforms-0.1.tar.gz", hash = "sha256:4340bb20c4477fffb13b4cc5cccf9f1b1010b64f79956c291c72d2ad2ed243f8", size = 5856 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e6/5b/216157ff053f955b15b9dcdc13bfb6e406666445164fee9e332e141be96d/django_permissionedforms-0.1-py2.py3-none-any.whl", hash = "sha256:d341a961a27cc77fde8cc42141c6ab55cc1f0cb886963cc2d6967b9674fa47d6", size = 5744 },
-]
-
-[[package]]
-name = "django-polyglot-translator"
-version = "1.2.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "polyglot-translator" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c6/d5/ccafe0ae2b37f9e631fa14cdf0819e47244fd0dd8c694eeeaefb95987b4c/django-polyglot-translator-1.2.2.tar.gz", hash = "sha256:887c3306f4c0dcba54a96848ac6c96a297d850b1986c123009275329f20566cb", size = 6069 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/04/af/e9c6d1561f132ecc08a05a7f1457587b8e3d3e1ad14da07d3913bb0f7e27/django_polyglot_translator-1.2.2-py3-none-any.whl", hash = "sha256:9b5b823d1c09f25362ae4131380f8348b3a3ac33ae373ff6036b08437b146557", size = 7099 },
 ]
 
 [[package]]
@@ -1268,43 +1243,6 @@ wheels = [
 ]
 
 [[package]]
-name = "polib"
-version = "1.2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/10/9a/79b1067d27e38ddf84fe7da6ec516f1743f31f752c6122193e7bce38bdbf/polib-1.2.0.tar.gz", hash = "sha256:f3ef94aefed6e183e342a8a269ae1fc4742ba193186ad76f175938621dbfc26b", size = 161658 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6b/99/45bb1f9926efe370c6dbe324741c749658e44cb060124f28dad201202274/polib-1.2.0-py2.py3-none-any.whl", hash = "sha256:1c77ee1b81feb31df9bca258cbc58db1bbb32d10214b173882452c73af06d62d", size = 20634 },
-]
-
-[[package]]
-name = "polyglot-translator"
-version = "2.2.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "colorama" },
-    { name = "deepl" },
-    { name = "polib" },
-    { name = "progressbar2" },
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/0f/0f/f296e467bd70973e7071e7065b24ee99685fb08a42579f7fe9c695bd72ef/polyglot-translator-2.2.4.tar.gz", hash = "sha256:c07b58c9597ec907174332ce445989ec5d85af6f0ed70ce3ec121bcae2408be4", size = 11898 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/34/2a/6b06e6f4b7e279526d840253cc846d29f86e9408123078db4342f45bc198/polyglot_translator-2.2.4-py3-none-any.whl", hash = "sha256:f6c6d820fe63979162fc37c1acf9d8d5decc42159170c27187bdd23124bfc80f", size = 13189 },
-]
-
-[[package]]
-name = "progressbar2"
-version = "4.5.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "python-utils" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/19/24/3587e795fc590611434e4bcb9fbe0c3dddb5754ce1a20edfd86c587c0004/progressbar2-4.5.0.tar.gz", hash = "sha256:6662cb624886ed31eb94daf61e27583b5144ebc7383a17bae076f8f4f59088fb", size = 101449 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/94/448f037fb0ffd0e8a63b625cf9f5b13494b88d15573a987be8aaa735579d/progressbar2-4.5.0-py3-none-any.whl", hash = "sha256:625c94a54e63915b3959355e6d4aacd63a00219e5f3e2b12181b76867bf6f628", size = 57132 },
-]
-
-[[package]]
 name = "project-name"
 version = "0.1.0"
 source = { virtual = "." }
@@ -1340,7 +1278,6 @@ dev = [
     { name = "coverage" },
     { name = "django-coverage-plugin" },
     { name = "django-debug-toolbar" },
-    { name = "django-polyglot-translator" },
     { name = "django-stubs", extra = ["compatible-mypy"] },
     { name = "djlint" },
     { name = "factory-boy" },
@@ -1385,7 +1322,6 @@ dev = [
     { name = "coverage" },
     { name = "django-coverage-plugin" },
     { name = "django-debug-toolbar" },
-    { name = "django-polyglot-translator" },
     { name = "django-stubs", extras = ["compatible-mypy"] },
     { name = "djlint" },
     { name = "factory-boy" },
@@ -1505,18 +1441,6 @@ wheels = [
 [package.optional-dependencies]
 crypto = [
     { name = "cryptography" },
-]
-
-[[package]]
-name = "python-utils"
-version = "3.9.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/13/4c/ef8b7b1046d65c1f18ca31e5235c7d6627ca2b3f389ab1d44a74d22f5cc9/python_utils-3.9.1.tar.gz", hash = "sha256:eb574b4292415eb230f094cbf50ab5ef36e3579b8f09e9f2ba74af70891449a0", size = 35403 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/69/31c82567719b34d8f6b41077732589104883771d182a9f4ff3e71430999a/python_utils-3.9.1-py2.py3-none-any.whl", hash = "sha256:0273d7363c7ad4b70999b2791d5ba6b55333d6f7a4e4c8b6b39fb82b5fab4613", size = 32078 },
 ]
 
 [[package]]
