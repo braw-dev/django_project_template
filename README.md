@@ -7,7 +7,7 @@ But building is easy, getting (and retaining) customers is hard. That's why this
 To get started, make sure you have Django installed (5.1 at time of writing) and run the following command (where `project_name` is the slug of your new project):
 
 ```
-pipenv run django-admin startproject \
+uv run django-admin startproject \
     --template=https://github.com/braw-dev/django_project_template/archive/main.zip \
     --extension 'py,yaml,md,template,toml,json' \
     --name justfile \
@@ -66,7 +66,7 @@ A non-exhaustive list of what is included when starting with this template:
 - `justfile` for repetitive commands
   - Simply run `just` to see the targets available
 - Code style enforced
-  - Ruff linting and formatting built in to editor and run at commit time with pre-commit
+  - Ruff linting and formatting built in to editor and run at commit time with lefthook
 
 ### Marketing
 
@@ -161,7 +161,7 @@ This section contains instructions about what to do after you've started your pr
 $ just install
 ```
 
-This creates a virtual environment, installs the dependencies and installs `pre-commit`.
+This creates a virtual environment, installs the dependencies and installs `lefthook`.
 
 ### Setting environment variables
 
@@ -186,7 +186,7 @@ $ just runserver
 
 ### Keeping to the style guide
 
-Code styling is enforced by [Ruff](https://docs.astral.sh/ruff/) (run as part of pre-commit and the CI/CD pipeline).
+Code styling is enforced by [Ruff](https://docs.astral.sh/ruff/) (run as part of lefthook and the CI/CD pipeline).
 
 We choose to follow the [HackSoftware Django guide](https://github.com/HackSoftware/Django-Styleguide) wherever we can for the layout and structure of our code.
 
@@ -271,12 +271,12 @@ If you discover a security vulnerability we encourage you to please disclose thi
 
 ## Development
 
-- [Pipenv](https://pipenv.pypa.io/en/latest/) for dependency management
+- [`uv`](https://docs.astral.sh/uv/) for dependency management
 - [Playwright](https://playwright.dev/) for end-to-end user tests
 
 ### Prerequisites
 
-- [`pipenv`](https://pipenv.pypa.io/en/latest/) for python dependency management
+- [`uv`](https://docs.astral.sh/uv/) for python dependency management
 - [`entr`](https://github.com/eradman/entr) for hot reloading tests (`just test-watch`)
 - [`rg`](https://github.com/BurntSushi/ripgrep) for finding the python and html files suitable for hot reloading
 
@@ -291,7 +291,7 @@ If you discover a security vulnerability we encourage you to please disclose thi
 
 ### Linting & Formatting
 
-[`ruff`](https://docs.astral.sh/ruff/) is used to format (drop in replacement for `black`) and lint code (run as part of a `pre-commit` hook).
+[`ruff`](https://docs.astral.sh/ruff/) is used to format (drop in replacement for `black`) and lint code (run as part of a `lefthook` hook).
 
 ### Test Driven Development (TDD)
 
@@ -333,7 +333,7 @@ Use [`nh3`](https://github.com/messense/nh3) to sanitise user input as soon as i
 ## How to use this template
 
 ```
-pipenv run django-admin startproject \
+uv run django-admin startproject \
     --template=django_project_template \
     --extension 'py,yaml,md,template,toml,json' \
     --name justfile \
@@ -346,10 +346,10 @@ pipenv run django-admin startproject \
 
 If developing on the template directly, need to be able to quickly use the template to see what the output looks like. To do this, ansible playbooks are provided.
 
-_Note: Will need to have `pipenv` installed and do a `pipenv install --dev`_
+_Note: Will need to have `uv` installed and do a `uv sync`_
 
 ```
-pipenv run ansible-playbook ./dev/01-test-project-template.yaml
+uv run ansible-playbook ./dev/01-test-project-template.yaml
 ```
 
 This will automatically create a new django project using this template in a temporary directory.
