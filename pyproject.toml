@@ -58,3 +58,54 @@ ignore_missing_imports = true
 
 [tool.django-stubs]
 django_settings_module = "{{ project_name }}.settings"
+
+[tool.uv.sources]
+
+[project]
+name = "project_name"
+version = "0.1.0"
+dependencies = [
+    "diskcache",
+    "dj-stripe",
+    "django[argon2]",
+    "django-allauth[mfa,socialaccount]",
+    "django-braces",
+    "django-cotton",
+    "django-environ",
+    "django-extensions",
+    "django-filter",
+    "django-guardian",
+    "django-htmx",
+    "django-meta",
+    "django-model-utils",
+    "django-ninja",
+    "django-prometheus",
+    "django-sri",
+    "django-widget-tweaks",
+    "nh3",
+    "opentelemetry-instrumentation-django",
+    "opentelemetry-sdk",
+    "pillow",
+    "typeid-python",
+    "whitenoise[brotli]",
+    "wagtail",
+]
+
+[dependency-groups]
+dev = [
+    "coverage",
+    "django-coverage-plugin",
+    "django-debug-toolbar",
+    "django-stubs[compatible-mypy]",
+    "djangorestframework-stubs",
+    "djlint",
+    "factory-boy",
+    "mypy",
+    "playwright",
+    "pre-commit",
+    "ruff",
+    "sphinx",
+    "tblib",
+    "ansible",
+    "django-polyglot-translator",
+]
