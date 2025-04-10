@@ -24,7 +24,7 @@ There are some tweaks that need to be done after creating a new project to get i
 
 - [ ] Configure environment variables (API keys, Debug etc.) by copying `{{ project_name }}/.env.template` to `{{ project_name }}/.env` and customizing
 - [ ] Review the `{{ project_name }}/{{ project_name }}/settings.py` settings to ensure display names are correct
-- [ ] Run the tests with `just test`
+- [ ] Run the tests with `just test` to ensure everything is working correctly
 
 ## What's included?
 
@@ -81,13 +81,14 @@ A non-exhaustive list of what is included when starting with this template:
 
 ### Business development
 
-- Take payments
-  - Accept Stripe payments and sync with [`dj-stripe`](https://github.com/dj-stripe/dj-stripe)
+- Take payments (pick one of the following)
+  - Accept Stripe payments
+  - Use Paddle for tax collection (optional)
 - Support multiple languages
   - Using the inbuilt Django i18n framework to extract strings
-  - Auto translated into different languages via DeepL and [`polygot-translator`](https://pypi.org/project/django-polyglot-translator/)
+  - Auto translated into different languages via Google Gemini AI
 - Deploy to a VPS
-  - Containerised and run via Podman & Systemctl
+  - Containerised and run via Podman & Systemctl/Quadlet
   - Infrastructure as code via Ansible for server setup and deployments
   - Supports multiple sites on a single VPS
 
