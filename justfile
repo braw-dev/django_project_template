@@ -6,16 +6,15 @@ _default:
 
 # Variables
 
-export PIPENV_VENV_IN_PROJECT := ""
 SAAS_DIR := "{{project_name}}"
 PROJECT_DIR := SAAS_DIR + "/" + SAAS_DIR
-PIPENV_RUN := "pipenv run"
+UV_RUN := "uv run"
 
 ###############################################
 ## Testing related targets
 ###############################################
 
-test_command := PIPENV_RUN + " python manage.py test"
+test_command := UV_RUN + " python manage.py test"
 test_options := " --shuffle --parallel=auto"
 
 # Run fast tests (excludes browser tests)
@@ -42,7 +41,7 @@ test-watch:
 ## Django management
 ###############################################
 
-manage := "cd " + SAAS_DIR + ";" + PIPENV_RUN + " python manage.py"
+manage := "cd " + SAAS_DIR + ";" + UV_RUN + " python manage.py"
 
 # Shortcut to run Django management commands
 manage *ARGS:
@@ -72,16 +71,16 @@ startapp APP_NAME:
 
 # Install python dependencies
 install:
-    @pipenv install --dev
-    {% templatetag openvariable %} PIPENV_RUN {% templatetag closevariable %} pre-commit install
+    @uv sync
+    {% templatetag openvariable %} UV_RUN {% templatetag closevariable %} lefthook install
 
 # Use Ansible to setup the development environment and install dependencies
 setup-dev-environment: install
-    {% templatetag openvariable %} PIPENV_RUN {% templatetag closevariable %} ansible-playbook ansible/00-dev-env-setup.yaml
+    {% templatetag openvariable %} UV_RUN {% templatetag closevariable %} ansible-playbook ansible/00-dev-env-setup.yaml
 
 # Install Playwright dependencies
 playwright-install:
-    @{% templatetag openvariable %} PIPENV_RUN {% templatetag closevariable %} playwright install
+    @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} playwright install
 
 # Create Django migrations
 makemigrations:
@@ -89,8 +88,8 @@ makemigrations:
 
 # Run the linter and formatter
 format:
-    @{% templatetag openvariable %} PIPENV_RUN {% templatetag closevariable %} ruff check --fix
-    @{% templatetag openvariable %} PIPENV_RUN {% templatetag closevariable %} ruff format
+    @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} ruff check --fix
+    @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} ruff format
 
 # Create a Django superuser
 createsuperuser *FLAGS:
@@ -107,7 +106,7 @@ reset-db:
 
 # Run type checking with mypy
 typecheck:
-    @{% templatetag openvariable %} PIPENV_RUN {% templatetag closevariable %} mypy {% templatetag openvariable %} SAAS_DIR {% templatetag closevariable %}
+    @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} mypy {% templatetag openvariable %} SAAS_DIR {% templatetag closevariable %}
 
 # Translate any i18n strings with DeepL (requires a DeepL API key)
 translate:
