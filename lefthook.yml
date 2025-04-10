@@ -1,0 +1,12 @@
+pre-commit:
+  parallel: true
+  commands:
+    ruff:
+      run: uv run ruff check --fix {staged_files}
+      stage_fixed: true
+    djlint-reformat:
+      run: uv run djlint --reformat --format-css {staged_files}
+      stage_fixed: true
+    djlint-django:
+      run: uv run djlint --lint {staged_files}
+      stage_fixed: true
