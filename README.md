@@ -6,7 +6,7 @@ But building is easy, getting (and retaining) customers is hard. That's why this
 
 To get started, make sure you have Django installed (5.1 at time of writing) and run the following command (where `project_name` is the slug of your new project):
 
-```
+```bash
 uv run django-admin startproject \
     --template=https://github.com/braw-dev/django_project_template/archive/main.zip \
     --extension 'py,yaml,md,template,toml,json' \
@@ -158,8 +158,8 @@ This section contains instructions about what to do after you've started your pr
 
 > **Note**: We recommend `Python3.12`
 
-```
-$ just install
+```shell
+just install
 ```
 
 This creates a virtual environment, installs the dependencies and installs `lefthook`.
@@ -171,18 +171,18 @@ Environment variables are loaded from a `.env` file.
 We provide a pre-configured environment file for local development (this should **never be used in production**). We can copy the local `.env.template` file with the defaults and this can be modified by developers for their own needs.
 
 ```shell
-$ # Copy local environment defaults
-$ cp .env.template .env
+# Copy local environment defaults
+cp .env.template .env
 ```
 
 All sensitive settings should be modified for use on the production environment.
 
 ```shell
-$ # Collect static files for serving via Whitenoise
-$ just collectstatic
+# Collect static files for serving via Whitenoise
+just collectstatic
 
-$ # Run the local django development server
-$ just runserver
+# Run the local django development server
+just runserver
 ```
 
 ### Keeping to the style guide
@@ -333,7 +333,7 @@ Use [`nh3`](https://github.com/messense/nh3) to sanitise user input as soon as i
 
 ## How to use this template
 
-```
+```bash
 uv run django-admin startproject \
     --template=django_project_template \
     --extension 'py,yaml,md,template,toml,json' \
@@ -349,7 +349,7 @@ If developing on the template directly, need to be able to quickly use the templ
 
 _Note: Will need to have `uv` installed and do a `uv sync`_
 
-```
+```bash
 uv run ansible-playbook ./dev/01-test-project-template.yaml
 ```
 
