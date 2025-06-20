@@ -45,8 +45,8 @@ ignore = [
 ]
 
 [tool.djlint]
-profile="django"
-ignore="H030,H031,H021"
+profile = "django"
+ignore = "H030,H031,H021"
 
 [tool.mypy]
 mypy_path = "{{ project_name }}"
@@ -74,16 +74,12 @@ dependencies = [
     "django-extensions",
     "django-filter",
     "django-guardian",
-    "django-htmx",
     "django-meta",
     "django-model-utils",
     "django-ninja",
-    "django-prometheus",
     "django-sri",
     "django-widget-tweaks",
     "nh3",
-    "opentelemetry-instrumentation-django",
-    "opentelemetry-sdk",
     "pillow",
     "typeid-python",
     "whitenoise[brotli]",
