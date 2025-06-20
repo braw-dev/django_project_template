@@ -22,7 +22,7 @@ To understand what's going on we can refer to the [Django documentation on `star
 
 There are some tweaks that need to be done after creating a new project to get it up and running for your project.
 
-- [ ] Configure environment variables (API keys, Debug etc.) by copying `{{ project_name }}/.env.template` to `{{ project_name }}/.env` and customizing
+- [ ] Configure environment variables (API keys, Debug etc.) by copying `{{ project_name }}/.env.dist` to `{{ project_name }}/.env` and customizing
 - [ ] Review the `{{ project_name }}/{{ project_name }}/settings.py` settings to ensure display names are correct
 - [ ] Run the tests with `just test` to ensure everything is working correctly
 
@@ -60,10 +60,10 @@ A non-exhaustive list of what is included when starting with this template:
   - Static files served with Python via Whitenoise
   - Static files hashed (versioned) and compressed in collectstatic step
 - Frontend ready to develop
-  - HTMX for incremental HTML updates with fragments
+  - Vite building an optional React app
   - Tailwind CSS & Daisy UI for styling
   - Re-usable HTML components using [`django-cotton`](https://django-cotton.com/)
-- `justfile` for repetitive commands
+- `Justfile` for repetitive commands
   - Simply run `just` to see the targets available
 - Code style enforced
   - Ruff linting and formatting built in to editor and run at commit time with lefthook
@@ -146,7 +146,7 @@ You need to understand your finances and your project demand so you build Busine
 
 In the end you will have a collection of projects, built on the same foundation. Some will bring in more than others. Some may not bring in anything at all. Across all of them though, you've hit your goal. Your choice now is whether to grow them more, create new projects or try to keep everything as it is.
 
-## Development
+## Development Setup
 
 This section contains instructions about what to do after you've started your project from this template using the `django-admin` command above.
 
@@ -168,11 +168,11 @@ This creates a virtual environment, installs the dependencies and installs `left
 
 Environment variables are loaded from a `.env` file.
 
-We provide a pre-configured environment file for local development (this should **never be used in production**). We can copy the local `.env.template` file with the defaults and this can be modified by developers for their own needs.
+We provide a pre-configured environment file for local development (this should **never be used in production**). We can copy the local `.env.dist` file with the defaults and this can be modified by developers for their own needs.
 
 ```shell
 # Copy local environment defaults
-cp .env.template .env
+cp .env.dist .env
 ```
 
 All sensitive settings should be modified for use on the production environment.
@@ -249,7 +249,7 @@ If you discover a security vulnerability we encourage you to please disclose thi
 
 ## Configuration
 
-[`django-environ`](https://django-environ.readthedocs.io/en/latest/) is used to manage configuration in the `settings.py` file. To use, copy the `.env.template` file to `.env` and update the values as needed. If local overrides are required, put them into `.env.local`.
+[`django-environ`](https://django-environ.readthedocs.io/en/latest/) is used to manage configuration in the `settings.py` file. To use, copy the `.env.dist` file to `.env` and update the values as needed. If local overrides are required, put them into `.env.local`.
 
 ## Security
 
