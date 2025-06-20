@@ -89,5 +89,8 @@
   "makefile.configureOnOpen": false,
   "files.associations": {
     "*.py-tpl": "python"
+  },
+  "emmet.includeLanguages": {
+    "django-html": "html"
   }
 }
