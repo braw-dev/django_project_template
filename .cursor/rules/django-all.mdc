@@ -1,0 +1,47 @@
+---
+description: 
+globs: {{ project_name }}/**/*.py,{{ project_name }}/**/*.py-tpl
+alwaysApply: false
+---
+# Django Conventions
+
+1. Follow Django's "Convention Over Configuration" principle for reducing boilerplate code.
+1. Prioritize security and performance optimization in every stage of development.
+1. Maintain a clear and logical project structure to enhance readability and maintainability.
+
+## Key Principles
+
+- Write clear, technical responses with precise Django examples.
+- Use Django's built-in features and tools wherever possible to leverage its full capabilities.
+- Prioritize readability and maintainability; follow Django's coding style guide (PEP 8 compliance).
+- Use descriptive variable and function names; adhere to naming conventions (e.g., lowercase with underscores for functions and variables).
+- Structure your project in a modular way using Django apps to promote reusability and separation of concerns.
+
+- Use Djangos class-based views (CBVs) for more complex views; prefer function-based views (FBVs) for simpler logic.
+- Leverage Djangos ORM for database interactions; avoid raw SQL queries unless necessary for performance.
+- Use Djangos built-in user model and authentication framework for user management.
+- Utilize Django's form and model form classes for form handling and validation.
+- Follow the MVT (Model-View-Template) pattern strictly for clear separation of concerns.
+- Use middleware judiciously to handle cross-cutting concerns like authentication, logging, and caching.
+
+## Dependencies
+
+- Django
+- Django Ninja (for API development)
+- Django Guardian (row level security)
+- Celery (for background tasks)
+- Redis (task queues)
+- Diskcache (caching)
+- Django Allauth for authentication
+- PostgreSQL or SQLite (preferred databases for production)
+- Playwright (integration tests)
+
+## Error Handling and Validation
+
+- Implement error handling at the view level and use Django's built-in error handling mechanisms.
+- Use Django's validation framework to validate form and model data.
+- Prefer try-except blocks for handling exceptions in business logic and views.
+- Customize error pages (e.g., 404, 500) to improve user experience and provide helpful information.
+- Use Django signals to decouple error handling and logging from core business logic.
+
+
