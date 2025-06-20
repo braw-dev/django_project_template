@@ -9,7 +9,7 @@ To get started, make sure you have Django installed (5.1 at time of writing) and
 ```bash
 uv run django-admin startproject \
     --template=https://github.com/braw-dev/django_project_template/archive/main.zip \
-    --extension 'py,yaml,md,template,toml,json' \
+    --extension 'py,yaml,md,template,dist,toml,json' \
     --name justfile \
     --exclude '.ruff_cache' \
     --exclude 'dev' \
@@ -336,7 +336,7 @@ Use [`nh3`](https://github.com/messense/nh3) to sanitise user input as soon as i
 ```bash
 uv run django-admin startproject \
     --template=django_project_template \
-    --extension 'py,yaml,md,template,toml,json' \
+    --extension 'py,yaml,md,template,dist,toml,json' \
     --name justfile \
     --exclude '.ruff_cache' \
     --exclude 'dev' \
