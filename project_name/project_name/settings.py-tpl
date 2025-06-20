@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/
 """
 
 import os
+import re
 import sys
 import tempfile
 from email.utils import getaddresses
@@ -499,8 +500,17 @@ WAGTAILDOCS_EXTENSIONS = ["csv", "docx", "key", "odt", "pdf", "pptx", "rtf", "tx
 TAGGIT_CASE_INSENSITIVE = True
 TAG_SPACES_ALLOWED = True
 
-# Vite settings
+# Vite
 DJANGO_VITE = {"default": {"dev_mode": DEBUG}}
+
+
+# Whitenoise
+def immutable_file_test(path, url):
+    # Match vite (rollup)-generated hashes, à la, `some_file-CSliV9zW.js`
+    return re.match(r"^.+[.-][0-9a-zA-Z_-]{8,12}\..+$", url)
+
+
+WHITENOISE_IMMUTABLE_FILE_TEST = immutable_file_test
 
 # Production settings
 # HTTPS settings: https://docs.djangoproject.com/en/5.1/topics/security/#ssl-https
