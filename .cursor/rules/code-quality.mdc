@@ -1,13 +1,12 @@
 ---
-description: 
+description: Code quality guidelines
 globs: 
 alwaysApply: true
 ---
----
-description: Code Quality Guidelines
-globs: 
----
+
 # Code Quality Guidelines
+
+Always use your Grug developer brain.
 
 ## Verify Information
 Always verify information before presenting it. Do not make assumptions or speculate without clear evidence.

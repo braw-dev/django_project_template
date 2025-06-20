@@ -1,12 +1,9 @@
 ---
-description: 
+description: Guidelines for writing clean, maintainable, and human-readable code. Apply these rules when writing or reviewing code to ensure consistency and quality.
 globs: 
 alwaysApply: true
 ---
----
-description: Guidelines for writing clean, maintainable, and human-readable code. Apply these rules when writing or reviewing code to ensure consistency and quality.
-globs: 
----
+
 # Clean Code Guidelines
 
 ## Constants Over Magic Numbers
