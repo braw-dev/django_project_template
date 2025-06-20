@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",  # Whitenoise for static files in development
     "django.contrib.staticfiles",
     "guardian",  # Object level permissions
+    "django_vite",
     "django_filters",  # Filtering based on user input
     "django_extensions",  # Additional django extensions
     "allauth",  # Authentication
@@ -394,6 +395,7 @@ STORAGES = {
 }
 STATICFILES_DIRS = [
     BASE_DIR / "static",
+    BASE_DIR / "frontend" / "{{ project_name }}" / "dist",
 ]  # Add additional static file directories other than the app directories
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_HOST = env.str("DJANGO_STATIC_HOST", "")
@@ -497,6 +499,9 @@ WAGTAILDOCS_EXTENSIONS = ["csv", "docx", "key", "odt", "pdf", "pptx", "rtf", "tx
 TAGGIT_CASE_INSENSITIVE = True
 TAG_SPACES_ALLOWED = True
 
+# Vite settings
+DJANGO_VITE = {"default": {"dev_mode": DEBUG}}
+
 # Production settings
 # HTTPS settings: https://docs.djangoproject.com/en/5.1/topics/security/#ssl-https
 # Recommendations from Mozilla: https://infosec.mozilla.org/guidelines/web_security.html
@@ -527,7 +532,6 @@ if IS_PRODUCTION:
     # Add the preload header to be submitted to the HSTS preload list
     # https://docs.djangoproject.com/en/5.1/ref/settings/#secure-hsts-preload
     SECURE_HSTS_PRELOAD = True
-
 # Custom testing settings to speed things up
 if TESTING:
     # Disable logging during tests

@@ -1,4 +1,4 @@
-{% load static meta core sri %}
+{% load static meta core sri django_vite %}
 <!DOCTYPE html>
 <html lang="en">
     <head {% meta_namespaces %}>
@@ -16,34 +16,15 @@
             {% endblock head_title %}
         </title>
         {% comment %} Tailwind & DaisyUI {% endcomment %}
-        <link rel="preconnect" href="https://cdn.jsdelivr.net">
-        <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.13/dist/full.min.css"
-              rel="stylesheet"
-              type="text/css">
-        <link rel="preconnect" href="https://cdn.tailwindcss.com">
-        <script src="https://cdn.tailwindcss.com?plugins=typography,aspect-ratio,container-queries"></script>
-        <script>
-            tailwind.config = {
-              theme: {
-                fontFamily: {
-                    sans: ['Noto Sans', 'sans-serif'],
-                    serif: ['Gelasio', 'serif'],
-                  },
-                extend: {
-                }
-              }
-            }
-        </script>
-        {% comment %} Custom fonts {% endcomment %}
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=noto-sans:200,200i,400,400i,600,600i,800,800i,900,900i|gelasio:400,400i,600,600i,700,700i"
-              rel="stylesheet" />
+        <link rel="stylesheet" href="{% vite_asset_url 'src/tailwind.css' %}">
         {% comment %} Additional meta from django-meta {% endcomment %}
         {% include "meta/meta.html" %}
         {% comment %} HTMX {% endcomment %}
         {% sri_static "core/js/htmx.min.js" 'defer' %}
         {% block extra_head %}
         {% endblock extra_head %}
+        {% vite_hmr_client %}
+        {% vite_react_refresh %}
     </head>
     <body>
         {% block header %}
