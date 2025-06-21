@@ -62,7 +62,7 @@ django_settings_module = "{{ project_name }}.settings"
 [tool.uv.sources]
 
 [project]
-name = "{{ project_name }}"
+name = "project_name"
 requires-python = ">=3.13"
 version = "0.1.0"
 dependencies = [
