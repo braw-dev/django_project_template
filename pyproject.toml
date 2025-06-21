@@ -102,4 +102,6 @@ dev = [
     "tblib",
     "ansible",
     "lefthook>=1.11.8",
+    "pytest>=8.4.1",
+    "pytest-django>=4.11.1",
 ]
