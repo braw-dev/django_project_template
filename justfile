@@ -6,9 +6,6 @@ _default:
 
 # Variables
 
-SAAS_DIR := "{{project_name}}"
-FRONTEND_DIR := "frontend/" + SAAS_DIR
-PROJECT_DIR := SAAS_DIR + "/" + SAAS_DIR
 UV_RUN := "uv run"
 PNPM := "pnpm"
 
@@ -20,27 +17,27 @@ test_command := UV_RUN + " python manage.py test"
 test_options := " --shuffle --parallel=auto"
 
 # Run fast tests (excludes browser tests)
-[working-directory: SAAS_DIR]
+[working-directory: '{{ project_name }}']
 test-fast:
     @{% templatetag openvariable %} test_command {% templatetag closevariable %} {% templatetag openvariable %} test_options {% templatetag closevariable %} --exclude-tag=browser
 
 # Run fast tests in watch mode
-[working-directory: SAAS_DIR]
+[working-directory: '{{ project_name }}']
 test-fast-watch:
     @rg --files -t python,html | entr {% templatetag openvariable %} test_command {% templatetag closevariable %} {% templatetag openvariable %} test_options {% templatetag closevariable %} --exclude-tag=browser
 
 # Run browser tests (uses Playwright)
-[working-directory: SAAS_DIR]
+[working-directory: '{{ project_name }}']
 test-browser:
     @{% templatetag openvariable %} test_command {% templatetag closevariable %} {% templatetag openvariable %} test_options {% templatetag closevariable %} --tag=browser
 
 # Run all tests
-[working-directory: SAAS_DIR]
+[working-directory: '{{ project_name }}']
 test:
     @{% templatetag openvariable %} test_command {% templatetag closevariable %} {% templatetag openvariable %} test_options {% templatetag closevariable %}
 
 # Run all tests in watch mode
-[working-directory: SAAS_DIR]
+[working-directory: '{{ project_name }}']
 test-watch:
     @rg --files -t python -t html | entr {% templatetag openvariable %} test_command {% templatetag closevariable %} {% templatetag openvariable %} test_options {% templatetag closevariable %}
 
@@ -51,31 +48,31 @@ test-watch:
 manage := UV_RUN + " python manage.py"
 
 # Shortcut to run Django management commands
-[working-directory: SAAS_DIR]
+[working-directory: '{{ project_name }}']
 manage *ARGS:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} {% templatetag openvariable %} ARGS {% templatetag closevariable %}
 
 # Run the development server
-[working-directory: SAAS_DIR]
+[working-directory: '{{ project_name }}']
 runserver:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} runserver
 
 # Run Django migrations
-[working-directory: SAAS_DIR]
+[working-directory: '{{ project_name }}']
 migrate:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} migrate
 
 # Collect static files
-[working-directory: SAAS_DIR]
+[working-directory: '{{ project_name }}']
 collectstatic:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} collectstatic --noinput
 
 # Create a new Django app in the correct directory
-[working-directory: PROJECT_DIR]
+[working-directory: '{{ project_name }}/{{ project_name }}']
 startapp APP_NAME:
     @mkdir -p {% templatetag openvariable %} APP_NAME {% templatetag closevariable %}
-    @{% templatetag openvariable %} manage {% templatetag closevariable %} startapp {% templatetag openvariable %} APP_NAME {% templatetag closevariable %} {% templatetag openvariable %} SAAS_DIR {% templatetag closevariable %}/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}
-    @sed -i '' 's/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/{% templatetag openvariable %} SAAS_DIR {% templatetag closevariable %}\.{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/g' {% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/apps.py
+    @{% templatetag openvariable %} manage {% templatetag closevariable %} startapp {% templatetag openvariable %} APP_NAME {% templatetag closevariable %} {{ project_name }}/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}
+    @sed -i '' 's/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/{{ project_name }}\.{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/g' {% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/apps.py
 
 ###############################################
 ## Development
@@ -108,7 +105,7 @@ createsuperuser *FLAGS:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} createsuperuser {% templatetag openvariable %} FLAGS {% templatetag closevariable %}
 
 # Remove all Django migrations
-[working-directory: SAAS_DIR]
+[working-directory: '{{ project_name }}']
 rm-migrations:
     @find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
     @find . -path "*/migrations/*.pyc"  -delete
@@ -119,7 +116,7 @@ reset-db:
 
 # Run type checking with mypy
 typecheck:
-    @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} mypy {% templatetag openvariable %} SAAS_DIR {% templatetag closevariable %}
+    @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} mypy {{ project_name }}
 
 # Translate any i18n strings with DeepL (requires a DeepL API key)
 translate:
@@ -130,16 +127,16 @@ translate:
 ###############################################
 
 # Install frontend dependencies
-[working-directory: FRONTEND_DIR]
+[working-directory: 'frontend/{{ project_name }}']
 install-frontend:
     @{% templatetag openvariable %} PNPM {% templatetag closevariable %} install
 
 # Build the frontend
-[working-directory: FRONTEND_DIR]
+[working-directory: 'frontend/{{ project_name }}']
 build-frontend:
     @{% templatetag openvariable %} PNPM {% templatetag closevariable %} run build
 
 # Run the frontend development server
-[working-directory: FRONTEND_DIR]
+[working-directory: 'frontend/{{ project_name }}']
 dev-frontend:
     @{% templatetag openvariable %} PNPM {% templatetag closevariable %} run dev
