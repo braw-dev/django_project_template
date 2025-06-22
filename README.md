@@ -56,7 +56,7 @@ A non-exhaustive list of what is included when starting with this template:
   - Django Ninja setup with version API routes (`/api/v1/*`)
 - Testing and TDD supported
   - Playwright for functional end-to-end tests
-  - Pytest test runner
+  - Python + django Unittest test runner
   - Coverage support
 - Static typing to catch bugs early
   - `mypy` with `django-stubs` for type checking

@@ -22,7 +22,7 @@ mkcert:
 ## Testing related targets
 ###############################################
 
-test_command := UV_RUN + " pytest"
+test_command := UV_RUN + " python manage.py test"
 test_options := " --shuffle --parallel=auto"
 
 # Run fast tests (excludes browser tests)
@@ -97,7 +97,7 @@ install-python-dev:
     {% templatetag openvariable %} UV_RUN {% templatetag closevariable %} lefthook install
 
 # Use Ansible to setup the development environment and install dependencies
-setup-dev-environment: install
+setup-dev-environment: install-dev
     {% templatetag openvariable %} UV_RUN {% templatetag closevariable %} ansible-playbook ansible/00-dev-env-setup.yaml
 
 # Install Playwright dependencies

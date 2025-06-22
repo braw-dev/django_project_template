@@ -103,10 +103,4 @@ dev = [
     "tblib",
     "ansible",
     "lefthook>=1.11.8",
-    "pytest>=8.4.1",
-    "pytest-django>=4.11.1",
 ]
-
-[tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "{{ project_name }}.settings"
-python_files = ["test_*.py", "*_test.py", "tests.py"]
