@@ -24,8 +24,10 @@ To understand what's going on we can refer to the [Django documentation on `star
 
 There are some tweaks that need to be done after creating a new project to get it up and running for your project.
 
-- [ ] Configure environment variables (API keys, Debug etc.) by copying `{{ project_name }}/.env.dist` to `{{ project_name }}/.env` and customizing
-- [ ] Review the `{{ project_name }}/{{ project_name }}/settings.py` settings to ensure display names are correct
+- [ ] Init a new git repository `git init .` ;
+- [ ] Install dev dependencies & lefthook git hooks `just install-dev` ;
+- [ ] Configure environment variables (API keys, Debug etc.) by copying `{{ project_name }}/.env.dist` to `{{ project_name }}/.env` and customizing ;
+- [ ] Review the `{{ project_name }}/{{ project_name }}/settings.py` settings to ensure display names are correct ;
 - [ ] Run the tests with `just test` to ensure everything is working correctly
 
 ## What's included?
@@ -54,10 +56,11 @@ A non-exhaustive list of what is included when starting with this template:
   - Django Ninja setup with version API routes (`/api/v1/*`)
 - Testing and TDD supported
   - Playwright for functional tests
-  - Django native Unittest runner
+  - Pytest test runner
   - Coverage support
 - Static typing to catch bugs early
   - `mypy` with `django-stubs` for type checking
+  - [ ] todo(kisamoto): Replace with modern typechecking [`ty`](https://github.com/astral-sh/ty) or [`pyrefly`](https://github.com/facebook/pyrefly)
 - Static assets served simply and efficiently
   - Static files served with Python via Whitenoise
   - Static files hashed (versioned) and compressed in collectstatic step
@@ -68,7 +71,7 @@ A non-exhaustive list of what is included when starting with this template:
 - `Justfile` for repetitive commands
   - Simply run `just` to see the targets available
 - Code style enforced
-  - Ruff linting and formatting built in to editor and run at commit time with lefthook
+  - Ruff linting and formatting built in to editor and run at commit time with `lefthook`
 
 ### Marketing
 
@@ -108,13 +111,17 @@ Deployment is also opinionated and is expected to be deployed to a VPS/Dedicated
 
 This project is designed to work with [`braw-dev/django_auxiliary_services`](https://github.com/braw-dev/django_auxiliary_services).
 
-## Example app
+## Creating apps
 
-An example django-app is available under example_app. By default it is not registered in the `INSTALLED_APPS` section of `settings.py` however it can be added as `example_app`.
+A `startapp` template is available under `/app_name`.
 
-The code exists to show off structure and best practices of the different tools available in this starter template.
+The code exists to show off structure and best practices of the different tools available in this starter template as well as to bootstrap new apps when developing.
 
-<!-- todo(kisamoto): add example_app -->
+To use the app template and have apps placed consistantly, use the provided `just` command:
+
+```bash
+just startapp {{ app_name }}
+```
 
 ## Motivation
 
@@ -154,17 +161,25 @@ This section contains instructions about what to do after you've started your pr
 
 <!-- todo(kisamoto): Full devcontainer for standardised development environments -->
 
+### Prerequisites
+
+- [`uv`](https://docs.astral.sh/uv/) for python dependency management
+- [`entr`](https://github.com/eradman/entr) for hot reloading tests (`just test-watch`)
+- [`rg`](https://github.com/BurntSushi/ripgrep) for finding the python and html files suitable for hot reloading
+- [Playwright](https://playwright.dev/) for end-to-end user tests
+- [`pnpm`](https://github.com/pnpm/pnpm) for frontend dependency management
+
 ### Installing requirements
 
 #### Python backend
 
-> **Note**: We recommend `Python3.12`
+> **Note**: We recommend `Python3.13`
 
 ```shell
-just install
+just install-dev
 ```
 
-This creates a virtual environment, installs the dependencies and installs `lefthook`.
+This creates a python virtual environment, installs the python & nodejs dependencies and installs `lefthook` commit hooks.
 
 ### Setting environment variables
 
@@ -183,7 +198,7 @@ All sensitive settings should be modified for use on the production environment.
 # Collect static files for serving via Whitenoise
 just collectstatic
 
-# Run the local django development server
+# Run the local django development server with HTTPS
 just runserver
 ```
 
@@ -199,7 +214,7 @@ As our code is hosted on Github, we leverage [Github Actions](https://github.com
 
 ## Production architecture
 
-### Configuration
+### Server Configuration Management
 
 To make it easy to setup a server (e.g. for disaster recovery, fail-overs, future scaling etc.), we use [Ansible](https://docs.ansible.com/ansible/latest/index.html) to install OS dependencies and manage our configuration as code.
 
@@ -225,13 +240,13 @@ To make it fast and easy to find organizations we integrate with [Meilisearch](h
 
 Due to the read-heavy nature of the product we heavy use of caching throughout the stack.
 
-[Redis](https://redis.io/) is used for caching database calls and template renders.
+[Diskcache](https://github.com/grantjenks/python-diskcache) is used for caching database calls and template renders.
 
 [Bunny](https://bunnycdn.com/) is used as a CDN for compressed & versioned static assets as well as image optimisation.
 
 ### Backups
 
-We use [Borg](https://www.borgbackup.org/) to backup our database and static assets.
+[`borg`](https://github.com/borgbackup/borg) and [borgmatic](https://torsion.org/borgmatic/) are used for backups to [BorgBase](https://www.borgbase.com/).
 
 ### Monitoring
 
@@ -249,7 +264,7 @@ Passwords are stored and hashed using Argon2id.
 
 If you discover a security vulnerability we encourage you to please disclose this responsibly to [security@{{ project_name }}](mailto:security@{{ project_name }}). We will endeavour to act quickly and reward if we can.
 
-## Configuration
+## App Configuration
 
 [`django-environ`](https://django-environ.readthedocs.io/en/latest/) is used to manage configuration in the `settings.py` file. To use, copy the `.env.dist` file to `.env` and update the values as needed. If local overrides are required, put them into `.env.local`.
 
@@ -272,22 +287,6 @@ If you discover a security vulnerability we encourage you to please disclose thi
 
 [SRI](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) SHA512 hashes are added to static JS and CSS resources thanks to [`django-sri`](https://github.com/RealOrangeOne/django-sri).
 
-## Development
-
-- [`uv`](https://docs.astral.sh/uv/) for dependency management
-- [Playwright](https://playwright.dev/) for end-to-end user tests
-
-### Prerequisites
-
-- [`uv`](https://docs.astral.sh/uv/) for python dependency management
-- [`entr`](https://github.com/eradman/entr) for hot reloading tests (`just test-watch`)
-- [`rg`](https://github.com/BurntSushi/ripgrep) for finding the python and html files suitable for hot reloading
-
-### Setup
-
-1. Clone repo
-1. `just install` (this will setup a virtual environment and install dependencies)
-
 ### Debugging
 
 - [`debug-toolbar`](https://github.com/jazzband/django-debug-toolbar) for SQL query analysis
@@ -303,17 +302,9 @@ To practice TDD with this, the best way is:
 1. Write a behaviour test that uses Playwright to simulate user behaviour
 1. [optional] Debug Playwright tests by appending `PWDEBUG=1` to command to run tests
 
-#### Models
-
-Use [factory boy](https://github.com/FactoryBoy/factory_boy) to make it easier to test models.
-
 #### Testing Best Practices
 
 _todo(kisamoto)_
-
-## Backups
-
-[`borg`](https://github.com/borgbackup/borg) and [borgmatic](https://torsion.org/borgmatic/) are used for backups to [BorgBase](https://www.borgbase.com/).
 
 ### Database
 
@@ -330,22 +321,6 @@ Follow the [Hack Django Style guide](https://github.com/HackSoftware/Django-Styl
 ### Sanitise user input
 
 Use [`nh3`](https://github.com/messense/nh3) to sanitise user input as soon as it is received.
-
-### Use the debug toolbar (only in development)
-
-## How to use this template
-
-```bash
-uv run django-admin startproject \
-    --template=https://github.com/braw-dev/django_project_template/archive/main.zip \
-    --extension 'py,yaml,md,template,dist,toml,json' \
-    --name Justfile \
-    --exclude '.ruff_cache' \
-    --exclude '.venv' \
-    --exclude 'frontend/project_name/node_modules' \
-    --exclude 'dev' \
-    {{ project_name }} {{ path }}
-```
 
 ### Developing on the template
 
