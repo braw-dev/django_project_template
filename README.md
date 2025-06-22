@@ -55,7 +55,7 @@ A non-exhaustive list of what is included when starting with this template:
 - Lightweight API endpoints
   - Django Ninja setup with version API routes (`/api/v1/*`)
 - Testing and TDD supported
-  - Playwright for functional tests
+  - Playwright for functional end-to-end tests
   - Pytest test runner
   - Coverage support
 - Static typing to catch bugs early
