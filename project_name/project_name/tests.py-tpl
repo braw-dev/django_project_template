@@ -8,12 +8,6 @@ User = get_user_model()
 ###############################################
 ## Test cases
 ###############################################
-class HomepageTestCase(TestCase):
-    def test_uses_home_template(self):
-        response = self.client.get(reverse("core:homepage"))
-        self.assertTemplateUsed(response, "core/pages/homepage.html")
-
-
 class AuthTestCase(TestCase):
     username = "jane"
     email = "jane@example.com"

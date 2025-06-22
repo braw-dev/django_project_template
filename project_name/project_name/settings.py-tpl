@@ -108,7 +108,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django_htmx.middleware.HtmxMiddleware",  # adds request.htmx attribute
     # allauth account middleware:
     "allauth.account.middleware.AccountMiddleware",
     # wagtail middleware:
@@ -400,15 +399,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_HOST = env.str("DJANGO_STATIC_HOST", "")
 STATIC_URL = STATIC_HOST + "/static/"
 
-# Django newsletter
-# https://django-newsletter.readthedocs.io/en/latest/installation.html
-# Using sorl-thumbnail
-NEWSLETTER_THUMBNAIL = "sorl-thumbnail"
-
 # Django meta settings
 # https://django-meta.readthedocs.io/en/latest/settings.html
 META_SITE_PROTOCOL = "https"
-if DEBUG:
+if env.bool("USE_HTTP", default=False) or TESTING:
     META_SITE_PROTOCOL = "http"
 META_SITE_TYPE = "website"
 META_SITE_NAME = PROJECT_DISPLAY_NAME
@@ -422,7 +416,6 @@ META_USE_SITES = True
 COTTON_DIR = "components"
 
 # Stripe settings
-# https://dj-stripe.dev/2.8/reference/settings/
 STRIPE_LIVE_SECRET_KEY = env.str("STRIPE_LIVE_SECRET_KEY")
 STRIPE_TEST_SECRET_KEY = env.str("STRIPE_TEST_SECRET_KEY")
 STRIPE_LIVE_MODE = env.bool("STRIPE_LIVE_MODE")
@@ -457,8 +450,6 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 
 USE_TZ = True
-
-POLYGLOT_DEEPL_LICENSE = env.str("POLYGLOT_DEEPL_LICENSE")
 
 # https://docs.djangoproject.com/en/{{ docs_version }}/ref/templates/builtins/#std-templatefilter-date  # noqa: E501
 DATE_FORMAT = "d E Y"
