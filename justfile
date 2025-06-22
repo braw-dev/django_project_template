@@ -68,11 +68,11 @@ collectstatic:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} collectstatic --noinput
 
 # Create a new Django app in the correct directory
-[working-directory: '{{ project_name }}/{{ project_name }}']
+[working-directory: '{{ project_name }}']
 startapp APP_NAME:
-    @mkdir -p {% templatetag openvariable %} APP_NAME {% templatetag closevariable %}
-    @{% templatetag openvariable %} manage {% templatetag closevariable %} startapp {% templatetag openvariable %} APP_NAME {% templatetag closevariable %} {{ project_name }}/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}
-    @sed -i '' 's/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/{{ project_name }}\.{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/g' {% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/apps.py
+    @mkdir -p {{ project_name }}/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}
+    @{% templatetag openvariable %} manage {% templatetag closevariable %} startapp --template ../app_name {% templatetag openvariable %} APP_NAME {% templatetag closevariable %} {{ project_name }}/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}
+    @sed -i '' 's/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/{{ project_name }}\.{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/g' {{ project_name }}/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/apps.py
 
 ###############################################
 ## Development
