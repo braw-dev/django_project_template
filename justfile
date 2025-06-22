@@ -9,11 +9,20 @@ _default:
 UV_RUN := "uv run"
 PNPM := "pnpm"
 
+# Install dev dependencies
+install-dev: install-python-dev install-frontend-dev
+
+# Generates a self-signed certificate for the development server
+mkcert:
+    @if [ ! -f /tmp/{{project_name}}.crt ]; then \
+        mkcert -cert-file=/tmp/{{project_name}}.crt -key-file=/tmp/{{project_name}}.key localhost 127.0.0.1; \
+    fi
+
 ###############################################
 ## Testing related targets
 ###############################################
 
-test_command := UV_RUN + " python manage.py test"
+test_command := UV_RUN + " pytest"
 test_options := " --shuffle --parallel=auto"
 
 # Run fast tests (excludes browser tests)
@@ -49,12 +58,16 @@ manage := UV_RUN + " python manage.py"
 
 # Shortcut to run Django management commands
 [working-directory: '{{ project_name }}']
-manage *ARGS:
+manage +ARGS:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} {% templatetag openvariable %} ARGS {% templatetag closevariable %}
 
-# Run the development server
+# Run the development server with HTTPS
 [working-directory: '{{ project_name }}']
-runserver:
+runserver: mkcert
+    @{% templatetag openvariable %} manage {% templatetag closevariable %} runserver_plus --cert-file=/tmp/{{project_name}}.crt --key-file=/tmp/{{project_name}}.key
+
+# Runs the development server without HTTPS
+runserver-no-https:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} runserver
 
 # Run Django migrations
@@ -79,7 +92,7 @@ startapp APP_NAME:
 ###############################################
 
 # Install python dependencies
-install:
+install-python-dev:
     @uv sync
     {% templatetag openvariable %} UV_RUN {% templatetag closevariable %} lefthook install
 
@@ -128,15 +141,15 @@ translate:
 
 # Install frontend dependencies
 [working-directory: 'frontend/{{ project_name }}']
-install-frontend:
+install-frontend-dev:
     @{% templatetag openvariable %} PNPM {% templatetag closevariable %} install
 
 # Build the frontend
 [working-directory: 'frontend/{{ project_name }}']
 build-frontend:
-    @{% templatetag openvariable %} PNPM {% templatetag closevariable %} run build
+    @{% templatetag openvariable %} PNPM {% templatetag closevariable %} build
 
 # Run the frontend development server
 [working-directory: 'frontend/{{ project_name }}']
 dev-frontend:
-    @{% templatetag openvariable %} PNPM {% templatetag closevariable %} run dev
+    @{% templatetag openvariable %} PNPM {% templatetag closevariable %} dev
