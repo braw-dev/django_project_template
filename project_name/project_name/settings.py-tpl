@@ -92,8 +92,6 @@ INSTALLED_APPS = [
     "wagtail",
     "taggit",
     "modelcluster",
-    # Polygot translation with DeepL
-    "djangoPolyglot",
     # Project apps
     "{{ project_name }}.users",
     "{{ project_name }}.brand",  # Brand colours and logo
