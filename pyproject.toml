@@ -67,7 +67,6 @@ requires-python = ">=3.13"
 version = "0.1.0"
 dependencies = [
     "diskcache",
-    "django[argon2]",
     "django-allauth[mfa,socialaccount]",
     "django-braces",
     "django-cotton",
@@ -79,12 +78,14 @@ dependencies = [
     "django-model-utils",
     "django-ninja",
     "django-sri",
+    "django-vite>=3.1.0",
     "django-widget-tweaks",
+    "django[argon2]",
     "nh3",
     "pillow",
     "typeid-python",
-    "whitenoise[brotli]",
     "wagtail",
+    "whitenoise[brotli]",
 ]
 
 [dependency-groups]
@@ -105,3 +106,7 @@ dev = [
     "pytest>=8.4.1",
     "pytest-django>=4.11.1",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "{{ project_name }}.settings"
+python_files = ["test_*.py", "*_test.py", "tests.py"]
