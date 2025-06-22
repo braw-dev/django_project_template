@@ -1,36 +1,8 @@
-import factory
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-from djstripe.enums import PriceType, ProductType
-from djstripe.models import Price, Product
 
 User = get_user_model()
-
-
-###############################################
-## Factory boy model factories
-###############################################
-class ProductFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = Product
-
-    id = factory.Sequence(lambda n: "%d" % n)
-    name = factory.Faker("word")
-    type = ProductType.service
-
-
-class PriceFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = Price
-
-    id = factory.Sequence(lambda n: "%d" % n)
-    active = True
-    currency = "usd"
-    product = factory.SubFactory(ProductFactory)
-    type = PriceType.recurring
-    unit_amount = factory.Faker("random_int", min=1000, max=10000)
-    nickname = factory.Faker("word")
 
 
 ###############################################
@@ -99,47 +71,3 @@ class AuthTestCase(TestCase):
         response = self.client.get(reverse("account:dashboard"))
 
         self.assertTemplateUsed(response, "core/pages/dashboard.html")
-
-
-class PricingTestCase(TestCase):
-    def test_uses_pricing_template(self):
-        response = self.client.get(reverse("pricing"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "core/pages/pricing.html")
-
-    def test_pricing_view_returns_products(self):
-        ProductFactory()
-        ProductFactory()
-
-        response = self.client.get(reverse("pricing"))
-
-        self.assertIn("products", response.context)
-        self.assertIsNotNone(response.context["products"])
-        self.assertEqual(len(response.context["products"]), 2)
-
-    def test_pricing_view_only_shows_service_products(self):
-        ProductFactory(type=ProductType.good)
-        service = ProductFactory(type=ProductType.service)
-
-        response = self.client.get(reverse("pricing"))
-
-        self.assertEqual(len(response.context["products"]), 1)
-        self.assertEqual(response.context["products"][0].type, ProductType.service)
-        self.assertEqual(response.context["products"][0].name, service.name)
-
-    def test_pricing_view_shows_price_details(self):
-        product = ProductFactory()
-        PriceFactory(product=product)
-        PriceFactory(product=product)
-
-        response = self.client.get(reverse("pricing"))
-
-        self.assertIn("products", response.context)
-        self.assertIsNotNone(response.context["products"])
-        self.assertEqual(len(response.context["products"]), 1)
-
-        product = response.context["products"][0]
-
-        self.assertIsNotNone(product.prices)
-        self.assertEqual(product.prices.count(), 2)
