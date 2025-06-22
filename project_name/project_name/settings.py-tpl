@@ -430,7 +430,7 @@ SRI_ALGORITHM = "sha512"
 
 LANGUAGE_CODE = "en-us"
 
-# Used by Polyglot to know what to create
+# Will be used by Gemini to know what to create
 # https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/#languages
 LANGUAGES = [
     ("de", _("German")),
