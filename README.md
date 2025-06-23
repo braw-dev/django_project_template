@@ -28,7 +28,8 @@ There are some tweaks that need to be done after creating a new project to get i
 - [ ] Install dev dependencies & lefthook git hooks `just install-dev` ;
 - [ ] Configure environment variables (API keys, Debug etc.) by copying `{{ project_name }}/.env.dist` to `{{ project_name }}/.env` and customizing ;
 - [ ] Review the `{{ project_name }}/{{ project_name }}/settings.py` settings to ensure display names are correct ;
-- [ ] Run the tests with `just test` to ensure everything is working correctly
+- [ ] Collect staticfiles (needed for tests?) `just collectstatic` ;
+- [ ] Run the tests with `just test` to ensure everything is working correctly ;
 
 ## What's included?
 
