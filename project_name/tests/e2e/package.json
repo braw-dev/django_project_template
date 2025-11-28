@@ -1,0 +1,14 @@
+{
+  "name": "project_name-e2e",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "codegen": "playwright codegen"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "typescript": "~5.9.3"
+  }
+}
