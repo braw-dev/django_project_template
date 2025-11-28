@@ -1,6 +1,5 @@
-{% load wagtailcore_tags %}
 <div class="collapse collapse-plus bg-base-200">
     <input type="radio" name="my-accordion-3" checked="checked" />
     <div class="collapse-title text-xl font-medium">{{ faq.question }}</div>
-    <div class="collapse-content">{{ faq.answer | richtext }}</div>
+    <div class="collapse-content prose" data-testid="faq-answer">{{ faq.rendered_answer|safe }}</div>
 </div>

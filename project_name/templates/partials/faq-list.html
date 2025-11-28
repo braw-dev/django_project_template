@@ -14,7 +14,7 @@
         <div class="mt-10 lg:col-span-7 lg:mt-0">
             <dl class="space-y-5">
                 {% for faq in faqs %}
-                    {% include "partials/faq-item.html" with faq=faq.value %}
+                    {% include "partials/faq-item.html" with faq=faq %}
                 {% endfor %}
             </dl>
         </div>
