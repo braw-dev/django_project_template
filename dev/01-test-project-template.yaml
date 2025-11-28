@@ -7,7 +7,7 @@
   vars:
     clean_up: true
     project_name: TEST_PROJECT_NAME
-    django_version: "5.1.2"
+    django_version: "5.2.8"
     install_project_dependencies: true
     setup_project: true
     project_dir: null
@@ -24,9 +24,9 @@
         path: "{{ playbook_dir }}/../../django_project_template/project_name/.env"
       register: env_file
 
-    - name: Make a copy of .env.template to .env if not already present
+    - name: Make a copy of .env.dist to .env if not already present
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../../django_project_template/project_name/.env.template"
+        src: "{{ playbook_dir }}/../../django_project_template/project_name/.env.dist"
         dest: "{{ playbook_dir }}/../../django_project_template/project_name/.env"
       when: env_file.stat.exists == false
 
@@ -76,13 +76,15 @@
       ansible.builtin.command:
         cmd: |
           django-admin startproject
-            --template={{ playbook_dir }}/../../django_project_template
-            --extension 'py,yaml,md,template,toml,json'
-            --name justfile
+            --template={{ playbook_dir }}/..
+            --extension 'py,yaml,md,template,dist,toml,json,css,js,dev,prod'
+            --name Justfile
             --exclude '.ruff_cache'
             --exclude 'dev'
-            --exclude '.env'
+            --exclude '.venv'
             --exclude 'db.sqlite3'
+            --exclude 'node_modules'
+            --exclude 'tmp'
             {{ project_name }} {{ project_dir }}
 
     - name: Clear out any files that shouldn't have been copied over
