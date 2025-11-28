@@ -9,12 +9,13 @@ To get started, make sure you have Django installed (5.1 at time of writing) and
 ```bash
 uv run django-admin startproject \
     --template=https://github.com/braw-dev/django_project_template/archive/main.zip \
-    --extension 'py,yaml,md,template,dist,toml,json' \
+    --extension 'py,yaml,md,template,dist,toml,json,css,js,dev,prod' \
     --name Justfile \
     --exclude '.ruff_cache' \
     --exclude '.venv' \
     --exclude 'node_modules' \
     --exclude 'dev' \
+    --exclude 'tmp' \
     project_name
 ```
 
@@ -118,7 +119,7 @@ A `startapp` template is available under `/app_name`.
 
 The code exists to show off structure and best practices of the different tools available in this starter template as well as to bootstrap new apps when developing.
 
-To use the app template and have apps placed consistantly, use the provided `just` command:
+To use the app template and have apps placed consistently, use the provided `just` command:
 
 ```bash
 just startapp {{ app_name }}
@@ -305,11 +306,11 @@ To practice TDD with this:
 
 #### Testing Best Practices
 
-_todo(kisamoto)_
+<!-- _todo(kisamoto)_ -->
 
 ### Database
 
-_todo(kisamoto)_
+<!-- _todo(kisamoto)_ -->
 
 ## Monitoring and alerting
 
@@ -337,7 +338,7 @@ This will automatically create a new django project using this template in a tem
 
 #### Find `project_name` that is not a variable
 
-Django will automatically replace `{{ project_name }}` with the actual name of the project when rendering the templates/files. However when developing on the template we need to find `project_name` that **is not** a variable (so we can fix it). One approach is to render the template and use `rg` to find `project_name`. However we can also use `rg` to find unvariabled `project_name` in just the template:
+Django will automatically replace `{{ project_name }}` with the actual name of the project when rendering the templates/files. However when developing on the template we need to find `project_name` that **is not** a variable (so we can fix it). One approach is to render the template and use `rg` to find `project_name`. However we can also use `rg` to find non-variable `project_name` in just the template:
 
 ```bash
 rg 'project_name' | rg -v '\{\{\s*project_name\s*\}\}'
