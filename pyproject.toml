@@ -48,6 +48,11 @@ ignore = [
 profile = "django"
 ignore = "H030,H031,H021"
 
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "{{ project_name }}.settings"
+python_files = ["tests.py", "test_*.py"]
+addopts = "-p no:warnings"
+
 [tool.mypy]
 mypy_path = "{{ project_name }}"
 plugins = ["mypy_django_plugin.main"]
@@ -63,28 +68,35 @@ django_settings_module = "{{ project_name }}.settings"
 
 [project]
 name = "project_name"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 version = "0.1.0"
 dependencies = [
-    "diskcache",
     "django-allauth[mfa,socialaccount]",
+    "django-anymail[scaleway]",
+    "django-axes",
     "django-braces",
     "django-cotton",
     "django-environ",
     "django-extensions",
     "django-filter",
+    "django-hijack",
     "django-guardian",
     "django-meta",
     "django-model-utils",
     "django-ninja",
+    "django-structlog",
+    "django-storages[s3]",
     "django-sri",
     "django-vite>=3.1.0",
     "django-widget-tweaks",
     "django[argon2]",
+    "flagsmith",
+    "gunicorn",
+    "markdown",
     "nh3",
+    "polar-sdk",
     "pillow",
     "typeid-python",
-    "wagtail",
     "whitenoise[brotli]",
 ]
 
