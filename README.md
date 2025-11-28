@@ -29,7 +29,7 @@ There are some tweaks that need to be done after creating a new project to get i
 - [ ] Configure environment variables (API keys, Debug etc.) by copying `{{ project_name }}/.env.dist` to `{{ project_name }}/.env` and customizing ;
 - [ ] Review the `{{ project_name }}/{{ project_name }}/settings.py` settings to ensure display names are correct ;
 - [ ] Collect staticfiles (needed for tests?) `just collectstatic` ;
-- [ ] Run the tests with `just test` to ensure everything is working correctly ;
+- [ ] Run backend tests with `just test-unit` and smoke E2E flows with `just test-e2e` ;
 
 ## What's included?
 
@@ -52,13 +52,13 @@ A non-exhaustive list of what is included when starting with this template:
   - A Team can have different permissions based on what they've paid for
 - Minimal external services
   - SQLite for the database (although can be changed via environment variables)
-  - [Diskcache](https://pypi.org/project/diskcache/) for SSD based caching
+  - [Dragonfly](https://www.dragonflydb.io/) as the Redis-compatible cache layer
 - Lightweight API endpoints
   - Django Ninja setup with version API routes (`/api/v1/*`)
 - Testing and TDD supported
-  - Playwright for functional end-to-end tests
-  - Python + django Unittest test runner
-  - Coverage support
+  - `pytest-django` for backend test suites
+  - Playwright (TypeScript) for functional end-to-end tests
+  - Coverage support baked into pytest configuration
 - Static typing to catch bugs early
   - `mypy` with `django-stubs` for type checking
   - [ ] todo(kisamoto): Replace with modern typechecking [`ty`](https://github.com/astral-sh/ty) or [`pyrefly`](https://github.com/facebook/pyrefly)
@@ -77,9 +77,10 @@ A non-exhaustive list of what is included when starting with this template:
 ### Marketing
 
 - Market your service
-  - Wagtail CMS for writing blog articles
+  - Built-in Markdown `Page` model with FAQs for landing pages (no Wagtail dependency)
   - SEO optimisations for all views with [`django-meta`](https://django-meta.readthedocs.io/en/latest/)
   - Privacy policy and Terms & Conditions pages out the box via inbuilt static pages
+  - Privacy-friendly analytics powered by Plausible
 - Capture user interest
   - Newsletter sign-up page & components saves email to your Django database
 - Support your customers
@@ -88,8 +89,7 @@ A non-exhaustive list of what is included when starting with this template:
 ### Business development
 
 - Take payments (pick one of the following)
-  - Accept Stripe payments
-  - Use Paddle for tax collection (optional)
+  - Native Polar.sh integration with subscription + webhook syncing
 - Support multiple languages
   - Using the inbuilt Django i18n framework to extract strings
   - Auto translated into different languages via Google Gemini AI
@@ -239,9 +239,9 @@ To make it fast and easy to find organizations we integrate with [Meilisearch](h
 
 ### Caching
 
-Due to the read-heavy nature of the product we heavy use of caching throughout the stack.
+Due to the read-heavy nature of the product we heavily use caching throughout the stack.
 
-[Diskcache](https://github.com/grantjenks/python-diskcache) is used for caching database calls and template renders.
+[Dragonfly](https://www.dragonflydb.io/) is the default Redis-compatible cache for database calls and template renders.
 
 [Bunny](https://bunnycdn.com/) is used as a CDN for compressed & versioned static assets as well as image optimisation.
 
@@ -298,10 +298,10 @@ If you discover a security vulnerability we encourage you to please disclose thi
 
 ### Test Driven Development (TDD)
 
-To practice TDD with this, the best way is:
+To practice TDD with this:
 
-1. Write a behaviour test that uses Playwright to simulate user behaviour
-1. [optional] Debug Playwright tests by appending `PWDEBUG=1` to command to run tests
+1. Write/extend a pytest in `{{ project_name }}/tests` or an end-to-end Playwright spec under `{{ project_name }}/tests/e2e/tests`
+1. [optional] Debug Playwright specs with `PWDEBUG=1 pnpm test`
 
 #### Testing Best Practices
 
