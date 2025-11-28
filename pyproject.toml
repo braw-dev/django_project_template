@@ -3,7 +3,7 @@ profile = "black"
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py314"
 extend-exclude = ["*/migrations/*"]
 
 [tool.ruff.format]
@@ -63,7 +63,7 @@ django_settings_module = "{{ project_name }}.settings"
 
 [project]
 name = "project_name"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 version = "0.1.0"
 dependencies = [
     "diskcache",
