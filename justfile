@@ -50,6 +50,14 @@ test:
 test-watch:
     @rg --files -t python -t html | entr {% templatetag openvariable %} test_command {% templatetag closevariable %} {% templatetag openvariable %} test_options {% templatetag closevariable %}
 
+[working-directory: '{{ project_name }}']
+test-unit:
+    @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} pytest
+
+[working-directory: 'project_name/tests/e2e']
+test-e2e:
+    @{% templatetag openvariable %} PNPM {% templatetag closevariable %} test
+
 ###############################################
 ## Django management
 ###############################################
@@ -119,9 +127,8 @@ createsuperuser *FLAGS:
 
 # Remove all Django migrations
 [working-directory: '{{ project_name }}']
-rm-migrations:
-    @find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-    @find . -path "*/migrations/*.pyc"  -delete
+clean-migrations:
+    @find . -path "*/migrations/*.py" -not -name "__init__.py" -not -path "./.venv/*" -type f -delete
 
 # Reset the database
 reset-db:
@@ -130,10 +137,6 @@ reset-db:
 # Run type checking with mypy
 typecheck:
     @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} mypy {{ project_name }}
-
-# Translate any i18n strings with DeepL (requires a DeepL API key)
-translate:
-    @{% templatetag openvariable %} manage {% templatetag closevariable %} django-polyglot translate
 
 ###############################################
 ## Frontend
