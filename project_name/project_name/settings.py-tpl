@@ -8,14 +8,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/
 """
 
-import os
+import logging
 import re
 import sys
-import tempfile
+from datetime import timedelta
 from email.utils import getaddresses
 from pathlib import Path
 
 import environ
+import structlog
 from django.utils.translation import gettext_lazy as _
 
 env = environ.Env()
@@ -67,51 +68,46 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "whitenoise.runserver_nostatic",  # Whitenoise for static files in development
     "django.contrib.staticfiles",
+    "axes",  # Login throttling
     "guardian",  # Object level permissions
     "django_vite",
+    "django_structlog",
     "django_filters",  # Filtering based on user input
     "django_extensions",  # Additional django extensions
+    "anymail",
+    "storages",
+    "hijack",
+    "hijack.contrib.admin",
+    "hijack.contrib.admin_helpers",
     "allauth",  # Authentication
     "allauth.account",
     "allauth.mfa",  # Multi-factor authentication extension
     "meta",  # SEO metadata
     "sri",  # Sub resource Integrity for JS
     "django_cotton",  # Javascript style components
-    # Wagtail CMS
-    "wagtail.contrib.forms",
-    "wagtail.contrib.redirects",
-    "wagtail.contrib.settings",
-    "wagtail.embeds",
-    "wagtail.sites",
-    "wagtail.users",
-    "wagtail.snippets",
-    "wagtail.documents",
-    "wagtail.images",
-    "wagtail.search",
-    "wagtail.admin",
-    "wagtail",
-    "taggit",
-    "modelcluster",
     # Project apps
     "{{ project_name }}.users",
     "{{ project_name }}.brand",  # Brand colours and logo
-    "{{ project_name }}.marketing",  # Marketing content (incl. homepage) from Wagtail CMS
     "{{ project_name }}.core",
+    "{{ project_name }}.pages",
+    "{{ project_name }}.payments",
 ]
 
 MIDDLEWARE = [
+    "django_structlog.middlewares.RequestMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    "axes.middleware.AxesMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "hijack.middleware.HijackUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "csp.middleware.CSPMiddleware",
     # allauth account middleware:
     "allauth.account.middleware.AccountMiddleware",
-    # wagtail middleware:
-    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
 if not TESTING:
@@ -139,7 +135,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "wagtail.contrib.settings.context_processors.settings",
             ],
         },
     },
@@ -147,107 +142,51 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "{{ project_name }}.wsgi.application"
 
-LOG_LEVEL = env.str("LOG_LEVEL", default="ERROR")
-LOGS_SAVE_TO_FILE = env.bool("LOGS_SAVE_TO_FILE", default=False)
-LOGS_DIR = BASE_DIR.parent / "logs"
+LOG_LEVEL = env.str("LOG_LEVEL", default="INFO").upper()
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "filters": {
-        "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"},
-        "no_error_messages": {"()": "{{ project_name }}.utils.log.NonErrorFilter"},
-        "require_save_to_file": {"()": "{{ project_name }}.utils.log.RequireSaveToFileFilter"},
-    },
     "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {message}",
-            "style": "{",
-        },
-        "simple": {
-            "format": "{levelname} {message}",
-            "style": "{",
-        },
-        "json": {
-            "()": "{{ project_name }}.utils.log.JSONFormatter",
-            "fmt_keys": {
-                # key = value in the JSON log message output output
-                # value = logging variable that will be used
-                "level": "levelname",
-                "timestamp": "asctime",
-                "msg": "message",
-                "logger": "name",
-                "pid": "process",
-                "tid": "thread",
-                "exception": "exc_info",
-            },
+        "structlog_console": {
+            "()": "django_structlog.formatters.StructlogFormatter",
         },
     },
     "handlers": {
-        "mail_admins": {
-            "level": "ERROR",
-            "filters": ["require_debug_false"],
-            "class": "django.utils.log.AdminEmailHandler",
-        },
         "console": {
-            "level": "DEBUG",
+            "level": LOG_LEVEL,
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
-        "debug_file": {
-            "level": "DEBUG",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOGS_DIR / "debug.log",
-            "formatter": "json",
-            "maxBytes": 1024 * 1024 * 5,  # 5MB
-            "backupCount": 3,
-            "encoding": "utf-8",
-            "filters": ["require_save_to_file", "no_error_messages"],
-        },
-        "error_file": {
-            "level": "ERROR",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOGS_DIR / "error.log",
-            "formatter": "json",
-            "maxBytes": 1024 * 1024 * 5,  # 5MB
-            "backupCount": 3,
-            "encoding": "utf-8",
-            "filters": ["require_save_to_file"],
-        },
-        "file_queue": {
-            "level": "DEBUG",
-            "class": "logging.handlers.QueueHandler",
-            "handlers": ["debug_file", "error_file"],
-            "respect_handler_level": True,
-        },
-        "email_queue": {
-            "level": "ERROR",
-            "class": "logging.handlers.QueueHandler",
-            "handlers": ["mail_admins"],
-            "respect_handler_level": True,
+            "formatter": "structlog_console",
         },
     },
-    "root": {"level": LOG_LEVEL, "handlers": ["console", "file_queue"]},
     "loggers": {
         "django": {
-            "handlers": [
-                "console",
-            ],
-            "propagate": True,
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
         },
-        "django.request": {
-            "handlers": ["email_queue"],
-            "level": "ERROR",
-            "propagate": True,
-        },
-        "django.security.DisallowedHost": {
-            "level": "ERROR",
-            "handlers": ["console", "email_queue"],
-            "propagate": True,
+        "django_structlog": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
         },
     },
+    "root": {"handlers": ["console"], "level": LOG_LEVEL},
 }
 
-LOGGING_CONFIG = "{{ project_name }}.utils.log.load_logging_config_start_listener"
+STRUCTLOG_SETTINGS = {
+    "contextvars": True,
+    "cache_logger_on_first_use": True,
+    "wrapper_class": structlog.make_filtering_bound_logger(
+        getattr(logging, LOG_LEVEL, logging.INFO)
+    ),
+    "processors": [
+        structlog.contextvars.merge_contextvars,
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.JSONRenderer(),
+    ],
+}
 
 # Database
 # https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/#databases
@@ -273,27 +212,26 @@ SQLITE_OPTIONS = {
 }
 
 # Cache
-# https://docs.djangoproject.com/en/{{ docs_version }}/topics/cache/#using-a-custom-cache-backend
+# https://docs.djangoproject.com/en/{{ docs_version }}/topics/cache/#redis
 CACHES = {
-    "default": {
-        "BACKEND": "diskcache.DjangoCache",
-        "LOCATION": os.path.join(tempfile.gettempdir(), f"{PROJECT_SLUG}-cache"),
-        "TIMEOUT": 30,
-        # ^-- Django setting for default timeout of each key.
-        "SHARDS": 8,
-        "DATABASE_TIMEOUT": 0.010,  # 10 milliseconds
-        # ^-- Timeout for each DjangoCache database transaction.
-        "OPTIONS": {"size_limit": 2**30},  # 1 gigabyte
-    },
+    "default": env.cache(var="REDIS_URL")
 }
 
 # Email settings
 # https://docs.djangoproject.com/en/{{ docs_version }}/topics/email/
-if env.bool("SEND_EMAILS") and not TESTING:
-    pass
+if env.bool("SEND_EMAILS", default=False) and not TESTING:
+    EMAIL_BACKEND = "anymail.backends.scaleway.EmailBackend"
+    ANYMAIL = {
+        "SCW_PROJECT_ID": env.str("SCALEWAY_PROJECT_ID", default=""),
+        "SCW_ACCESS_KEY": env.str("SCALEWAY_ACCESS_KEY", default=""),
+        "SCW_SECRET_KEY": env.str("SCALEWAY_SECRET_KEY", default=""),
+        "SCW_REGION": env.str("SCALEWAY_REGION", default="fr-par"),
+        "SCW_DOMAIN_ID": env.str("SCALEWAY_DOMAIN_ID", default=""),
+    }
 else:
     # Use console backend for development
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    ANYMAIL = {}
 
 DEFAULT_FROM_EMAIL = f"noreply@{env.str('EMAIL_DOMAIN')}"
 SERVER_EMAIL = f"django@{env.str('EMAIL_DOMAIN')}"
@@ -332,11 +270,16 @@ PASSWORD_HASHERS = [
 ]
 
 AUTHENTICATION_BACKENDS = (
+    "axes.backends.AxesBackend",
     "django.contrib.auth.backends.ModelBackend",  # default
     "guardian.backends.ObjectPermissionBackend",
     # `allauth` specific authentication methods, such as login by email
     "allauth.account.auth_backends.AuthenticationBackend",
 )
+
+HIJACK_PERMISSION_CHECK = "hijack.permissions.superusers_and_staff"
+HIJACK_ALLOW_GET_REQUESTS = True
+HIJACK_LOGOUT_REDIRECT_URL = "/admin/"
 
 LOGIN_REDIRECT_URL = "account:dashboard"
 LOGOUT_REDIRECT_URL = "/"
@@ -359,6 +302,13 @@ ACCOUNT_USERNAME_REQUIRED = True
 # https://cookiecutter-django.readthedocs.io/en/latest/settings.html#other-environment-settings
 # Force the `admin` sign in process to go through the `django-allauth` workflow
 DJANGO_ADMIN_FORCE_ALLAUTH = True
+
+# django-axes configuration
+AXES_FAILURE_LIMIT = env.int("AXES_FAILURE_LIMIT", default=5)
+AXES_COOLOFF_TIME = timedelta(hours=1)
+AXES_LOCKOUT_TEMPLATE = "429.html"
+AXES_ENABLED = not TESTING
+AXES_RESET_ON_SUCCESS = True
 
 # Allauth MFA settings
 # https://docs.allauth.org/en/latest/mfa/webauthn.html
@@ -391,13 +341,28 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+if IS_PRODUCTION:
+    AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME", default="")
+    AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME", default="")
+    AWS_S3_ENDPOINT_URL = env.str("AWS_S3_ENDPOINT_URL", default="")
+    AWS_S3_CUSTOM_DOMAIN = env.str("AWS_S3_CUSTOM_DOMAIN", default="")
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    }
+
 STATICFILES_DIRS = [
     BASE_DIR / "static",
     BASE_DIR / "frontend" / "{{ project_name }}" / "dist",
 ]  # Add additional static file directories other than the app directories
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATIC_HOST = env.str("DJANGO_STATIC_HOST", "")
-STATIC_URL = STATIC_HOST + "/static/"
+STATIC_HOST = env.str("DJANGO_STATIC_HOST", default="")
+if not STATIC_HOST:
+    STATIC_HOST = env.str("BUNNY_CDN_HOST", default="")
+STATIC_URL = f"{STATIC_HOST}/static/" if STATIC_HOST else "/static/"
+
+PLAUSIBLE_DOMAIN = env.str("PLAUSIBLE_DOMAIN", default="")
+PLAUSIBLE_SCRIPT_HOST = env.str("PLAUSIBLE_SCRIPT_HOST", default="https://plausible.io")
+PLAUSIBLE_API_HOST = env.str("PLAUSIBLE_API_HOST", default=PLAUSIBLE_SCRIPT_HOST)
 
 # Django meta settings
 # https://django-meta.readthedocs.io/en/latest/settings.html
@@ -415,11 +380,17 @@ META_USE_SITES = True
 # https://django-cotton.com/docs/configuration
 COTTON_DIR = "components"
 
-# Stripe settings
-STRIPE_LIVE_SECRET_KEY = env.str("STRIPE_LIVE_SECRET_KEY")
-STRIPE_TEST_SECRET_KEY = env.str("STRIPE_TEST_SECRET_KEY")
-STRIPE_LIVE_MODE = env.bool("STRIPE_LIVE_MODE")
-STRIPE_WEBHOOK_SECRET = env.str("STRIPE_WEBHOOK_SECRET")
+# Flagsmith feature flags
+FLAGSMITH_ENVIRONMENT_KEY = env.str("FLAGSMITH_ENVIRONMENT_KEY", default="")
+FLAGSMITH_API_URL = env.str(
+    "FLAGSMITH_API_URL",
+    default="https://edge.api.flagsmith.com/api/v1/",
+)
+
+POLAR_ACCESS_TOKEN = env.str("POLAR_ACCESS_TOKEN", default="")
+POLAR_ORGANIZATION_ID = env.str("POLAR_ORGANIZATION_ID", default="")
+POLAR_WEBHOOK_SECRET = env.str("POLAR_WEBHOOK_SECRET", default="")
+POLAR_API_BASE_URL = env.str("POLAR_API_BASE_URL", default="https://api.polar.sh")
 
 # Django SRI settings
 # https://github.com/RealOrangeOne/django-sri
@@ -467,27 +438,10 @@ FORMS_URLFIELD_ASSUME_HTTPS = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/{{ docs_version }}/howto/static-files/
 
-STATIC_URL = "static/"
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# Wagtail settings
-# This is the human-readable name of your Wagtail install
-# which welcomes users upon login to the Wagtail admin.
-WAGTAIL_SITE_NAME = "{{ project_name }}"
-
-# Allowed file extensions for documents in the document library.
-# This can be omitted to allow all files, but note that this may present a security risk
-# if untrusted users are allowed to upload files -
-# see https://docs.wagtail.org/en/stable/advanced_topics/deploying.html#user-uploaded-files
-WAGTAILDOCS_EXTENSIONS = ["csv", "docx", "key", "odt", "pdf", "pptx", "rtf", "txt", "xlsx", "zip"]
-
-# Reverse the default case-sensitive handling of tags
-TAGGIT_CASE_INSENSITIVE = True
-TAG_SPACES_ALLOWED = True
 
 # Vite
 DJANGO_VITE = {"default": {"dev_mode": DEBUG}}
