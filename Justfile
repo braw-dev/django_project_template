@@ -54,7 +54,7 @@ test-watch:
 test-unit:
     @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} pytest
 
-[working-directory: 'project_name/tests/e2e']
+[working-directory: '{{ project_name }}/tests/e2e']
 test-e2e:
     @{% templatetag openvariable %} PNPM {% templatetag closevariable %} test
 

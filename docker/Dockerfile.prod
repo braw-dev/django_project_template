@@ -1,0 +1,40 @@
+# syntax=docker/dockerfile:1.19.0
+
+ARG PYTHON_VERSION=3.13
+ARG NODE_VERSION=24
+
+FROM node:${NODE_VERSION}-alpine AS frontend-builder
+WORKDIR /app
+RUN corepack enable
+COPY frontend ./frontend
+WORKDIR /app/frontend/{{ project_name }}
+RUN pnpm install --frozen-lockfile
+RUN pnpm build
+
+FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm-slim AS python-builder
+WORKDIR /app
+ENV UV_PROJECT_ENVIRONMENT=/app/.venv
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project --python ${PYTHON_VERSION}
+
+FROM python:${PYTHON_VERSION}-slim AS runtime
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    DJANGO_SETTINGS_MODULE="{{ project_name }}.settings" \
+    PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
+
+COPY --from=python-builder /app/.venv /app/.venv
+COPY {{ project_name }} ./
+COPY {{ project_name }}/manage.py ./manage.py
+COPY frontend/{{ project_name }}/package.json ./frontend/{{ project_name }}/package.json
+COPY --from=frontend-builder /app/frontend/{{ project_name }}/dist ./frontend/{{ project_name }}/dist
+
+RUN python manage.py collectstatic --noinput
+
+EXPOSE 8000
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "{{ project_name }}.wsgi:application"]
+

@@ -13,7 +13,7 @@ uv run django-admin startproject \
     --name Justfile \
     --exclude '.ruff_cache' \
     --exclude '.venv' \
-    --exclude 'frontend/project_name/node_modules' \
+    --exclude 'node_modules' \
     --exclude 'dev' \
     project_name
 ```
@@ -334,6 +334,14 @@ uv run ansible-playbook ./dev/01-test-project-template.yaml
 ```
 
 This will automatically create a new django project using this template in a temporary directory.
+
+#### Find `project_name` that is not a variable
+
+Django will automatically replace `{{ project_name }}` with the actual name of the project when rendering the templates/files. However when developing on the template we need to find `project_name` that **is not** a variable (so we can fix it). One approach is to render the template and use `rg` to find `project_name`. However we can also use `rg` to find unvariabled `project_name` in just the template:
+
+```bash
+rg 'project_name' | rg -v '\{\{\s*project_name\s*\}\}'
+```
 
 ---
 
