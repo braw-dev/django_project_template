@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/
 """
 
 import logging
+import queue
 import re
 import sys
 from datetime import timedelta
@@ -78,7 +79,6 @@ INSTALLED_APPS = [
     "storages",
     "hijack",
     "hijack.contrib.admin",
-    "hijack.contrib.admin_helpers",
     "allauth",  # Authentication
     "allauth.account",
     "allauth.mfa",  # Multi-factor authentication extension
@@ -89,13 +89,11 @@ INSTALLED_APPS = [
     "{{ project_name }}.users",
     "{{ project_name }}.brand",  # Brand colours and logo
     "{{ project_name }}.core",
-    "{{ project_name }}.pages",
-    "{{ project_name }}.payments",
 ]
 
 MIDDLEWARE = [
-    "django_structlog.middlewares.RequestMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "django_structlog.middlewares.RequestMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -105,7 +103,6 @@ MIDDLEWARE = [
     "hijack.middleware.HijackUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "csp.middleware.CSPMiddleware",
     # allauth account middleware:
     "allauth.account.middleware.AccountMiddleware",
 ]
@@ -143,13 +140,20 @@ TEMPLATES = [
 WSGI_APPLICATION = "{{ project_name }}.wsgi.application"
 
 LOG_LEVEL = env.str("LOG_LEVEL", default="INFO").upper()
+LOGGING_QUEUE = queue.SimpleQueue()
+LOG_FILE_PATH = BASE_DIR.parent / "logs" / "django.log"
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
+        "json_formatter": {
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.processors.JSONRenderer(),
+        },
         "structlog_console": {
-            "()": "django_structlog.formatters.StructlogFormatter",
+            "()": structlog.stdlib.ProcessorFormatter,
+            "processor": structlog.dev.ConsoleRenderer(),
         },
     },
     "handlers": {
@@ -157,6 +161,19 @@ LOGGING = {
             "level": LOG_LEVEL,
             "class": "logging.StreamHandler",
             "formatter": "structlog_console",
+        },
+        "json_file": {
+            "level": LOG_LEVEL,
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOG_FILE_PATH,
+            "maxBytes": 1024 * 1024 * 10,  # 10MB
+            "backupCount": 5,
+            "formatter": "json_formatter",
+        },
+        "file_queue": {
+            "level": LOG_LEVEL,
+            "class": "logging.handlers.QueueHandler",
+            "queue": LOGGING_QUEUE,
         },
     },
     "loggers": {
@@ -167,6 +184,11 @@ LOGGING = {
         },
         "django_structlog": {
             "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "{{ project_name }}": {
+            "handlers": ["console", "file_queue"],
             "level": LOG_LEVEL,
             "propagate": False,
         },
@@ -214,7 +236,7 @@ SQLITE_OPTIONS = {
 # Cache
 # https://docs.djangoproject.com/en/{{ docs_version }}/topics/cache/#redis
 CACHES = {
-    "default": env.cache(var="REDIS_URL")
+    "default": env.cache(var="CACHE_DEFAULT_URL", default="locmemcache://")
 }
 
 # Email settings
@@ -294,10 +316,9 @@ ACCOUNT_LOGIN_BY_CODE_TIMEOUT = 60 * 15  # 15 minutes
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
 ACCOUNT_PRESERVE_USERNAME_CASING = False
-ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*"]
 ACCOUNT_USERNAME_BLACKLIST: list[str] = []
 ACCOUNT_USERNAME_MIN_LENGTH = 3
-ACCOUNT_USERNAME_REQUIRED = True
 
 # https://cookiecutter-django.readthedocs.io/en/latest/settings.html#other-environment-settings
 # Force the `admin` sign in process to go through the `django-allauth` workflow
@@ -500,6 +521,23 @@ if TESTING:
             "NAME": ":memory:",
         },
     }
+
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
 
 for db in DATABASES.values():
     if "sqlite3" in db["ENGINE"]:
