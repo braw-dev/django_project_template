@@ -17,7 +17,7 @@
         </div>
     </div>
     <div class="navbar-center">
-        <a class="text-xl" href="{% url 'core:homepage' %}">{% project_display_name %}</a>
+        <a class="text-xl" href="{% url 'homepage' %}">{% project_display_name %}</a>
     </div>
     <div class="navbar-end">
         {% if user.is_authenticated %}
