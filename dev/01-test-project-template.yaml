@@ -109,13 +109,6 @@
         - search: "LOG_LEVEL="
           replacement: "LOG_LEVEL=DEBUG"
 
-    - name: Make sure the just commands have the pipenv environment variable set in Justfile
-      ansible.builtin.lineinfile:
-        line: 'export PIPENV_VENV_IN_PROJECT := "1"'
-        path: "{{ project_dir }}/justfile"
-        search_string: "export PIPENV_VENV_IN_PROJECT"
-        validate: just --unstable --fmt --check --justfile %s
-
     - name: Install dependencies
       when: install_project_dependencies
       block:
@@ -131,7 +124,7 @@
 
         - name: Install project dependencies
           ansible.builtin.command:
-            cmd: just install
+            cmd: just install-dev
             chdir: "{{ project_dir }}"
 
     - name: Setup project
