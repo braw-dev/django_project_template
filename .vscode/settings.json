@@ -27,6 +27,7 @@
         "Instrumentor",
         "isort",
         "justfile",
+        "locmemcache",
         "Meilisearch",
         "modelcluster",
         "mypy",
