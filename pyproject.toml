@@ -98,6 +98,7 @@ dependencies = [
     "pillow",
     "typeid-python",
     "whitenoise[brotli]",
+    "httpx>=0.28.1",
 ]
 
 [dependency-groups]
