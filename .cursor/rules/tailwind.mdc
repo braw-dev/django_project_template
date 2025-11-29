@@ -1,19 +1,35 @@
 ---
-description: Tailwind CSS and UI component best practices for modern web applications
-globs: **/*.css, **/*.tsx, **/*.jsx
+description: Tailwind CSS and DaisyUI best practices for this project
+globs: frontend/**/*.css,frontend/**/*.tsx,**/*.html
+alwaysApply: false
 ---
 
 # Tailwind CSS Best Practices
 
+## Project Context
+
+This project uses Tailwind CSS with **DaisyUI** for component styling. Configuration is in `frontend/<project_name>/tailwind.config.js`.
+
+## DaisyUI Components
+
+Prefer DaisyUI components over custom implementations:
+
+```html
+<button class="btn btn-primary">Click me</button>
+<div class="card bg-base-100 shadow-xl">...</div>
+```
+
 ## Project Setup
+
 - Use proper Tailwind configuration
 - Configure theme extension properly
 - Set up proper purge configuration
-- Use proper plugin integration
+- Use DaisyUI themes for consistent styling
 - Configure custom spacing and breakpoints
-- Set up proper color palette
+- Set up proper color palette using DaisyUI semantic colors
 
 ## Component Styling
+
 - Use utility classes over custom CSS
 - Group related utilities with @apply when needed
 - Use proper responsive design utilities
@@ -22,6 +38,7 @@ globs: **/*.css, **/*.tsx, **/*.jsx
 - Keep component styles consistent
 
 ## Layout
+
 - Use Flexbox and Grid utilities effectively
 - Implement proper spacing system
 - Use container queries when needed
@@ -30,6 +47,7 @@ globs: **/*.css, **/*.tsx, **/*.jsx
 - Implement proper alignment utilities
 
 ## Typography
+
 - Use proper font size utilities
 - Implement proper line height
 - Use proper font weight utilities
@@ -38,6 +56,7 @@ globs: **/*.css, **/*.tsx, **/*.jsx
 - Implement proper text decoration
 
 ## Colors
+
 - Use semantic color naming
 - Implement proper color contrast
 - Use opacity utilities effectively
@@ -46,14 +65,16 @@ globs: **/*.css, **/*.tsx, **/*.jsx
 - Implement proper hover states
 
 ## Components
-- Use shadcn/ui components when available
-- Extend components properly
+
+- Use DaisyUI components as the foundation
+- Extend components properly with Tailwind utilities
 - Keep component variants consistent
 - Implement proper animations
 - Use proper transition utilities
 - Keep accessibility in mind
 
 ## Responsive Design
+
 - Use mobile-first approach
 - Implement proper breakpoints
 - Use container queries effectively
@@ -62,6 +83,7 @@ globs: **/*.css, **/*.tsx, **/*.jsx
 - Use proper responsive spacing
 
 ## Performance
+
 - Use proper purge configuration
 - Minimize custom CSS
 - Use proper caching strategies
@@ -70,9 +92,10 @@ globs: **/*.css, **/*.tsx, **/*.jsx
 - Monitor bundle size
 
 ## Best Practices
+
 - Follow naming conventions
 - Keep styles organized
 - Use proper documentation
 - Implement proper testing
 - Follow accessibility guidelines
-- Use proper version control 
+- Use proper version control

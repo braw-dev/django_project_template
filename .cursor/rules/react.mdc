@@ -1,11 +1,17 @@
 ---
 description: React best practices and patterns for modern web applications
-globs: **/*.tsx, **/*.jsx, components/**/*
+globs: frontend/**/*.tsx,frontend/**/*.jsx
+alwaysApply: false
 ---
 
 # React Best Practices
 
+## Project Context
+
+This project uses React with Vite, served alongside Django. The frontend lives in `frontend/<project_name>/`.
+
 ## Component Structure
+
 - Use functional components over class components
 - Keep components small and focused
 - Extract reusable logic into custom hooks
@@ -14,6 +20,7 @@ globs: **/*.tsx, **/*.jsx, components/**/*
 - Split large components into smaller, focused ones
 
 ## Hooks
+
 - Follow the Rules of Hooks
 - Use custom hooks for reusable logic
 - Keep hooks focused and simple
@@ -22,6 +29,7 @@ globs: **/*.tsx, **/*.jsx, components/**/*
 - Avoid nested hooks
 
 ## State Management
+
 - Use useState for local component state
 - Implement useReducer for complex state logic
 - Use Context API for shared state
@@ -30,6 +38,7 @@ globs: **/*.tsx, **/*.jsx, components/**/*
 - Use state management libraries only when necessary
 
 ## Performance
+
 - Implement proper memoization (useMemo, useCallback)
 - Use React.memo for expensive components
 - Avoid unnecessary re-renders
@@ -38,6 +47,7 @@ globs: **/*.tsx, **/*.jsx, components/**/*
 - Profile and optimize render performance
 
 ## Forms
+
 - Use controlled components for form inputs
 - Implement proper form validation
 - Handle form submission states properly
@@ -46,6 +56,7 @@ globs: **/*.tsx, **/*.jsx, components/**/*
 - Implement proper accessibility for forms
 
 ## Error Handling
+
 - Implement Error Boundaries
 - Handle async errors properly
 - Show user-friendly error messages
@@ -54,6 +65,7 @@ globs: **/*.tsx, **/*.jsx, components/**/*
 - Handle edge cases gracefully
 
 ## Testing
+
 - Write unit tests for components
 - Implement integration tests for complex flows
 - Use React Testing Library
@@ -62,6 +74,7 @@ globs: **/*.tsx, **/*.jsx, components/**/*
 - Implement proper mock data
 
 ## Accessibility
+
 - Use semantic HTML elements
 - Implement proper ARIA attributes
 - Ensure keyboard navigation
@@ -70,9 +83,10 @@ globs: **/*.tsx, **/*.jsx, components/**/*
 - Provide proper alt text for images
 
 ## Code Organization
+
 - Group related components together
 - Use proper file naming conventions
 - Implement proper directory structure
 - Keep styles close to components
 - Use proper imports/exports
-- Document complex component logic 
+- Document complex component logic
