@@ -8,5 +8,7 @@
       "Read(./.env.*)",
       "Read(./secrets/**)"
     ]
-  }
+  },
+  "includeCoAuthoredBy": false,
+  "outputStyle": "Concise"
 }
