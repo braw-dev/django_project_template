@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": ["Bash(just *)"],
+    "deny": [
+      "Bash(curl:*)",
+      "Bash(http:*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)"
+    ]
+  }
+}
