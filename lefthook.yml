@@ -19,3 +19,8 @@ pre-commit:
       glob:
         - "*.html"
         - "*.html-tpl"
+    markdownlint:
+      run: uv run rumdl check --fix {staged_files}
+      stage_fixed: true
+      glob:
+        - "*.md"
