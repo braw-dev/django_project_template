@@ -44,6 +44,12 @@ ignore = [
     "ISC002",
 ]
 
+[tool.rumdl]
+exclude = ["node_modules", "build", "dist"]
+respect-gitignore = true
+# Disable line length rule
+disabled = ["MD013",]
+
 [tool.djlint]
 profile = "django"
 ignore = "H030,H031,H021"
