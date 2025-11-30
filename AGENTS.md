@@ -93,3 +93,50 @@ Always use `just` commands to ensure environment consistency.
   - Node: Edit `package.json`, then run `pnpm install`.
 - **Code Style**: Run `just format` before finishing tasks.
 - **Documentation**: Update `README.md` or `MOTIVATION.md` if architectural changes are made.
+
+---
+
+## 5. AI Agent-Specific Instructions
+
+This repository includes detailed instructions for different AI coding assistants:
+
+### For Claude Code
+
+Comprehensive instructions are in the `.claude/` directory:
+
+- **`.claude/CLAUDE.md`**: Main instructions file (start here)
+- **`.claude/docs/`**: Detailed documentation:
+  - `template-development.md`: Template-specific development rules
+  - `django-stack.md`: Django architecture and conventions
+  - `security-simplicity.md`: Security principles and simplicity philosophy
+  - `grug-brain.md`: Grug brain developer philosophy
+
+**Quick Start for Claude Code:**
+
+1. Read `.claude/CLAUDE.md` for context detection (template vs generated project)
+2. Follow security-first principles (never compromise on auth, validation, secrets)
+3. Apply Grug brain philosophy (say no to complexity, features, dependencies)
+4. Use established Django patterns (services/selectors, ORM, built-in features)
+5. Test template changes with: `uv run ansible-playbook ./dev/01-test-project-template.yaml`
+
+### For Cursor
+
+Instructions are in the `.cursor/rules/` directory. Key files:
+
+- `grug-brain.mdc`: Simplicity philosophy
+- `security-simplicity.mdc`: Security and simplicity principles  
+- `django-stack.mdc`: Django conventions
+- `template-development.mdc`: Template development rules
+
+### Cross-Agent Principles
+
+All AI agents should follow these universal principles:
+
+1. **Context Detection**: Determine if working on template or generated project
+2. **Security First**: Never compromise on authentication, validation, or data handling
+3. **Grug Brain Philosophy**: Complexity is the enemy, say no to most things
+4. **Boring Technology**: Don't introduce new languages/frameworks without strong justification
+5. **Minimal Changes**: Don't refactor unrelated code or add unrequested features
+6. **Test First**: Test template changes before committing
+
+See individual agent directories for detailed, agent-specific instructions.

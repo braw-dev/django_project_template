@@ -2,7 +2,7 @@
 
 Example component in `templates/components/card.html`
 
-```
+```text
 <div class="bg-white shadow rounded border p-4">
     <h2>{% templatetag openvariable %} title {% templatetag closevariable %}</h2>
     <p>{% templatetag openvariable %} slot {% templatetag closevariable %}</p>
@@ -12,13 +12,13 @@ Example component in `templates/components/card.html`
 
 And how to use it:
 
-```
+```text
 <c-card title="Trees" url="trees">
     We have the best trees
 </c-card>
 ```
 
-# Usage
+## Usage
 
 Taken from the [django-cotton docs](https://django-cotton.com/docs/quickstart#usage).
 
