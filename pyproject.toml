@@ -104,6 +104,9 @@ dependencies = [
     "pillow",
     "typeid-python",
     "whitenoise[brotli]",
+    "celery[redis]>=5.6.0",
+    "django-celery-results>=2.6.0",
+    "hiredis>=3.3.0",
     "httpx>=0.28.1",
 ]
 
