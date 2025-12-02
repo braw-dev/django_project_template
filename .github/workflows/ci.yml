@@ -1,0 +1,111 @@
+name: CI
+
+on:
+    push:
+        branches:
+            - main
+            - develop
+    pull_request:
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        services:
+            cache:
+                image: docker.dragonflydb.io/dragonflydb/dragonfly
+                ports:
+                    - 6379:6379
+            postgres:
+                image: postgis/postgis:18-3.6
+                env:
+                    POSTGRES_DB: "{{ project_name }}"
+                    POSTGRES_USER: "{{ project_name }}"
+                    POSTGRES_PASSWORD: "{{ project_name }}"
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+        env:
+            REDIS_URL: redis://localhost:6379/0
+            DB_DEFAULT_URL: postgres://{{ project_name }}:{{ project_name }}@localhost:5432/{{ project_name }}
+            DJANGO_SETTINGS_MODULE: "{{ project_name }}.settings"
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13"
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v4
+
+            - name: Sync Python dependencies
+              run: uv sync --python 3.13
+
+            - name: Ruff lint
+              run: uv run ruff check
+
+            - name: Ruff format check
+              run: uv run ruff format --check
+
+            - name: djlint
+              run: uv run djlint project_name/templates --check
+
+            - name: mypy
+              run: uv run mypy {{ project_name }}
+
+            - name: pytest
+              run: uv run pytest
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "24"
+
+            - name: Enable corepack
+              run: corepack enable
+
+            - name: Install frontend deps
+              working-directory: frontend/project_name
+              run: pnpm install --frozen-lockfile
+
+            - name: ESLint
+              working-directory: frontend/project_name
+              run: pnpm lint
+
+            - name: Install Playwright deps
+              working-directory: project_name/tests/e2e
+              run: |
+                  pnpm install --frozen-lockfile
+                  pnpm exec playwright install --with-deps
+
+            - name: Run migrations
+              working-directory: project_name
+              run: uv run python manage.py migrate
+
+            - name: Start Django server
+              working-directory: project_name
+              run: |
+                  uv run python manage.py runserver 0.0.0.0:8000 &
+                  echo $! > ../django.pid
+                  sleep 5
+
+            - name: Playwright tests
+              working-directory: project_name/tests/e2e
+              env:
+                  E2E_BASE_URL: http://127.0.0.1:8000
+              run: pnpm test
+
+            - name: Stop Django server
+              if: always()
+              run: |
+                  if [ -f django.pid ]; then
+                    kill $(cat django.pid) || true
+                  fi
+
+            - name: Build production image
+              run: docker build -f docker/Dockerfile.prod .
