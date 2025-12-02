@@ -10,6 +10,7 @@ uv run django-admin startproject \
     --extension 'py,yaml,md,template,dist,toml,json,css,js,dev,prod' \
     --name Justfile \
     --exclude '.ruff_cache' \
+    --exclude '.rumdl_cache' \
     --exclude '.venv' \
     --exclude 'node_modules' \
     --exclude 'dev' \
@@ -33,7 +34,7 @@ uv run django-admin startproject \
 - **Security**: Custom User with MFA, Argon2id hashing, SRI, `nh3` sanitization.
 - **Configuration**: Simple `django-environ` setup.
 - **Structure**: Users in Teams (Django Groups) with permission levels.
-- **Stack**: SQLite (configurable), Dragonfly (Redis-compatible cache), Django Ninja API.
+- **Stack**: PostgreSQL (production), SQLite (test), Dragonfly (Redis-compatible cache), Django Ninja API.
 - **Testing**: `pytest-django` coverage, Playwright e2e tests.
 - **Typing**: `mypy` static analysis.
 - **Frontend**: Whitenoise serving, Vite + React (optional), Tailwind CSS + Daisy UI, `django-cotton` components.

@@ -80,6 +80,7 @@
             --extension 'py,yaml,md,template,dist,toml,json,css,js,dev,prod'
             --name Justfile
             --exclude '.ruff_cache'
+            --exclude '.rumdl_cache'
             --exclude 'dev'
             --exclude '.venv'
             --exclude 'db.sqlite3'
