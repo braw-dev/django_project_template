@@ -12,3 +12,36 @@ def user_has_permission(*, user: user_models.User, permission: str) -> bool:
         bool: whether the user has the permission
     """
     return user.has_perm(permission)
+
+
+def product_list() -> list[dict]:
+    """Return a list of products.
+    
+
+    return [
+        {
+            "name": "Starter",
+            "price": "$9/mo",
+            "features": ["Feature 1", "Feature 2"],
+            "cta": "Start Free Trial",
+            "popular": False,
+        },
+        {
+            "name": "Pro",
+            "price": "$29/mo",
+            "features": ["Everything in Starter", "Feature 3", "Feature 4"],
+            "cta": "Get Started",
+            "popular": True,
+        },
+        {
+            "name": "Enterprise",
+            "price": "Custom",
+            "features": ["Everything in Pro", "Dedicated Support", "SLA"],
+            "cta": "Contact Sales",
+            "popular": False,
+        },
+    ]
+    """
+
+    raise NotImplementedError("Fetch from Polar.sh")
+
