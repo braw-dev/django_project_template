@@ -54,6 +54,10 @@ To verify that the template generates a valid project:
 
 ## 3. Working in a Generated Project
 
+Understand the purpose of the project in [`/docs/PRODUCT_OVERVIEW.md`](/docs/PRODUCT_OVERVIEW.md).
+
+Clean up any code or documents that reference working on the template itself.
+
 If you are reading this file inside a project *generated* from this template (i.e., `project_name` has been replaced by a real name):
 
 ### Development Workflow
@@ -87,7 +91,7 @@ Always use `just` commands to ensure environment consistency.
 
 ## 4. Rules & Conventions
 
-- **File Editing**: Always read the file first. If it contains template tags (`{% ... %}`), treat it as a template file.
+- **File Editing**: Always read the file first. If it contains template tags (`{% templatetag openblock %} ... {% templatetag closeblock %}`), treat it as a template file.
 - **Dependency Management**:
   - Python: Edit `pyproject.toml`, then run `uv sync`.
   - Node: Edit `package.json`, then run `pnpm install`.
