@@ -235,9 +235,7 @@ SQLITE_OPTIONS = {
 
 # Cache
 # https://docs.djangoproject.com/en/{{ docs_version }}/topics/cache/#redis
-CACHES = {
-    "default": env.cache(var="CACHE_DEFAULT_URL", default="locmemcache://")
-}
+CACHES = {"default": env.cache(var="CACHE_DEFAULT_URL", default="locmemcache://")}
 
 # Email settings
 # https://docs.djangoproject.com/en/{{ docs_version }}/topics/email/
@@ -413,7 +411,12 @@ POLAR_ORGANIZATION_ID = env.str("POLAR_ORGANIZATION_ID", default="")
 POLAR_WEBHOOK_SECRET = env.str("POLAR_WEBHOOK_SECRET", default="")
 POLAR_API_BASE_URL = env.str("POLAR_API_BASE_URL", default="https://api.polar.sh")
 
+# Chatwoot
+CHATWOOT_WEBSITE_TOKEN = env.str("CHATWOOT_WEBSITE_TOKEN", default="")
+CHATWOOT_BASE_URL = env.str("CHATWOOT_BASE_URL", default="https://app.chatwoot.com")
+
 # Django SRI settings
+
 # https://github.com/RealOrangeOne/django-sri
 SRI_ALGORITHM = "sha512"
 
@@ -466,6 +469,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Vite
 DJANGO_VITE = {"default": {"dev_mode": DEBUG}}
+
+# Celery
+if USE_TZ:
+    CELERY_TIMEZONE = TIME_ZONE
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_CACHE_BACKEND = "default"
 
 
 # Whitenoise
