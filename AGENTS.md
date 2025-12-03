@@ -114,6 +114,7 @@ Comprehensive instructions are in the `.claude/` directory:
   - `django-stack.md`: Django architecture and conventions
   - `security-simplicity.md`: Security principles and simplicity philosophy
   - `grug-brain.md`: Grug brain developer philosophy
+  - `internationalisation-first.md`: Guidance on supporting translations from the start
 
 **Quick Start for Claude Code:**
 
