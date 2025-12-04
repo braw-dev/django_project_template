@@ -1,4 +1,5 @@
 from debug_toolbar.toolbar import debug_toolbar_urls
+from django.conf.urls.i18n import i18n_patterns
 from django.contrib import admin
 from django.urls import include, path
 
@@ -31,4 +32,9 @@ urlpatterns = (
     + [
         path("", views.homepage, name="homepage"),
     ]
+)
+
+urlpatterns += i18n_patterns(
+    # Pages app catch-all - must be last to avoid catching other URLs
+    path("", include("{{ project_name }}.pages.urls")),
 )
