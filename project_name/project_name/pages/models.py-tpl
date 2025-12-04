@@ -1,0 +1,133 @@
+from django.db import models
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from meta.models import ModelMeta
+from parler.models import TranslatableModel, TranslatedFields
+
+from {{ project_name }}.utils.models import BaseModel
+
+
+class PageManager(models.Manager):
+    """Custom manager for Page model with publishing logic."""
+
+    def published(self):
+        """Return only published pages that are within their publish window."""
+        now = timezone.now()
+        return self.filter(
+            is_published=True,
+        ).filter(
+            models.Q(publish_at__isnull=True) | models.Q(publish_at__lte=now),
+            models.Q(unpublish_at__isnull=True) | models.Q(unpublish_at__gt=now),
+        )
+
+
+class Page(TranslatableModel, ModelMeta, BaseModel):
+    """
+    A translatable page model for marketing landing pages.
+
+    Supports:
+    - Markdown content with translations via django-parler
+    - SEO metadata via django-meta
+    - Scheduled publishing with publish_at/unpublish_at
+    - Custom template override per page
+    """
+
+    slug = models.SlugField(
+        _("URL slug"),
+        max_length=200,
+        unique=True,
+        help_text=_("URL path for this page (e.g., 'about-us' becomes /about-us/)"),
+    )
+    image = models.ImageField(
+        _("Featured image"),
+        upload_to="pages/",
+        blank=True,
+        help_text=_("Used for Open Graph and social sharing"),
+    )
+
+    # Publishing
+    is_published = models.BooleanField(
+        _("Published"),
+        default=False,
+        help_text=_("Only published pages are visible to visitors"),
+    )
+    publish_at = models.DateTimeField(
+        _("Publish at"),
+        null=True,
+        blank=True,
+        help_text=_("Optional: Schedule when this page becomes visible"),
+    )
+    unpublish_at = models.DateTimeField(
+        _("Unpublish at"),
+        null=True,
+        blank=True,
+        help_text=_("Optional: Schedule when this page is hidden"),
+    )
+
+    # Template override
+    template_name = models.CharField(
+        _("Template override"),
+        max_length=200,
+        blank=True,
+        help_text=_("Optional: Custom template path (e.g., 'pages/custom/pricing.html')"),
+    )
+
+    # Translated fields
+    translations = TranslatedFields(
+        title=models.CharField(_("Title"), max_length=200),
+        content=models.TextField(
+            _("Content"),
+            help_text=_("Markdown content for the page"),
+        ),
+        meta_description=models.CharField(
+            _("Meta description"),
+            max_length=160,
+            blank=True,
+            help_text=_("SEO description (max 160 characters)"),
+        ),
+    )
+
+    # django-meta configuration
+    _metadata = {
+        "title": "title",
+        "description": "meta_description",
+        "image": "get_meta_image",
+        "url": "get_absolute_url",
+    }
+
+    objects = PageManager()
+
+    class Meta:
+        verbose_name = _("Page")
+        verbose_name_plural = _("Pages")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.safe_translation_getter("title", default=self.slug)
+
+    def get_absolute_url(self):
+        return reverse("pages:page_detail", kwargs={"slug": self.slug})
+
+    def get_meta_image(self):
+        """Return the image URL for meta tags."""
+        if self.image:
+            return self.image.url
+        return None
+
+    def is_visible(self):
+        """Check if the page is currently visible based on publish settings."""
+        if not self.is_published:
+            return False
+
+        now = timezone.now()
+        if self.publish_at and self.publish_at > now:
+            return False
+        if self.unpublish_at and self.unpublish_at <= now:
+            return False
+
+        return True
+
+    is_visible.boolean = True
+    is_visible.short_description = _("Visible")
+
