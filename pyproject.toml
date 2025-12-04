@@ -88,6 +88,7 @@ dependencies = [
     "django-hijack",
     "django-guardian",
     "django-meta",
+    "django-parler",
     "django-model-utils",
     "django-ninja",
     "django-structlog",
