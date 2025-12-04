@@ -83,12 +83,14 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.mfa",  # Multi-factor authentication extension
     "meta",  # SEO metadata
+    "parler",  # Translatable model fields
     "sri",  # Sub resource Integrity for JS
     "django_cotton",  # Javascript style components
     # Project apps
     "{{ project_name }}.users",
     "{{ project_name }}.brand",  # Brand colours and logo
     "{{ project_name }}.core",
+    "{{ project_name }}.pages",  # Marketing landing pages
 ]
 
 MIDDLEWARE = [
@@ -96,6 +98,7 @@ MIDDLEWARE = [
     "django_structlog.middlewares.RequestMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",  # Must be after SessionMiddleware
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "axes.middleware.AxesMiddleware",
@@ -434,6 +437,22 @@ LANGUAGES = [
     ("pt", _("Portuguese")),
     ("en", _("English")),
 ]
+
+# django-parler settings
+# https://django-parler.readthedocs.io/en/stable/configuration.html
+PARLER_LANGUAGES = {
+    None: (
+        {"code": "en"},
+        {"code": "de"},
+        {"code": "fr"},
+        {"code": "es"},
+        {"code": "pt"},
+    ),
+    "default": {
+        "fallbacks": ["en"],
+        "hide_untranslated": False,
+    },
+}
 
 # Where to put the translations
 LOCALE_PATHS = [
