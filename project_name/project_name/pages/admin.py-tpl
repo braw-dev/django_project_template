@@ -1,0 +1,76 @@
+from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
+from parler.admin import TranslatableAdmin
+
+from .models import Page
+
+
+@admin.register(Page)
+class PageAdmin(TranslatableAdmin):
+    """Admin configuration for Page model with translation support."""
+
+    list_display = [
+        "title",
+        "slug",
+        "is_published",
+        "is_visible",
+        "publish_at",
+        "unpublish_at",
+        "updated_at",
+    ]
+    list_filter = [
+        "is_published",
+        "created_at",
+        "updated_at",
+    ]
+    search_fields = [
+        "translations__title",
+        "slug",
+        "translations__content",
+    ]
+    prepopulated_fields = {"slug": ("title",)}
+    readonly_fields = ["created_at", "updated_at"]
+
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": ["title", "slug", "content"],
+            },
+        ),
+        (
+            _("SEO"),
+            {
+                "fields": ["meta_description", "image"],
+                "classes": ["collapse"],
+            },
+        ),
+        (
+            _("Publishing"),
+            {
+                "fields": ["is_published", "publish_at", "unpublish_at"],
+            },
+        ),
+        (
+            _("Advanced"),
+            {
+                "fields": ["template_name"],
+                "classes": ["collapse"],
+            },
+        ),
+        (
+            _("Metadata"),
+            {
+                "fields": ["created_at", "updated_at"],
+                "classes": ["collapse"],
+            },
+        ),
+    ]
+
+    def get_prepopulated_fields(self, request, obj=None):
+        # Disable prepopulated fields when editing existing objects
+        # because slug should not change after creation
+        if obj:
+            return {}
+        return self.prepopulated_fields
+
