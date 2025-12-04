@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n parler_tags %}
+{% comment %}
+Base template for marketing pages.
+Extend this template for custom page layouts.
+
+Provides:
+- SEO meta tags via django-meta (inherited from base.html)
+- Hreflang tags for language alternates
+- Prose styling for markdown content
+
+Usage:
+    {% extends "pages/base_page.html" %}
+    {% block page_content %}
+        Your custom content here
+    {% endblock %}
+{% endcomment %}
+{% block extra_head %}
+    {{ block.super }}
+    {% comment %} Add hreflang tags for language alternates {% endcomment %}
+    <ul class="flex gap-2">
+        {% for lang_code, title in LANGUAGES %}
+            {% get_language_info for lang_code as lang %}
+            {% get_translated_url lang_code as tr_url %}
+            {% if tr_url %}
+                <li {% if lang_code == LANGUAGE_CODE %}class="is-selected"{% endif %}>
+                    <a href="{{ tr_url }}" hreflang="{{ lang_code }}">{{ lang.name_local|capfirst }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+{% endblock extra_head %}
+{% block body %}
+    <main class="min-h-screen">
+        {% block page_header %}
+        {% endblock page_header %}
+        {% block page_content %}
+        {% endblock page_content %}
+        {% block page_footer %}
+        {% endblock page_footer %}
+    </main>
+{% endblock body %}
