@@ -1,0 +1,50 @@
+import markdown as md
+from django import template
+from django.utils.safestring import mark_safe
+
+register = template.Library()
+
+
+@register.filter(name="markdown")
+def markdown_filter(value):
+    """
+    Convert markdown text to HTML.
+
+    Usage in templates:
+        {{ page.content|markdown }}
+
+    Or with the safe filter if needed:
+        {{ page.content|markdown|safe }}
+    """
+    if not value:
+        return ""
+
+    extensions = [
+        "extra",  # Tables, fenced code blocks, footnotes, etc.
+        "smarty",  # Smart quotes, dashes
+        "toc",  # Table of contents
+    ]
+
+    return mark_safe(md.markdown(value, extensions=extensions))
+
+
+@register.simple_tag
+def render_markdown(text):
+    """
+    Render markdown text to HTML as a template tag.
+
+    Usage in templates:
+        {% load markdown_tags %}
+        {% render_markdown page.content %}
+    """
+    if not text:
+        return ""
+
+    extensions = [
+        "extra",
+        "smarty",
+        "toc",
+    ]
+
+    return mark_safe(md.markdown(text, extensions=extensions))
+
