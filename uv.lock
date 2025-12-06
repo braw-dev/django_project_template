@@ -1357,6 +1357,7 @@ dependencies = [
     { name = "pillow" },
     { name = "polar-sdk" },
     { name = "psycopg", extra = ["pool"] },
+    { name = "pydantic" },
     { name = "typeid-python" },
     { name = "whitenoise", extra = ["brotli"] },
 ]
@@ -1411,6 +1412,7 @@ requires-dist = [
     { name = "pillow" },
     { name = "polar-sdk" },
     { name = "psycopg", extras = ["pool"], specifier = ">=3.3.1" },
+    { name = "pydantic", specifier = ">=2.11.7" },
     { name = "typeid-python" },
     { name = "whitenoise", extras = ["brotli"] },
 ]
