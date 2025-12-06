@@ -28,7 +28,7 @@ Database migrations should be repeatable (e.g. use `IF NOT EXISTS` etc.)
 
 ### Search
 
-To make it fast and easy to find organizations we integrate with [Meilisearch](https://github.com/meilisearch/meilisearch) which indexes and searches all of our results as fast as possible.
+Search is provided by [Meilisearch](https://github.com/meilisearch/meilisearch).
 
 ### Caching
 
