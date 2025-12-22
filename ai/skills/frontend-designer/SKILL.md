@@ -33,21 +33,37 @@ Choose ONE distinctive aesthetic approach that matches the vision of {{ project_
 
 Inspired by the Japanese bento box, this style organizes content into discrete, rounded rectangular cells of varying sizes. It provides a highly structured, modular layout that is inherently responsive.
 
+Why it works: It creates a clear visual hierarchy and makes complex dashboards or portfolios feel organized and "clickable" without overwhelming the user with a sea of text.
+
 **Option B:** Neo-Brutalism
 
 This aesthetic rejects the soft gradients and shadows of modern design in favor of harsh shadows, bold outlines, and high-contrast colors. It often uses "raw" web elements like default system fonts and bright yellows or greens.
+
+Why it works: The high contrast makes buttons and interactive elements impossible to miss. It feels honest, energetic, and loads quickly because it relies on CSS rather than heavy image assets.
 
 **Option C:** Glassmorphism (Frosted Glass)
 
 Characterized by semi-transparent backgrounds with a soft blur, this style mimics the look of frosted glass. It uses multi-layered approaches to create a sense of vertical depth (Z−index) and hierarchy.
 
+Why it works: It allows for vibrant background colors or patterns to show through without distracting from the text. It makes interfaces feel light, airy, and premium.
+
 **Option D:** Claymorphism
 
 A evolution of "Neumorphism," this style uses soft, rounded corners and double inner/outer shadows to make elements look like 3D clay or inflated plastic. It is often paired with playful 3D illustrations.
 
+Why it works: The "tactile" nature of the buttons provides excellent affordance—users instinctively know what is interactive because it looks physically pushable. It is particularly effective for friendly, approachable brands.
+
 **Option E:** Type-Centric Maximalism
 
 This approach strips away almost all imagery and decoration, making massive, expressive typography the primary design element. It uses variable fonts and creative kerning to build the visual identity.
+
+Why it works: It is incredibly fast-loading and accessible for screen readers. By removing visual "noise," the user’s focus is directed entirely toward the message and the content, making for a very efficient reading experience.
+
+**Option F:** Editorial Academicism
+
+This aesthetic borrows from the world of high-end publishing and research journals. It swaps the typical "tech blue" and sleek dark modes for creamy off-white backgrounds, serif typography, and earthy, muted color palettes.
+
+Why it works: It establishes immediate trust and authority by feeling scholarly rather than corporate. The use of paper-like textures and "slow-reading" layouts reduces digital eye strain and signals that the content is deeply considered, making it perfect for AI, research, or mission-driven brands.
 
 ---
 
