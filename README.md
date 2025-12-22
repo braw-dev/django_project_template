@@ -23,6 +23,7 @@ uv run django-admin startproject \
 - [ ] Init a new git repository `git init .`
 - [ ] Install dev dependencies & lefthook git hooks `just install-dev`
 - [ ] Configure environment variables by copying `.env.dist` to `.env` and customizing
+- [ ] Search for `REPLACE_ME:` and update accordingly.
 - [ ] Review `settings.py` settings
 - [ ] Collect staticfiles `just collectstatic`
 - [ ] Run tests: `just test-unit` and `just test-e2e`
