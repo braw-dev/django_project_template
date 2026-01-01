@@ -1,0 +1,1 @@
+../../ai/commands/speckit.taskstoissues.md
