@@ -18,6 +18,12 @@ mkcert:
         mkcert -cert-file=/tmp/{{project_name}}.crt -key-file=/tmp/{{project_name}}.key localhost 127.0.0.1; \
     fi
 
+# Link the AI folders
+ai-link:
+    @mkdir -p .cursor/commands .claude/commands
+    @stow --dir=ai --target=.cursor/commands commands rules
+    @stow --dir=ai --target=.claude/commands commands rules
+
 ###############################################
 ## Testing related targets
 ###############################################
