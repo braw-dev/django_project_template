@@ -23,7 +23,8 @@ uv run django-admin startproject \
 - [ ] Init a new git repository `git init .`
 - [ ] Install dev dependencies & lefthook git hooks `just install-dev`
 - [ ] Configure environment variables by copying `.env.dist` to `.env` and customizing
-- [ ] Search for `REPLACE_ME:` and update accordingly.
+- [ ] Search for `REPLACE_ME:` and update accordingly
+- [ ] Establish the [SpecKit project principals](https://github.com/github/spec-kit?tab=readme-ov-file#2-establish-project-principles) in AI agent of choice (Cursor and Claude support included)
 - [ ] Review `settings.py` settings
 - [ ] Collect staticfiles `just collectstatic`
 - [ ] Run tests: `just test-unit` and `just test-e2e`
