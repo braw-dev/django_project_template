@@ -1,0 +1,281 @@
+---
+description: 
+globs: **/models.py
+alwaysApply: false
+---
+# Models
+
+Models should take care of the data model and not much else.
+
+## Base model
+
+It's a good idea to define a `BaseModel`, that you can inherit.
+
+Usually, fields like `created_at` and `updated_at` are perfect candidates to go into a `BaseModel`.
+
+Here's an example `BaseModel`:
+
+```python
+from django.db import models
+from django.utils import timezone
+
+
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(db_index=True, default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+```
+
+Then, whenever you need a new model, just inherit `BaseModel`:
+
+```python
+class SomeModel(BaseModel):
+    pass
+```
+
+## Validation - `clean` and `full_clean`
+
+Lets take a look at an example model:
+
+```python
+class Course(BaseModel):
+    name = models.CharField(unique=True, max_length=255)
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    def clean(self):
+        if self.start_date >= self.end_date:
+            raise ValidationError("End date cannot be before start date")
+```
+
+We are defining the model's `clean` method, because we want to make sure we get good data in our database.
+
+Now, in order for the `clean` method to be called, someone must call `full_clean` on an instance of our model, before saving.
+
+**Our recommendation is to do that in the service, right before calling save:**
+
+```python
+def course_create(*, name: str, start_date: date, end_date: date) -> Course:
+    obj = Course(name=name, start_date=start_date, end_date=end_date)
+
+    obj.full_clean()
+    obj.save()
+
+    return obj
+```
+
+This also plays well with Django admin, because the forms used there will trigger `full_clean` on the instance.
+
+**We have few general rules of thumb for when to add validation in the model's `clean` method:**
+
+1. If we are validating based on multiple, **non-relational fields**, of the model.
+1. If the validation itself is simple enough.
+
+**Validation should be moved to the service layer if:**
+
+1. The validation logic is more complex.
+1. Spanning relations & fetching additional data is required.
+
+> It's OK to have validation both in `clean` and in the service, but we tend to move things in the service, if that's the case.
+
+## Validation - constraints
+
+As proposed in [this issue](https://github.com/HackSoftware/Django-Styleguide/issues/22), if you can do validation using [Django's constraints](https://docs.djangoproject.com/en/dev/ref/models/constraints/), then you should aim for that.
+
+Less code to write, less code to maintain, the database will take care of the data even if it's being inserted from a different place.
+
+Lets look at an example!
+
+```python
+class Course(BaseModel):
+    name = models.CharField(unique=True, max_length=255)
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                name="start_date_before_end_date",
+                check=Q(start_date__lt=F("end_date"))
+            )
+        ]
+```
+
+Now, if we try to create new object via `course.save()` or via `Course.objects.create(...)`, we are going to get an `IntegrityError`, rather than a `ValidationError`.
+
+This can actually be a downside (_this is not the case, starting from Django 4.1. Check the extra section below._) to the approach, because now, we have to deal with the `IntegrityError`, which does not always have the best error message.
+
+> 👀 ⚠️ 👀 Since Django 4.1, calling `.full_clean` will also check model constraints!
+>
+> This actually removes the downside, mentioned above, since you'll get a nice `ValidationError`, if your model constraints fail the check (if you go thru `Model.objects.create(...)` the downside still holds)
+>
+> More on this, here - <https://docs.djangoproject.com/en/4.1/ref/models/instances/#validating-objects>
+>
+> For an example test case, check the Styleguide-Example repo - <https://github.com/HackSoftware/Django-Styleguide-Example/blob/master/styleguide_example/common/tests/models/test_random_model.py#L12>
+
+The Django's documentation on constraints is quite lean, so you can check the following articles by Adam Johnson, for examples of how to use them:
+
+1. [Using Django Check Constraints to Ensure Only One Field Is Set](https://adamj.eu/tech/2020/03/25/django-check-constraints-one-field-set/)
+1. [Django’s Field Choices Don’t Constrain Your Data](https://adamj.eu/tech/2020/01/22/djangos-field-choices-dont-constrain-your-data/)
+1. [Using Django Check Constraints to Prevent Self-Following](https://adamj.eu/tech/2021/02/26/django-check-constraints-prevent-self-following/)
+
+## Properties
+
+Model properties are great way to quickly access a derived value from a model's instance.
+
+For example, lets look at the `has_started` and `has_finished` properties of our `Course` model:
+
+```python
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+
+
+class Course(BaseModel):
+    name = models.CharField(unique=True, max_length=255)
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    def clean(self):
+        if self.start_date >= self.end_date:
+            raise ValidationError("End date cannot be before start date")
+
+    @property
+    def has_started(self) -> bool:
+        now = timezone.now()
+
+        return self.start_date <= now.date()
+
+    @property
+    def has_finished(self) -> bool:
+        now = timezone.now()
+
+        return self.end_date <= now.date()
+```
+
+Those properties are handy, because we can now refer to them in serializers or use them in templates.
+
+**We have few general rules of thumb, for when to add properties to the model:**
+
+1. If we need a simple derived value, based on **non-relational model fields**, add a `@property` for that.
+1. If the calculation of the derived value is simple enough.
+
+**Properties should be something else (service, selector, utility) in the following cases:**
+
+1. If we need to span multiple relations or fetch additional data.
+1. If the calculation is more complex.
+
+Keep in mind that those rules are vague, because context is quite often important. Use your best judgement!
+
+## Methods
+
+Model methods are also very powerful tool, that can build on top of properties.
+
+Lets see an example with the `is_within(self, x)` method:
+
+```python
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+
+
+class Course(BaseModel):
+    name = models.CharField(unique=True, max_length=255)
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    def clean(self):
+        if self.start_date >= self.end_date:
+            raise ValidationError("End date cannot be before start date")
+
+    @property
+    def has_started(self) -> bool:
+        now = timezone.now()
+
+        return self.start_date <= now.date()
+
+    @property
+    def has_finished(self) -> bool:
+        now = timezone.now()
+
+        return self.end_date <= now.date()
+
+    def is_within(self, x: date) -> bool:
+        return self.start_date <= x <= self.end_date
+```
+
+`is_within` cannot be a property, because it requires an argument. So it's a method instead.
+
+Another great way for using methods in models is using them for **attribute setting**, when setting one attribute must always be followed by setting another attribute with a derived value.
+
+An example:
+
+```python
+from django.utils.crypto import get_random_string
+from django.conf import settings
+from django.utils import timezone
+
+
+class Token(BaseModel):
+    secret = models.CharField(max_length=255, unique=True)
+    expiry = models.DateTimeField(blank=True, null=True)
+
+    def set_new_secret(self):
+        now = timezone.now()
+
+        self.secret = get_random_string(255)
+        self.expiry = now + settings.TOKEN_EXPIRY_TIMEDELTA
+
+        return self
+```
+
+Now, we can safely call `set_new_secret`, that'll produce correct values for both `secret` and `expiry`.
+
+**We have few general rules of thumb, for when to add methods to the model:**
+
+1. If we need a simple derived value, that requires arguments, based on **non-relational model fields**, add a method for that.
+1. If the calculation of the derived value is simple enough.
+1. If setting one attribute always requires setting values to other attributes, use a method for that.
+
+**Methods should be something else (service, selector, utility) in the following cases:**
+
+1. If we need to span multiple relations or fetch additional data.
+1. If the calculation is more complex.
+
+Keep in mind that those rules are vague, because context is quite often important. Use your best judgement!
+
+## Testing
+
+Models need to be tested only if there's something additional to them - like validation, properties or methods.
+
+Here's an example:
+
+```python
+from datetime import timedelta
+
+from django.test import TestCase
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+
+from project.some_app.models import Course
+
+
+class CourseTests(TestCase):
+    def test_course_end_date_cannot_be_before_start_date(self):
+        start_date = timezone.now()
+        end_date = timezone.now() - timedelta(days=1)
+
+        course = Course(start_date=start_date, end_date=end_date)
+
+        with self.assertRaises(ValidationError):
+            course.full_clean()
+```
+
+A few things to note here:
+
+1. We assert that a validation error is going to be raised if we call `full_clean`.
+1. **We are not hitting the database at all**, since there's no need for that. This can speed up certain tests.

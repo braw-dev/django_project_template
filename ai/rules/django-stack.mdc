@@ -1,0 +1,87 @@
+---
+description: Django stack conventions and architecture for this project
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Django Stack
+
+This project uses a specific Django stack. Follow these conventions.
+
+## Architecture
+
+- **Hybrid Rendering**: Django templates for server-rendered pages + optional React/Vite for interactive components.
+- **MVT Pattern**: Model-View-Template with services layer for business logic.
+- **API**: Django Ninja for REST endpoints.
+
+## Core Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `django-allauth` | Authentication (email, social, MFA) |
+| `django-ninja` | REST API framework |
+| `django-guardian` | Row-level permissions |
+| `django-environ` | Environment configuration |
+| `django-cotton` | HTML components |
+| `celery` + `redis` | Background tasks |
+| `diskcache` | Caching |
+
+## Key Principles
+
+1. **Use built-in features first**. Django has solutions for most problems.
+2. **Prefer CBVs for complex views**, FBVs for simple logic.
+3. **Use the ORM**. Avoid raw SQL unless absolutely necessary.
+4. **Use the provided User model** in `users/models.py`.
+5. **Use `django-allauth` flows**. Don't write custom auth code.
+
+## Project Structure
+
+```bash
+project_root/
+├── <project_name>/          # Django project
+│   ├── <project_name>/      # Main app (settings, urls)
+│   ├── core/                # Core app (shared models, views)
+│   ├── users/               # User management
+│   └── <other_apps>/        # Feature apps
+├── frontend/                # React/Vite (optional)
+├── templates/               # Django templates
+└── static/                  # Static assets
+```
+
+## Services Pattern
+
+Business logic lives in `services.py`:
+
+```python
+def user_create(*, email: str, name: str) -> User:
+    user = User(email=email)
+    user.full_clean()
+    user.save()
+    return user
+```
+
+## Selectors Pattern
+
+Data retrieval logic lives in `selectors.py`:
+
+```python
+def user_get_by_email(*, email: str) -> User | None:
+    return User.objects.filter(email=email).first()
+```
+
+## Error Handling
+
+- Use Django's built-in error handling.
+- Customize error pages (400, 403, 404, 429, 500).
+- Use `ValidationError` for model validation.
+- Use try-except in services for business logic errors.
+
+## Components (django-cotton)
+
+Use `django-cotton` for reusable HTML components:
+
+```html
+<c-button variant="primary">Click me</c-button>
+```
+
+Components live in `components/` directory.

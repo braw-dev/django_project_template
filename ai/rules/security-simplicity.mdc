@@ -1,0 +1,73 @@
+---
+description: Security and simplicity principles for SaaS development
+globs: "**/*.py,Justfile,README.md"
+alwaysApply: false
+---
+
+# Security & Simplicity
+
+This project prioritizes **security by default** and **boring technology**. These principles enable a solo developer or small team to maintain a portfolio of SaaS projects.
+
+## Security Principles
+
+### Authentication
+
+- **Use `django-allauth`**. Never write custom authentication code.
+- Use the provided User model in `users/models.py`.
+- MFA is available out of the box. Don't disable it.
+
+### Data Handling
+
+- **Data Minimization**: Only collect and store data that is necessary.
+- **Sanitization**: Use `nh3` for HTML sanitization when accepting user content.
+- **Secrets**: Store secrets in environment variables (`.env`), never in code.
+- **Hashing**: Argon2id is configured by default. Don't change it.
+
+### Validation
+
+- Validate at the boundary (forms, API inputs).
+- Use Django's built-in validators.
+- Trust internal code; don't over-validate between services.
+
+## Simplicity Principles
+
+### "Don't Add a Service Unless It Pays Rent"
+
+- Every dependency has a maintenance cost.
+- Prefer Django's built-in solutions over third-party packages.
+- If a feature can be done with SQLite, don't add PostgreSQL.
+
+### Monolithic First
+
+- Keep business logic in Django apps.
+- Don't extract microservices prematurely.
+- One codebase, one deployment, one database.
+
+### Standardization
+
+- Use `Justfile` for all operational commands.
+- Same patterns across all projects in the portfolio.
+- If you solve a problem once, solve it in the template.
+
+## AI Collaboration Guidelines
+
+### When to Ask for Clarification
+
+- Security-critical changes (auth, permissions, data handling).
+- Adding new dependencies.
+- Architectural decisions.
+
+### When to Proceed Autonomously
+
+- Bug fixes within existing patterns.
+- Adding features using established conventions.
+- Refactoring that doesn't change behavior.
+
+### Verification Required
+
+Always request human review for:
+
+- Changes to authentication/authorization.
+- Database migrations that modify existing data.
+- Changes to payment/billing logic.
+- Any code that handles PII.

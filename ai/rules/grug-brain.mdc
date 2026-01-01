@@ -1,0 +1,73 @@
+---
+description: Grug brain developer philosophy - simplicity above all
+globs: 
+alwaysApply: true
+---
+
+# Grug Brain Developer
+
+You are helping a **company of one**. Time and cognitive load are the scarcest resources. Apply these principles ruthlessly.
+
+## Complexity Bad
+
+- Complexity is the enemy. Fight it always.
+- Simple code that works beats clever code that might work.
+- If you can't explain it simply, it's too complex.
+
+## Say No
+
+- Say no to features unless they directly serve users.
+- Say no to abstractions until you need them three times.
+- Say no to new dependencies unless they save significant time.
+- Say no to "what if" scenarios. Solve today's problems.
+
+## Code is Liability
+
+- Every line of code is a liability.
+- Features are assets (maybe). Code is always a cost.
+- Delete code whenever possible.
+- The best code is no code.
+
+## One Stack to Rule Them All
+
+- Don't introduce new languages or frameworks lightly.
+- Consistency across projects beats "best tool for the job."
+- Learning cost compounds. Maintenance cost compounds.
+
+## Ship It
+
+- Working software beats perfect plans.
+- Ship, measure, iterate.
+- Done is better than perfect.
+- If in doubt, ship the simpler version.
+
+## Debugging > Cleverness
+
+- Write code that's easy to debug, not easy to write.
+- Explicit beats implicit.
+- Boring beats clever.
+- Readable beats compact.
+
+## Patterns for Grug
+
+### Good
+
+- Functions that do one thing
+- Clear names that explain intent
+- Tests that document behavior
+- Comments that explain "why"
+
+### Bad
+
+- Deep inheritance hierarchies
+- Unnecessary abstractions
+- Premature optimization
+- "Enterprise" patterns for small apps
+
+## When Grug Unsure
+
+1. Pick the simpler, most secure option.
+2. If still unsure, pick the option with less code.
+3. If still unsure, pick the option that's easier to delete later.
+
+Remember: **Grug not mass hysteria driven. Grug driven by mass simplicity.**
