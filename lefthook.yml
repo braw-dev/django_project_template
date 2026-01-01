@@ -24,3 +24,8 @@ pre-commit:
       stage_fixed: true
       glob:
         - "*.md"
+      exclude:
+        - "ai/**"
+        - ".specify/**"
+        - ".cursor/**"
+        - ".claude/**"
