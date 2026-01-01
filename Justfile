@@ -20,10 +20,11 @@ mkcert:
 
 # Link the AI folders
 ai-link:
-    @mkdir -p .cursor/commands .claude/commands
-    @stow --dir=ai --target=.cursor/commands commands rules
-    @stow --dir=ai --target=.claude/commands commands rules
-
+    @mkdir -p .cursor/{commands,rules} .claude/{commands,rules}
+    @stow --dir=ai --target=.cursor/commands commands
+    @stow --dir=ai --target=.cursor/rules rules
+    @stow --dir=ai --target=.claude/commands commands
+    @stow --dir=ai --target=.claude/rules rules
 ###############################################
 ## Testing related targets
 ###############################################
