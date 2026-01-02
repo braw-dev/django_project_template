@@ -1,59 +1,83 @@
-# [PROJECT_NAME] Constitution
+<!--
+Sync Impact Report:
+- Version change: New -> 1.0.0
+- Modified principles: Initial creation based on project rules and motivation.
+- Added sections: Core Principles (Grug Brain, Security First, Boring Technology, Internationalisation First, MVP & Speed), Architecture & Patterns, Development Workflow.
+- Templates requiring updates:
+  - .specify/templates/plan-template.md: ✅ (Compatible)
+  - .specify/templates/spec-template.md: ✅ (Compatible)
+  - .specify/templates/tasks-template.md: ✅ (Compatible)
+- Follow-up TODOs: None.
+-->
 
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Django Project Template Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
+### I. Grug Brain (Simplicity)
 
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+Complexity is the enemy. Fight it always. Simple code that works beats clever code that might work. If you can't explain it simply, it's too complex.
 
-### [PRINCIPLE_2_NAME]
+- **Say No**: To features unless they serve users; to abstractions until needed 3 times; to new dependencies unless they save significant time.
+- **Code is Liability**: Delete code whenever possible. The best code is no code.
+- **Debugging > Cleverness**: Explicit beats implicit. Boring beats clever.
 
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Security First
 
-### [PRINCIPLE_3_NAME]
+Security by default. This enables a solo developer to maintain a portfolio of SaaS projects securely.
 
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+- **Authentication**: Use `django-allauth`. Never write custom authentication code.
+- **Data Handling**: Minimize data collection. Sanitize user content with `nh3`. Store secrets in environment variables.
+- **Validation**: Validate at boundaries. Trust internal code.
+- **Verification**: Human review required for auth, permissions, payment logic, and PII handling.
 
-### [PRINCIPLE_4_NAME]
+### III. Boring Technology (One Stack)
 
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+Stick to the defined stack: Django, Python, React/Vite (optional), Tailwind CSS, PostgreSQL/SQLite.
 
-### [PRINCIPLE_5_NAME]
+- **Consistency**: Consistency across projects beats "best tool for the job".
+- **No New Stacks**: Don't introduce new languages or frameworks lightly. Learning and maintenance costs compound.
+- **Use Built-ins**: Prefer Django's built-in solutions and the ORM over third-party packages or raw SQL.
 
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### IV. Internationalisation First
 
-## [SECTION_2_NAME]
+Support translations from the start to avoid technical debt later.
 
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+- **No Hardcoded Strings**: Absolutely NO user-facing strings shall be hardcoded in Python or templates.
+- **Use Translation Tools**: Wrap strings in `gettext_lazy` / `_()` or `{% translate %}` tags.
+- **Localization**: Use Django's localization tools for dates and numbers.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### V. MVP & Speed
 
-## [SECTION_3_NAME]
+Working software beats perfect plans.
 
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+- **Ship It**: Ship, measure, iterate. Done is better than perfect.
+- **Monolithic First**: Keep business logic in Django apps. Don't extract microservices prematurely.
+- **Focus**: Solve today's problems, not "what if" scenarios.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## Architecture & Patterns
+
+Follow the defined Django stack architecture (`django-stack.mdc`).
+
+- **MVT Pattern**: Model-View-Template with a services layer.
+- **Services**: Business logic lives in `services.py` (e.g., `user_create`).
+- **Selectors**: Data retrieval logic lives in `selectors.py` (e.g., `user_get_by_email`).
+- **Components**: Use `django-cotton` for reusable UI components.
+- **API**: Use `django-ninja` for REST endpoints.
+- **Frontend**: Hybrid rendering (Django templates + React/Vite for interactivity).
+
+## Development Workflow
+
+- **Operational Excellence**: Use `Justfile` for all commands (`just install-dev`, `just test-unit`, `just format`).
+- **Testing**: Test-First mentality. Use `pytest` for unit tests and `playwright` for E2E.
+- **Quality Gates**: `ruff` for linting/formatting is enforced via `lefthook`.
+- **Documentation**: Update `README.md` or `MOTIVATION.md` if architectural changes are made.
 
 ## Governance
 
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+- **Supremacy**: This Constitution supersedes other documentation practices unless explicitly amended.
+- **Amendments**: Changes to principles require a Pull Request, justification, and version bump.
+- **Compliance**: All PRs must verify compliance with these principles.
+- **Reference**: See `ai/rules/` for detailed runtime guidance.
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-02
