@@ -1,0 +1,43 @@
+"""Template tags for feature flags."""
+
+from django import template
+
+from {{ project_name }}.flags.services import is_flag_enabled
+
+register = template.Library()
+
+
+@register.simple_tag(name="flag_enabled")
+def flag_enabled_tag(flag_name: str, default: bool = False) -> bool:
+    """
+    Check if a feature flag is enabled in templates.
+
+    Usage:
+        {% load flags %}
+        {% flag_enabled "new_checkout" as checkout_enabled %}
+        {% if checkout_enabled %}
+            <!-- New checkout UI -->
+        {% endif %}
+
+    Or as a boolean filter:
+        {% load flags %}
+        {% if "new_checkout"|flag_enabled %}
+            <!-- New checkout UI -->
+        {% endif %}
+    """
+    return is_flag_enabled(flag_name, default=default)
+
+
+@register.filter(name="flag_enabled")
+def flag_enabled_filter(flag_name: str, default: bool = False) -> bool:
+    """
+    Filter to check if a feature flag is enabled.
+
+    Usage:
+        {% load flags %}
+        {% if "new_checkout"|flag_enabled %}
+            <!-- New checkout UI -->
+        {% endif %}
+    """
+    return is_flag_enabled(flag_name, default=default)
+

@@ -1,0 +1,23 @@
+from django.apps import AppConfig
+from django.db.models.signals import post_delete, post_save
+
+
+class FlagsConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "{{ project_name }}.flags"
+    verbose_name = "Feature Flags"
+
+    def ready(self):
+        """Set up cache invalidation signals when flags are saved or deleted."""
+        from {{ project_name }}.flags.models import FeatureFlag
+        from {{ project_name }}.flags.providers import DjangoFlagProvider
+
+        provider = DjangoFlagProvider()
+
+        def invalidate_flag_cache(sender, instance, **kwargs):
+            """Invalidate cache when a flag is saved or deleted."""
+            provider.invalidate_cache(instance.name)
+
+        post_save.connect(invalidate_flag_cache, sender=FeatureFlag)
+        post_delete.connect(invalidate_flag_cache, sender=FeatureFlag)
+

@@ -1,0 +1,32 @@
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+from {{ project_name }}.utils.models import BaseModel
+
+
+class FeatureFlag(BaseModel):
+    """Simple binary feature flag."""
+
+    name = models.SlugField(
+        max_length=100,
+        unique=True,
+        db_index=True,
+        help_text=_("Unique identifier for this flag (e.g., 'new_checkout')"),
+    )
+    enabled = models.BooleanField(
+        default=False,
+        help_text=_("Whether this feature flag is currently enabled"),
+    )
+    description = models.TextField(
+        blank=True,
+        help_text=_("Internal notes about this flag and what it controls"),
+    )
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = _("Feature Flag")
+        verbose_name_plural = _("Feature Flags")
+
+    def __str__(self):
+        return self.name
+

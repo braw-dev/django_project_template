@@ -1,0 +1,7 @@
+"""Feature flags app for managing binary feature toggles."""
+
+from {{ project_name }}.flags.decorators import feature_flag
+from {{ project_name }}.flags.services import get_client, is_flag_enabled
+
+__all__ = ["is_flag_enabled", "get_client", "feature_flag"]
+

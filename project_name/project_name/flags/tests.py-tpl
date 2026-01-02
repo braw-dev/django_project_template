@@ -1,0 +1,66 @@
+from django.core.cache import cache
+from django.test import TestCase
+
+from {{ project_name }}.flags.models import FeatureFlag
+from {{ project_name }}.flags.services import is_flag_enabled
+
+
+class FeatureFlagModelTest(TestCase):
+    """Test FeatureFlag model."""
+
+    def test_create_flag(self):
+        """Test creating a feature flag."""
+        flag = FeatureFlag.objects.create(name="test_flag", enabled=True)
+        self.assertEqual(flag.name, "test_flag")
+        self.assertTrue(flag.enabled)
+
+    def test_flag_str(self):
+        """Test flag string representation."""
+        flag = FeatureFlag.objects.create(name="test_flag")
+        self.assertEqual(str(flag), "test_flag")
+
+
+class FeatureFlagServiceTest(TestCase):
+    """Test feature flag service functions."""
+
+    def setUp(self):
+        """Clear cache before each test."""
+        cache.clear()
+
+    def test_is_flag_enabled_returns_true_when_enabled(self):
+        """Test that enabled flags return True."""
+        FeatureFlag.objects.create(name="enabled_flag", enabled=True)
+        self.assertTrue(is_flag_enabled("enabled_flag"))
+
+    def test_is_flag_enabled_returns_false_when_disabled(self):
+        """Test that disabled flags return False."""
+        FeatureFlag.objects.create(name="disabled_flag", enabled=False)
+        self.assertFalse(is_flag_enabled("disabled_flag"))
+
+    def test_is_flag_enabled_returns_default_when_not_found(self):
+        """Test that missing flags return default value."""
+        self.assertFalse(is_flag_enabled("nonexistent_flag"))
+        self.assertTrue(is_flag_enabled("nonexistent_flag", default=True))
+
+    def test_flag_caching(self):
+        """Test that flag values are cached."""
+        flag = FeatureFlag.objects.create(name="cached_flag", enabled=True)
+        self.assertTrue(is_flag_enabled("cached_flag"))
+
+        # Change flag in database without clearing cache
+        flag.enabled = False
+        flag.save()
+
+        # Cache should be invalidated by signal, so should return False
+        self.assertFalse(is_flag_enabled("cached_flag"))
+
+    def test_cache_invalidation_on_delete(self):
+        """Test that cache is invalidated when flag is deleted."""
+        flag = FeatureFlag.objects.create(name="delete_flag", enabled=True)
+        self.assertTrue(is_flag_enabled("delete_flag"))
+
+        flag.delete()
+
+        # Should return default after deletion
+        self.assertFalse(is_flag_enabled("delete_flag"))
+

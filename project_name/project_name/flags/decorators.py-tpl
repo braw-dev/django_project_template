@@ -1,0 +1,62 @@
+"""Decorators for feature flag control."""
+
+from functools import wraps
+from typing import Callable
+
+from django.http import Http404, HttpResponseForbidden
+from django.shortcuts import redirect
+
+from {{ project_name }}.flags.services import is_flag_enabled
+
+
+def feature_flag(
+    flag_name: str,
+    fallback_view: str | None = None,
+    raise_404: bool = False,
+) -> Callable:
+    """
+    Decorator to control view access based on a feature flag.
+
+    Args:
+        flag_name: The name of the feature flag to check
+        fallback_view: Optional URL name to redirect to if flag is disabled
+        raise_404: If True, raise Http404 instead of redirecting/forbidding
+
+    Returns:
+        Decorated view function
+
+    Examples:
+        # Redirect to homepage if flag is disabled
+        @feature_flag("beta_dashboard", fallback_view="core:homepage")
+        def beta_dashboard(request):
+            return render(request, "beta/dashboard.html")
+
+        # Raise 404 if flag is disabled
+        @feature_flag("new_feature", raise_404=True)
+        def new_feature_view(request):
+            return render(request, "features/new.html")
+
+        # Return 403 if flag is disabled
+        @feature_flag("admin_tools")
+        def admin_tools(request):
+            return render(request, "admin/tools.html")
+    """
+
+    def decorator(view_func: Callable) -> Callable:
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if is_flag_enabled(flag_name):
+                return view_func(request, *args, **kwargs)
+
+            if raise_404:
+                raise Http404("Feature not available")
+
+            if fallback_view:
+                return redirect(fallback_view)
+
+            return HttpResponseForbidden("Feature not enabled")
+
+        return _wrapped_view
+
+    return decorator
+

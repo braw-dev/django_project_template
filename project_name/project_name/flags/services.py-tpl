@@ -1,0 +1,56 @@
+"""Public API for feature flags."""
+
+from typing import TYPE_CHECKING
+
+from {{ project_name }}.flags.providers import DjangoFlagProvider, FlagProvider
+
+if TYPE_CHECKING:
+    pass
+
+# Global provider instance
+_default_provider: FlagProvider | None = None
+
+
+def get_provider() -> FlagProvider:
+    """Get the default flag provider instance."""
+    global _default_provider
+    if _default_provider is None:
+        _default_provider = DjangoFlagProvider()
+    return _default_provider
+
+
+def get_client() -> FlagProvider:
+    """
+    Get a feature flag client (OpenFeature-compatible API).
+
+    Returns:
+        A flag provider instance that can resolve flag values
+
+    Example:
+        client = get_client()
+        if client.resolve_boolean_value("new_checkout"):
+            # new code path
+            pass
+    """
+    return get_provider()
+
+
+def is_flag_enabled(flag_key: str, default: bool = False) -> bool:
+    """
+    Check if a feature flag is enabled.
+
+    Args:
+        flag_key: The unique identifier for the flag
+        default: Value to return if flag is not found (default: False)
+
+    Returns:
+        True if the flag is enabled, False otherwise
+
+    Example:
+        if is_flag_enabled("new_checkout"):
+            # new code path
+            pass
+    """
+    provider = get_provider()
+    return provider.resolve_boolean_value(flag_key, default_value=default)
+

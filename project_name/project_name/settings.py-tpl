@@ -91,6 +91,7 @@ INSTALLED_APPS = [
     "{{ project_name }}.brand",  # Brand colours and logo
     "{{ project_name }}.core",
     "{{ project_name }}.pages",  # Marketing landing pages
+    "{{ project_name }}.flags",  # Feature flags
 ]
 
 MIDDLEWARE = [
@@ -402,12 +403,8 @@ META_USE_SITES = True
 # https://django-cotton.com/docs/configuration
 COTTON_DIR = "components"
 
-# Flagsmith feature flags
-FLAGSMITH_ENVIRONMENT_KEY = env.str("FLAGSMITH_ENVIRONMENT_KEY", default="")
-FLAGSMITH_API_URL = env.str(
-    "FLAGSMITH_API_URL",
-    default="https://edge.api.flagsmith.com/api/v1/",
-)
+# Feature flags
+FLAGS_CACHE_TIMEOUT = env.int("FLAGS_CACHE_TIMEOUT", default=300)
 
 POLAR_ACCESS_TOKEN = env.str("POLAR_ACCESS_TOKEN", default="")
 POLAR_ORGANIZATION_ID = env.str("POLAR_ORGANIZATION_ID", default="")

@@ -1,0 +1,84 @@
+"""Flag provider protocol and implementations."""
+
+from typing import Protocol
+
+from django.core.cache import cache
+from django.conf import settings
+
+from {{ project_name }}.flags.models import FeatureFlag
+
+
+class FlagProvider(Protocol):
+    """OpenFeature-compatible provider interface for feature flags."""
+
+    def resolve_boolean_value(
+        self,
+        flag_key: str,
+        default_value: bool = False,
+        context: dict | None = None,
+    ) -> bool:
+        """
+        Resolve a boolean flag value.
+
+        Args:
+            flag_key: The unique identifier for the flag
+            default_value: Value to return if flag is not found
+            context: Optional context (e.g., user, request) - reserved for future use
+
+        Returns:
+            The resolved boolean value of the flag
+        """
+        ...
+
+
+class DjangoFlagProvider:
+    """Django database-backed flag provider with caching."""
+
+    def __init__(self, cache_timeout: int | None = None):
+        """
+        Initialize the provider.
+
+        Args:
+            cache_timeout: Cache timeout in seconds. Defaults to FLAGS_CACHE_TIMEOUT setting.
+        """
+        self.cache_timeout = cache_timeout or getattr(
+            settings, "FLAGS_CACHE_TIMEOUT", 300
+        )
+
+    def resolve_boolean_value(
+        self,
+        flag_key: str,
+        default_value: bool = False,
+        context: dict | None = None,
+    ) -> bool:
+        """
+        Resolve a boolean flag value from the database with caching.
+
+        Args:
+            flag_key: The unique identifier for the flag
+            default_value: Value to return if flag is not found
+            context: Optional context (reserved for future use)
+
+        Returns:
+            The resolved boolean value of the flag
+        """
+        cache_key = f"flag:{flag_key}"
+        cached_value = cache.get(cache_key)
+
+        if cached_value is not None:
+            return cached_value
+
+        try:
+            flag = FeatureFlag.objects.get(name=flag_key)
+            enabled = flag.enabled
+            cache.set(cache_key, enabled, timeout=self.cache_timeout)
+            return enabled
+        except FeatureFlag.DoesNotExist:
+            cache.set(cache_key, default_value, timeout=self.cache_timeout)
+            return default_value
+
+    def invalidate_cache(self, flag_key: str) -> None:
+        """Invalidate the cache for a specific flag."""
+        cache_key = f"flag:{flag_key}"
+        cache.delete(cache_key)
+
