@@ -64,6 +64,20 @@ A `startapp` template is available under `/app_name` to bootstrap new apps with 
 just startapp {{ app_name }}
 ```
 
+## Built-in Features
+
+### Organizations & Teams (RBAC)
+
+This project includes a built-in role-based access control (RBAC) system for managing
+multi-tenant organizational hierarchies:
+
+- **Organizations**: Top-level tenants/workspaces
+- **Teams**: Sub-groups within organizations
+- **Roles**: Define permissions (Admin, Editor, Viewer)
+- **Cascading Permissions**: Organization admins automatically access all teams
+
+See `{{ project_name }}/organizations/README.md` for usage details.
+
 ## Development Setup
 
 ### Prerequisites
