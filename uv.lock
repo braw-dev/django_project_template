@@ -582,18 +582,6 @@ wheels = [
 ]
 
 [[package]]
-name = "django-guardian"
-version = "3.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/30/82/2c76cdf77eae3cb0c3df394686daf8f84bcd604c0da7a26fa19f5fe74ed4/django_guardian-3.0.0.tar.gz", hash = "sha256:0c79d55c4af2cfc14fbd19539846a1ebfed2a38198b7697e0f5177b7f654e1cd", size = 79895, upload-time = "2025-05-07T19:33:23.328Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a5/81/a2f3d3245d1f4cf446d78863526fba0b1b140d60784095a5cc2d4e8ac709/django_guardian-3.0.0-py3-none-any.whl", hash = "sha256:f3ebe3cc7f486e267041b780c3429ad5db72c909df40c2f74adb1b059582a3cd", size = 112672, upload-time = "2025-05-07T19:33:21.719Z" },
-]
-
-[[package]]
 name = "django-hijack"
 version = "3.7.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1272,7 +1260,6 @@ dependencies = [
     { name = "django-environ" },
     { name = "django-extensions" },
     { name = "django-filter" },
-    { name = "django-guardian" },
     { name = "django-hijack" },
     { name = "django-meta" },
     { name = "django-model-utils" },
@@ -1292,6 +1279,7 @@ dependencies = [
     { name = "polar-sdk" },
     { name = "psycopg", extra = ["pool"] },
     { name = "pydantic" },
+    { name = "rules" },
     { name = "typeid-python" },
     { name = "whitenoise", extra = ["brotli"] },
 ]
@@ -1326,7 +1314,6 @@ requires-dist = [
     { name = "django-environ" },
     { name = "django-extensions" },
     { name = "django-filter" },
-    { name = "django-guardian" },
     { name = "django-hijack" },
     { name = "django-meta" },
     { name = "django-model-utils" },
@@ -1346,6 +1333,7 @@ requires-dist = [
     { name = "polar-sdk" },
     { name = "psycopg", extras = ["pool"], specifier = ">=3.3.1" },
     { name = "pydantic", specifier = ">=2.11.7" },
+    { name = "rules" },
     { name = "typeid-python" },
     { name = "whitenoise", extras = ["brotli"] },
 ]
@@ -1646,6 +1634,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/6a/ef/b960ab4818f90ff59e571d03c3f992828d4683561095e80f9ef31f3d58b7/ruff-0.12.0-py3-none-win32.whl", hash = "sha256:7162a4c816f8d1555eb195c46ae0bd819834d2a3f18f98cc63819a7b46f474fb", size = 10525289, upload-time = "2025-06-17T15:19:19.688Z" },
     { url = "https://files.pythonhosted.org/packages/34/93/8b16034d493ef958a500f17cda3496c63a537ce9d5a6479feec9558f1695/ruff-0.12.0-py3-none-win_amd64.whl", hash = "sha256:d00b7a157b8fb6d3827b49d3324da34a1e3f93492c1f97b08e222ad7e9b291e0", size = 11598311, upload-time = "2025-06-17T15:19:21.785Z" },
     { url = "https://files.pythonhosted.org/packages/d0/33/4d3e79e4a84533d6cd526bfb42c020a23256ae5e4265d858bd1287831f7d/ruff-0.12.0-py3-none-win_arm64.whl", hash = "sha256:8cd24580405ad8c1cc64d61725bca091d6b6da7eb3d36f72cc605467069d7e8b", size = 10724946, upload-time = "2025-06-17T15:19:23.952Z" },
+]
+
+[[package]]
+name = "rules"
+version = "3.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f7/36/918cf4cc9fd0e38bb9310b2d1a13ae6ebb2b5732d56e7de6feb4a992a6ed/rules-3.5.tar.gz", hash = "sha256:f01336218f4561bab95f53672d22418b4168baea271423d50d9e8490d64cb27a", size = 55504, upload-time = "2024-09-02T16:01:46.174Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ea/33/16213dd62ca8ce8749985318a966ac1300ab55c977b2d66632a45b405c99/rules-3.5-py2.py3-none-any.whl", hash = "sha256:0f00fc9ee448b3f82e9aff9334ab0c56c76dce4dfa14f1598f57969f1022acc0", size = 25658, upload-time = "2024-09-02T16:01:44.844Z" },
 ]
 
 [[package]]

@@ -48,7 +48,7 @@ ignore = [
 exclude = ["node_modules", "build", "dist"]
 respect-gitignore = true
 # Disable line length rule
-disabled = ["MD013",]
+disable = ["MD013"]
 
 [tool.djlint]
 profile = "django"
@@ -86,11 +86,11 @@ dependencies = [
     "django-extensions",
     "django-filter",
     "django-hijack",
-    "django-guardian",
     "django-meta",
     "django-parler",
     "django-model-utils",
     "django-ninja",
+    "rules",
     "django-structlog",
     "django-storages[s3]",
     "django-sri",
