@@ -70,7 +70,6 @@ INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",  # Whitenoise for static files in development
     "django.contrib.staticfiles",
     "axes",  # Login throttling
-    "guardian",  # Object level permissions
     "django_vite",
     "django_structlog",
     "django_filters",  # Filtering based on user input
@@ -92,6 +91,7 @@ INSTALLED_APPS = [
     "{{ project_name }}.core",
     "{{ project_name }}.pages",  # Marketing landing pages
     "{{ project_name }}.flags",  # Feature flags
+    "{{ project_name }}.organizations",  # Organizations and RBAC
 ]
 
 MIDDLEWARE = [
@@ -296,7 +296,7 @@ PASSWORD_HASHERS = [
 AUTHENTICATION_BACKENDS = (
     "axes.backends.AxesBackend",
     "django.contrib.auth.backends.ModelBackend",  # default
-    "guardian.backends.ObjectPermissionBackend",
+    "rules.permissions.ObjectPermissionBackend",  # django-rules
     # `allauth` specific authentication methods, such as login by email
     "allauth.account.auth_backends.AuthenticationBackend",
 )

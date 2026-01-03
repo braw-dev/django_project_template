@@ -1,0 +1,58 @@
+"""Template tags for organization permissions."""
+
+import rules
+from django import template
+
+register = template.Library()
+
+
+@register.simple_tag
+def has_org_perm(user, permission, org):
+    """Check if user has permission in an organization.
+
+    Usage:
+        {% has_org_perm user 'organizations.change_organisation' org as can_edit %}
+        {% if can_edit %}
+            <a href="...">Edit</a>
+        {% endif %}
+    """
+    return rules.has_perm(permission, user, org)
+
+
+@register.simple_tag
+def has_team_perm(user, permission, team):
+    """Check if user has permission in a team.
+
+    Usage:
+        {% has_team_perm user 'organizations.change_team' team as can_edit %}
+        {% if can_edit %}
+            <a href="...">Edit</a>
+        {% endif %}
+    """
+    return rules.has_perm(permission, user, team)
+
+
+@register.filter
+def user_org_role(user, org):
+    """Get user's role in an organization.
+
+    Usage:
+        {{ org|user_org_role:user }}
+    """
+    from . import models
+
+    membership = models.OrganisationMember.objects.filter(user=user, organisation=org).first()
+    return membership.role.name if membership else None
+
+
+@register.filter
+def user_team_role(user, team):
+    """Get user's role in a team.
+
+    Usage:
+        {{ team|user_team_role:user }}
+    """
+    from . import models
+
+    membership = models.TeamMember.objects.filter(user=user, team=team).first()
+    return membership.role.name if membership else None

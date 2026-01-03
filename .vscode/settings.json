@@ -51,6 +51,7 @@
 		"pyrefly",
 		"pytest",
 		"Quadlet",
+		"Queryset",
 		"ripgrep",
 		"rollup",
 		"rumdl",
