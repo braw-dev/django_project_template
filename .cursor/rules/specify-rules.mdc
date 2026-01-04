@@ -1,0 +1,29 @@
+# django_project_template Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-01-04
+
+## Active Technologies
+
+- Python 3.13+ (per existing `pyproject.toml`) (002-add-polar-payments)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLOGIES] pytest [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLOGIES] ruff check .
+
+## Code Style
+
+Python 3.13+ (per existing `pyproject.toml`): Follow standard conventions
+
+## Recent Changes
+
+- 002-add-polar-payments: Added Python 3.13+ (per existing `pyproject.toml`)
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->
