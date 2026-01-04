@@ -23,7 +23,6 @@ def is_org_admin(user, org):
     return membership.role.permissions.get("*") is True
 
 
-@rules.predicate
 def has_org_permission(user, org, perm):
     """Check if user has a specific permission in the organization."""
     if not user or not user.is_authenticated:
@@ -66,7 +65,6 @@ def is_org_admin_for_team(user, team):
     return is_org_admin(user, team.organisation)
 
 
-@rules.predicate
 def has_team_permission(user, team, perm):
     """Check if user has a specific permission in the team."""
     if not user or not user.is_authenticated:
