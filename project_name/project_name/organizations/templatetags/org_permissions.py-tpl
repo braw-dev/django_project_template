@@ -11,10 +11,12 @@ def has_org_perm(user, permission, org):
     """Check if user has permission in an organization.
 
     Usage:
-        {% has_org_perm user 'organizations.change_organisation' org as can_edit %}
-        {% if can_edit %}
+        {% templatetag openblock %}
+            has_org_perm user 'organizations.change_organisation' org as can_edit
+        {% templatetag closeblock %}
+        {% templatetag openblock %} if can_edit {% templatetag closeblock %}
             <a href="...">Edit</a>
-        {% endif %}
+        {% templatetag openblock %} endif {% templatetag closeblock %}
     """
     return rules.has_perm(permission, user, org)
 
@@ -24,10 +26,12 @@ def has_team_perm(user, permission, team):
     """Check if user has permission in a team.
 
     Usage:
-        {% has_team_perm user 'organizations.change_team' team as can_edit %}
-        {% if can_edit %}
+        {% templatetag openblock %}
+            has_team_perm user 'organizations.change_team' team as can_edit
+        {% templatetag closeblock %}
+        {% templatetag openblock %} if can_edit {% templatetag closeblock %}
             <a href="...">Edit</a>
-        {% endif %}
+        {% templatetag openblock %} endif {% templatetag closeblock %}
     """
     return rules.has_perm(permission, user, team)
 
@@ -37,7 +41,7 @@ def user_org_role(user, org):
     """Get user's role in an organization.
 
     Usage:
-        {{ org|user_org_role:user }}
+        {% templatetag openvariable %} org|user_org_role:user {% templatetag closevariable %}
     """
     from . import models
 
@@ -50,7 +54,7 @@ def user_team_role(user, team):
     """Get user's role in a team.
 
     Usage:
-        {{ team|user_team_role:user }}
+        {% templatetag openvariable %} team|user_team_role:user {% templatetag closevariable %}
     """
     from . import models
 

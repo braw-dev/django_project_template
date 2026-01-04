@@ -11,10 +11,10 @@ def markdown_filter(value):
     Convert markdown text to HTML.
 
     Usage in templates:
-        {{ page.content|markdown }}
+        {% templatetag openvariable %} page.content|markdown {% templatetag closevariable %}
 
     Or with the safe filter if needed:
-        {{ page.content|markdown|safe }}
+        {% templatetag openvariable %} page.content|markdown|safe {% templatetag closevariable %}
     """
     if not value:
         return ""
@@ -34,8 +34,8 @@ def render_markdown(text):
     Render markdown text to HTML as a template tag.
 
     Usage in templates:
-        {% load markdown_tags %}
-        {% render_markdown page.content %}
+        {% templatetag openblock %} load markdown_tags {% templatetag closeblock %}
+        {% templatetag openblock %} render_markdown page.content {% templatetag closeblock %}
     """
     if not text:
         return ""
@@ -47,4 +47,3 @@ def render_markdown(text):
     ]
 
     return mark_safe(md.markdown(text, extensions=extensions))
-
