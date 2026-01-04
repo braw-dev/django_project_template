@@ -167,13 +167,13 @@ cursor.execute(f"SELECT * FROM users WHERE email = '{user_email}'")  # SQL injec
 
 ```django
 <!-- GOOD: Auto-escaped -->
-<p>{{ user.comment }}</p>
+<p>{% templatetag openvariable %} user.comment {% templatetag closevariable %}</p>
 
 <!-- BAD: Disabled escaping -->
-<p>{{ user.comment|safe }}</p>
+<p>{% templatetag openvariable %} user.comment|safe {% templatetag closevariable %}</p>
 
 <!-- GOOD: Sanitized HTML -->
-<p>{{ user.comment|nh3_clean }}</p>
+<p>{% templatetag openvariable %} user.comment|nh3_clean {% templatetag closevariable %}</p>
 ```
 
 ### 7. CSRF Protection

@@ -44,7 +44,7 @@ Stick to the defined stack: Django, Python, React/Vite (optional), Tailwind CSS,
 Support translations from the start to avoid technical debt later.
 
 - **No Hardcoded Strings**: Absolutely NO user-facing strings shall be hardcoded in Python or templates.
-- **Use Translation Tools**: Wrap strings in `gettext_lazy` / `_()` or `{% translate %}` tags.
+- **Use Translation Tools**: Wrap strings in `gettext_lazy` / `_()` or `{% templatetag openblock %} translate {% templatetag closeblock %}` tags.
 - **Localization**: Use Django's localization tools for dates and numbers.
 
 ### V. MVP & Speed

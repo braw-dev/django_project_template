@@ -25,12 +25,12 @@ if rules.has_perm('organizations.change_team', user, team):
 ### In Templates
 
 ```django
-{% load rules %}
+{% templatetag openblock %} load rules {% templatetag closeblock %}
 
-{% has_perm 'organizations.change_organisation' user org as can_edit_org %}
-{% if can_edit_org %}
+{% templatetag openblock %} has_perm 'organizations.change_organisation' user org as can_edit_org {% templatetag closeblock %}
+{% templatetag openblock %} if can_edit_org {% templatetag closeblock %}
     <a href="...">Edit Org</a>
-{% endif %}
+{% templatetag openblock %} endif {% templatetag closeblock %}
 ```
 
 ### Decorators

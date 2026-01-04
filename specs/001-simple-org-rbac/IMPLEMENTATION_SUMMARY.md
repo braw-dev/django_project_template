@@ -40,10 +40,10 @@ Created a complete Django app at `project_name/project_name/organizations/` with
   - `middleware.py`: Catches `PermissionError` and converts to `Http404`
 
 - **UI Integration** (`templatetags/org_permissions.py`):
-  - `{% has_org_perm %}` template tag
-  - `{% has_team_perm %}` template tag
-  - `{{ org|user_org_role:user }}` filter
-  - `{{ team|user_team_role:user }}` filter
+  - `{% templatetag openblock %} has_org_perm {% templatetag closeblock %}` template tag
+  - `{% templatetag openblock %} has_team_perm {% templatetag closeblock %}` template tag
+  - `{% templatetag openvariable %} org|user_org_role:user {% templatetag closevariable %}` filter
+  - `{% templatetag openvariable %} team|user_team_role:user {% templatetag closevariable %}` filter
 
 - **Testing** (`tests.py`):
   - 20+ unit tests covering:
@@ -163,9 +163,9 @@ if rules.has_perm('organizations.change_team', user, team):
     pass
 
 # In templates
-{% load org_permissions %}
-{% has_org_perm user 'organizations.change_organisation' org as can_edit %}
-{% if can_edit %}<a href="...">Edit</a>{% endif %}
+{% templatetag openblock %} load org_permissions {% templatetag closeblock %}
+{% templatetag openblock %} has_org_perm user 'organizations.change_organisation' org as can_edit {% templatetag closeblock %}
+{% templatetag openblock %} if can_edit {% templatetag closeblock %}<a href="...">Edit</a>{% templatetag openblock %} endif {% templatetag closeblock %}
 ```
 
 ## What Replaces django-guardian

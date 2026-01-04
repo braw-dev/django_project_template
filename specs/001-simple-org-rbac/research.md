@@ -52,7 +52,7 @@ class Role(models.Model):
 
 ### 5. Template Tags
 
-**Decision**: Custom template tag `{% has_perm 'action' obj %}` wrapping `rules.has_perm`.
+**Decision**: Custom template tag `{% templatetag openblock %} has_perm 'action' obj {% templatetag closeblock %}` wrapping `rules.has_perm`.
 
 ## Unknowns & Clarifications (Resolved)
 

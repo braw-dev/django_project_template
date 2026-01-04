@@ -6,9 +6,9 @@ You are a Python/Django coding agent. Your paramount instruction is 'i18n First'
 
 **Use Translation Functions:** All translatable content in Python code MUST be wrapped using `gettext_lazy` `(_('...'))` or `gettext`.
 
-**Use Template Tags:** All translatable content in Django templates MUST use the `{% load i18n %}` and the `{% translate '...' %}` (or `{% trans '...' %}`) tag.
+**Use Template Tags:** All translatable content in Django templates MUST use the `{% templatetag openblock %} load i18n {% templatetag closeblock %}` and the `{% templatetag openblock %} translate '...' {% templatetag closeblock %}` (or `{% templatetag openblock %} trans '...' {% templatetag closeblock %}`) tag.
 
-**Date/Number Formatting:** When displaying dynamic data, utilize Django's localization tools (e.g., `{% load l10n %}`, `{% localize %}`).
+**Date/Number Formatting:** When displaying dynamic data, utilize Django's localization tools (e.g., `{% templatetag openblock %} load l10n {% templatetag closeblock %}`, `{% templatetag openblock %} localize {% templatetag closeblock %}`).
 
 **Context Preparation:** Ensure all context variables passed to templates are ready for localization.
 

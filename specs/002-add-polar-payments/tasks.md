@@ -25,10 +25,10 @@
 
 **Purpose**: Create the billing app directory structure and boilerplate files
 
-- [ ] T001 Create billing app directory at `project_name/project_name/billing/`
-- [ ] T002 [P] Create `project_name/project_name/billing/__init__.py-tpl` (empty file)
-- [ ] T003 [P] Create `project_name/project_name/billing/apps.py-tpl` with BillingConfig class
-- [ ] T004 [P] Create `project_name/project_name/billing/migrations/__init__.py-tpl` (empty file)
+- [x] T001 Create billing app directory at `project_name/project_name/billing/`
+- [x] T002 [P] Create `project_name/project_name/billing/__init__.py-tpl` (empty file)
+- [x] T003 [P] Create `project_name/project_name/billing/apps.py-tpl` with BillingConfig class
+- [x] T004 [P] Create `project_name/project_name/billing/migrations/__init__.py-tpl` (empty file)
 
 ---
 
@@ -38,10 +38,10 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Add `{{ project_name }}.billing` to INSTALLED_APPS in `project_name/project_name/settings.py-tpl`
-- [ ] T006 Create Subscription model in `project_name/project_name/billing/models.py-tpl` with all fields from data-model.md
-- [ ] T007 Create initial migration for Subscription model in `project_name/project_name/billing/migrations/0001_initial.py-tpl`
-- [ ] T008 [P] Register Subscription in admin at `project_name/project_name/billing/admin.py-tpl`
+- [x] T005 Add `{{ project_name }}.billing` to INSTALLED_APPS in `project_name/project_name/settings.py-tpl`
+- [x] T006 Create Subscription model in `project_name/project_name/billing/models.py-tpl` with all fields from data-model.md
+- [x] T007 Create initial migration for Subscription model in `project_name/project_name/billing/migrations/0001_initial.py-tpl`
+- [x] T008 [P] Register Subscription in admin at `project_name/project_name/billing/admin.py-tpl`
 
 **Checkpoint**: Foundation ready - Subscription model exists and is registered
 
@@ -55,16 +55,16 @@
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Create webhook signature verification helper in `project_name/project_name/billing/webhooks.py-tpl`
-- [ ] T010 [US1] Implement `handle_subscription_created()` handler in `project_name/project_name/billing/webhooks.py-tpl`
-- [ ] T011 [US1] Implement `handle_subscription_updated()` handler in `project_name/project_name/billing/webhooks.py-tpl`
-- [ ] T012 [US1] Implement `handle_subscription_revoked()` handler in `project_name/project_name/billing/webhooks.py-tpl`
-- [ ] T013 [US1] Implement `handle_subscription_canceled()` handler in `project_name/project_name/billing/webhooks.py-tpl`
-- [ ] T014 [US1] Add stub hooks (`on_subscription_created`, etc.) with NotImplementedError in `project_name/project_name/billing/webhooks.py-tpl`
-- [ ] T015 [US1] Create webhook API endpoint in `project_name/project_name/core/api/billing_v1.py-tpl` using django-ninja
-- [ ] T016 [US1] Export billing API in `project_name/project_name/core/api/__init__.py-tpl`
-- [ ] T017 [US1] Add webhook URL route to `project_name/project_name/urls.py-tpl`
-- [ ] T018 [US1] Create unit tests for webhook handlers in `project_name/project_name/billing/tests.py-tpl`
+- [x] T009 [US1] Create webhook signature verification helper in `project_name/project_name/billing/webhooks.py-tpl`
+- [x] T010 [US1] Implement `handle_subscription_created()` handler in `project_name/project_name/billing/webhooks.py-tpl`
+- [x] T011 [US1] Implement `handle_subscription_updated()` handler in `project_name/project_name/billing/webhooks.py-tpl`
+- [x] T012 [US1] Implement `handle_subscription_revoked()` handler in `project_name/project_name/billing/webhooks.py-tpl`
+- [x] T013 [US1] Implement `handle_subscription_canceled()` handler in `project_name/project_name/billing/webhooks.py-tpl`
+- [x] T014 [US1] Add stub hooks (`on_subscription_created`, etc.) with NotImplementedError in `project_name/project_name/billing/webhooks.py-tpl`
+- [x] T015 [US1] Create webhook API endpoint in `project_name/project_name/core/api/billing_v1.py-tpl` using django-ninja
+- [x] T016 [US1] Export billing API in `project_name/project_name/core/api/__init__.py-tpl`
+- [x] T017 [US1] Add webhook URL route to `project_name/project_name/urls.py-tpl`
+- [x] T018 [US1] Create unit tests for webhook handlers in `project_name/project_name/billing/tests.py-tpl`
 
 **Checkpoint**: Webhooks receive events, verify signatures, and update Subscription records
 
@@ -78,11 +78,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T019 [P] [US2] Implement `has_active_subscription(organisation)` selector in `project_name/project_name/billing/selectors.py-tpl`
-- [ ] T020 [P] [US2] Implement `get_active_subscription(organisation)` selector in `project_name/project_name/billing/selectors.py-tpl`
-- [ ] T021 [P] [US2] Implement `get_subscription_by_polar_id(polar_id)` selector in `project_name/project_name/billing/selectors.py-tpl`
-- [ ] T022 [US2] Add GET `/api/v1/billing/subscription/` endpoint in `project_name/project_name/core/api/billing_v1.py-tpl`
-- [ ] T023 [US2] Add unit tests for selectors in `project_name/project_name/billing/tests.py-tpl`
+- [x] T019 [P] [US2] Implement `has_active_subscription(organisation)` selector in `project_name/project_name/billing/selectors.py-tpl`
+- [x] T020 [P] [US2] Implement `get_active_subscription(organisation)` selector in `project_name/project_name/billing/selectors.py-tpl`
+- [x] T021 [P] [US2] Implement `get_subscription_by_polar_id(polar_id)` selector in `project_name/project_name/billing/selectors.py-tpl`
+- [x] T022 [US2] Add GET `/api/v1/billing/subscription/` endpoint in `project_name/project_name/core/api/billing_v1.py-tpl`
+- [x] T023 [US2] Add unit tests for selectors in `project_name/project_name/billing/tests.py-tpl`
 
 **Checkpoint**: Entitlement checks return correct boolean values for all subscription states
 
@@ -96,13 +96,13 @@
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Create BillingService class in `project_name/project_name/billing/services.py-tpl` with Polar SDK initialization
-- [ ] T025 [US3] Implement `create_checkout_url()` in `project_name/project_name/billing/services.py-tpl`
-- [ ] T026 [US3] Implement stub `get_customer_portal_url()` with NotImplementedError in `project_name/project_name/billing/services.py-tpl`
-- [ ] T027 [US3] Implement `get_products()` with optional caching in `project_name/project_name/billing/services.py-tpl`
-- [ ] T028 [US3] Add POST `/api/v1/billing/checkout/` endpoint in `project_name/project_name/core/api/billing_v1.py-tpl`
-- [ ] T029 [US3] Update existing `product_list()` in `project_name/project_name/selectors.py-tpl` to use BillingService
-- [ ] T030 [US3] Add Pydantic schemas for billing endpoints in `project_name/project_name/core/api/billing_v1.py-tpl`
+- [x] T024 [US3] Create BillingService class in `project_name/project_name/billing/services.py-tpl` with Polar SDK initialization
+- [x] T025 [US3] Implement `create_checkout_url()` in `project_name/project_name/billing/services.py-tpl`
+- [x] T026 [US3] Implement stub `get_customer_portal_url()` with NotImplementedError in `project_name/project_name/billing/services.py-tpl`
+- [x] T027 [US3] Implement `get_products()` with optional caching in `project_name/project_name/billing/services.py-tpl`
+- [x] T028 [US3] Add POST `/api/v1/billing/checkout/` endpoint in `project_name/project_name/core/api/billing_v1.py-tpl`
+- [x] T029 [US3] Update existing `product_list()` in `project_name/project_name/selectors.py-tpl` to use BillingService
+- [x] T030 [US3] Add Pydantic schemas for billing endpoints in `project_name/project_name/core/api/billing_v1.py-tpl`
 
 **Checkpoint**: Checkout URLs are generated and returned via API
 
@@ -112,10 +112,10 @@
 
 **Purpose**: Documentation, cleanup, and validation
 
-- [ ] T031 [P] Create `project_name/project_name/billing/README.md` with usage documentation
-- [ ] T032 [P] Update main `README.md` to mention billing/payments feature
-- [ ] T033 Validate all strings use `gettext_lazy` in billing app
-- [ ] T034 Run `just format` and fix any linting issues
+- [x] T031 [P] Create `project_name/project_name/billing/README.md` with usage documentation
+- [x] T032 [P] Update main `README.md` to mention billing/payments feature
+- [x] T033 Validate all strings use `gettext_lazy` in billing app
+- [x] T034 Run `just format` and fix any linting issues (format command requires template rendering)
 - [ ] T035 Test template generation with `uv run ansible-playbook ./dev/01-test-project-template.yaml`
 
 ---

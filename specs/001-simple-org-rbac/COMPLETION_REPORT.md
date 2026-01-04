@@ -188,7 +188,7 @@ Users of this template should:
 - [ ] Run `just migrate` to create organizations tables
 - [ ] Import and use `organizations.services` for member management
 - [ ] Use `@require_org_permission` decorator on org-scoped views
-- [ ] Use `{% has_org_perm %}` template tags in templates
+- [ ] Use `{% templatetag openblock %} has_org_perm {% templatetag closeblock %}` template tags in templates
 - [ ] Create custom roles via admin as needed
 - [ ] See `organizations/README.md` for detailed usage
 
