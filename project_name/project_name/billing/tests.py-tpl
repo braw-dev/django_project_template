@@ -1,0 +1,208 @@
+"""Tests for billing app."""
+
+import uuid
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch
+
+import pytest
+from django.utils import timezone
+from standardwebhooks.webhooks import WebhookVerificationError
+
+from {{ project_name }}.organizations import models as org_models
+
+from . import models, webhooks
+
+
+@pytest.fixture
+def organisation():
+    """Create a test organisation."""
+    return org_models.Organisation.objects.create(
+        name="Test Org",
+        slug="test-org",
+    )
+
+
+@pytest.fixture
+def subscription(organisation):
+    """Create a test subscription."""
+    return models.Subscription.objects.create(
+        organisation=organisation,
+        polar_subscription_id="sub_test123",
+        polar_customer_id="cust_test123",
+        polar_product_id="prod_test123",
+        status=models.Subscription.SubscriptionStatus.ACTIVE,
+        current_period_end=timezone.now() + timedelta(days=30),
+    )
+
+
+@pytest.mark.django_db
+class TestWebhookVerification:
+    """Test webhook signature verification."""
+
+    def test_verify_webhook_signature_success(self, settings):
+        """Test successful webhook verification."""
+        settings.POLAR_WEBHOOK_SECRET = "test_secret"
+
+        mock_webhook = MagicMock()
+        mock_webhook.verify.return_value = {"type": "subscription.created", "data": {}}
+
+        with patch("{{ project_name }}.billing.webhooks.Webhook", return_value=mock_webhook):
+            result = webhooks.verify_webhook_signature(b"body", {"header": "value"})
+            assert result == {"type": "subscription.created", "data": {}}
+
+    def test_verify_webhook_signature_missing_secret(self, settings):
+        """Test verification fails when secret not configured."""
+        settings.POLAR_WEBHOOK_SECRET = ""
+
+        with pytest.raises(WebhookVerificationError):
+            webhooks.verify_webhook_signature(b"body", {"header": "value"})
+
+    def test_verify_webhook_signature_failure(self, settings):
+        """Test verification failure raises exception."""
+        settings.POLAR_WEBHOOK_SECRET = "test_secret"
+
+        mock_webhook = MagicMock()
+        mock_webhook.verify.side_effect = WebhookVerificationError("Invalid signature")
+
+        with patch("{{ project_name }}.billing.webhooks.Webhook", return_value=mock_webhook):
+            with pytest.raises(WebhookVerificationError):
+                webhooks.verify_webhook_signature(b"body", {"header": "value"})
+
+
+@pytest.mark.django_db
+class TestSubscriptionHandlers:
+    """Test subscription webhook handlers."""
+
+    def test_handle_subscription_created(self, organisation):
+        """Test creating a subscription from webhook."""
+        data = {
+            "id": "sub_new123",
+            "customer_id": "cust_new123",
+            "product_id": "prod_new123",
+            "status": "active",
+            "current_period_start": "2026-01-01T00:00:00Z",
+            "current_period_end": "2026-02-01T00:00:00Z",
+            "cancel_at_period_end": False,
+            "metadata": {"organization_id": str(organisation.id)},
+        }
+
+        with patch("{{ project_name }}.billing.webhooks.on_subscription_created"):
+            subscription = webhooks.handle_subscription_created(data)
+
+        assert subscription is not None
+        assert subscription.polar_subscription_id == "sub_new123"
+        assert subscription.organisation == organisation
+        assert subscription.status == "active"
+
+    def test_handle_subscription_created_missing_org(self):
+        """Test creating subscription with missing organisation."""
+        data = {
+            "id": "sub_new123",
+            "customer_id": "cust_new123",
+            "product_id": "prod_new123",
+            "status": "active",
+            "metadata": {"organization_id": str(uuid.uuid4())},
+        }
+
+        subscription = webhooks.handle_subscription_created(data)
+        assert subscription is None
+
+    def test_handle_subscription_updated(self, subscription):
+        """Test updating a subscription from webhook."""
+        data = {
+            "id": subscription.polar_subscription_id,
+            "status": "past_due",
+            "current_period_end": "2026-03-01T00:00:00Z",
+            "cancel_at_period_end": True,
+        }
+
+        with patch("{{ project_name }}.billing.webhooks.on_subscription_updated"):
+            updated = webhooks.handle_subscription_updated(data)
+
+        assert updated is not None
+        assert updated.status == "past_due"
+        assert updated.cancel_at_period_end is True
+
+    def test_handle_subscription_revoked(self, subscription):
+        """Test revoking a subscription."""
+        data = {"id": subscription.polar_subscription_id}
+
+        with patch("{{ project_name }}.billing.webhooks.on_subscription_revoked"):
+            revoked = webhooks.handle_subscription_revoked(data)
+
+        assert revoked is not None
+        assert revoked.status == models.Subscription.SubscriptionStatus.REVOKED
+
+    def test_handle_subscription_canceled(self, subscription):
+        """Test canceling a subscription."""
+        data = {
+            "id": subscription.polar_subscription_id,
+            "canceled_at": "2026-01-15T00:00:00Z",
+        }
+
+        with patch("{{ project_name }}.billing.webhooks.on_subscription_canceled"):
+            canceled = webhooks.handle_subscription_canceled(data)
+
+        assert canceled is not None
+        assert canceled.status == models.Subscription.SubscriptionStatus.CANCELED
+        assert canceled.canceled_at is not None
+
+
+@pytest.mark.django_db
+class TestSelectors:
+    """Test billing selectors."""
+
+    def test_has_active_subscription_true(self, subscription):
+        """Test has_active_subscription returns True for active subscription."""
+        from {{ project_name }}.billing import selectors
+
+        assert selectors.has_active_subscription(subscription.organisation) is True
+
+    def test_has_active_subscription_false_revoked(self, organisation):
+        """Test has_active_subscription returns False for revoked subscription."""
+        from {{ project_name }}.billing import selectors
+
+        models.Subscription.objects.create(
+            organisation=organisation,
+            polar_subscription_id="sub_revoked",
+            polar_customer_id="cust_revoked",
+            polar_product_id="prod_revoked",
+            status=models.Subscription.SubscriptionStatus.REVOKED,
+        )
+
+        assert selectors.has_active_subscription(organisation) is False
+
+    def test_has_active_subscription_false_no_subscription(self, organisation):
+        """Test has_active_subscription returns False when no subscription exists."""
+        from {{ project_name }}.billing import selectors
+
+        assert selectors.has_active_subscription(organisation) is False
+
+    def test_get_active_subscription(self, subscription):
+        """Test get_active_subscription returns subscription."""
+        from {{ project_name }}.billing import selectors
+
+        result = selectors.get_active_subscription(subscription.organisation)
+        assert result == subscription
+
+    def test_get_active_subscription_none(self, organisation):
+        """Test get_active_subscription returns None when no active subscription."""
+        from {{ project_name }}.billing import selectors
+
+        result = selectors.get_active_subscription(organisation)
+        assert result is None
+
+    def test_get_subscription_by_polar_id(self, subscription):
+        """Test get_subscription_by_polar_id returns subscription."""
+        from {{ project_name }}.billing import selectors
+
+        result = selectors.get_subscription_by_polar_id(subscription.polar_subscription_id)
+        assert result == subscription
+
+    def test_get_subscription_by_polar_id_none(self):
+        """Test get_subscription_by_polar_id returns None for non-existent ID."""
+        from {{ project_name }}.billing import selectors
+
+        result = selectors.get_subscription_by_polar_id("sub_nonexistent")
+        assert result is None
+

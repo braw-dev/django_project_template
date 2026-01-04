@@ -52,7 +52,7 @@ uv run django-admin startproject \
 
 ### Business
 
-- **Payments**: Polar.sh integration.
+- **Payments**: Polar.sh integration with subscription management, webhook handling, and entitlement checks.
 - **i18n**: Django i18n with Google Gemini auto-translation.
 - **Deployment**: VPS ready (Podman + Ansible), multi-site support.
 

@@ -15,33 +15,62 @@ def user_has_permission(*, user: user_models.User, permission: str) -> bool:
 
 
 def product_list() -> list[dict]:
-    """Return a list of products.
-    
+    """Return a list of products from Polar.sh.
 
-    return [
-        {
-            "name": "Starter",
-            "price": "$9/mo",
-            "features": ["Feature 1", "Feature 2"],
-            "cta": "Start Free Trial",
-            "popular": False,
-        },
-        {
-            "name": "Pro",
-            "price": "$29/mo",
-            "features": ["Everything in Starter", "Feature 3", "Feature 4"],
-            "cta": "Get Started",
-            "popular": True,
-        },
-        {
-            "name": "Enterprise",
-            "price": "Custom",
-            "features": ["Everything in Pro", "Dedicated Support", "SLA"],
-            "cta": "Contact Sales",
-            "popular": False,
-        },
-    ]
+    Returns:
+        List of product dictionaries with name, price, features, etc.
+
+    Note:
+        This function fetches products from Polar.sh API.
+        Override this function to add project-specific formatting,
+        feature mapping, or fallback to hardcoded products.
     """
+    from {{ project_name }}.billing import services
 
-    raise NotImplementedError("Fetch from Polar.sh")
+    try:
+        billing_service = services.get_billing_service()
+        products = billing_service.get_products(use_cache=True)
+
+        # Transform Polar products to template format
+        # Override this function to customize the format
+        return [
+            {
+                "id": product.get("id"),
+                "name": product.get("name", "Unknown"),
+                "price": _format_price(product),
+                "features": product.get("benefits", []),
+                "cta": "Get Started",
+                "popular": False,
+            }
+            for product in products
+        ]
+
+    except Exception:
+        # Fallback to empty list if Polar API unavailable
+        # Override this function to provide fallback products
+        return []
+
+
+def _format_price(product: dict) -> str:
+    """Format product price for display.
+
+    Args:
+        product: Product dictionary from Polar
+
+    Returns:
+        Formatted price string
+    """
+    # Override this function to customize price formatting
+    prices = product.get("prices", [])
+    if not prices:
+        return "Custom"
+
+    # Get first recurring price
+    for price in prices:
+        if price.get("type") == "recurring":
+            amount = price.get("amount", 0) / 100  # Convert cents to dollars
+            interval = price.get("recurring_interval", "month")
+            return f"${amount:.0f}/{interval}"
+
+    return "Custom"
 

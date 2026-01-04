@@ -42,15 +42,15 @@ def edit_org(request, org_slug):
 ### In Templates
 
 ```django
-{% load org_permissions %}
+{% templatetag openblock %} load org_permissions {% templatetag closeblock %}
 
-{% has_org_perm user 'organizations.change_organisation' org as can_edit %}
-{% if can_edit %}
+{% templatetag openblock %} has_org_perm user 'organizations.change_organisation' org as can_edit {% templatetag closeblock %}
+{% templatetag openblock %} if can_edit {% templatetag closeblock %}
     <a href="...">Edit Organization</a>
-{% endif %}
+{% templatetag openblock %} endif {% templatetag closeblock %}
 
-{# Get user's role #}
-{{ org|user_org_role:user }}
+{% templatetag opencomment %} Get user's role {% templatetag closecomment %}
+{% templatetag openvariable %} org|user_org_role:user {% templatetag closevariable %}
 ```
 
 ### Services

@@ -1,0 +1,317 @@
+"""Webhook handlers for Polar.sh subscription events."""
+
+import logging
+from datetime import datetime
+from typing import Any
+
+from django.conf import settings
+from standardwebhooks import Webhook
+from standardwebhooks.webhooks import WebhookVerificationError
+
+from {{ project_name }}.organizations import models as org_models
+
+from . import models
+
+logger = logging.getLogger(__name__)
+
+
+def verify_webhook_signature(body: bytes, headers: dict[str, str]) -> dict[str, Any]:
+    """Verify webhook signature using Standard Webhooks spec.
+
+    Args:
+        body: Raw request body bytes
+        headers: Request headers dict
+
+    Returns:
+        Parsed webhook payload
+
+    Raises:
+        WebhookVerificationError: If signature verification fails
+    """
+    secret = settings.POLAR_WEBHOOK_SECRET
+    if not secret:
+        raise WebhookVerificationError("POLAR_WEBHOOK_SECRET not configured")
+
+    wh = Webhook(secret)
+    return wh.verify(body, headers)
+
+
+def handle_subscription_created(data: dict[str, Any]) -> models.Subscription | None:
+    """Handle subscription.created webhook event.
+
+    Creates a local Subscription record from Polar webhook data.
+
+    Args:
+        data: Subscription data from Polar webhook
+
+    Returns:
+        Created Subscription instance, or None if organisation not found
+    """
+    polar_subscription_id = data.get("id")
+    polar_customer_id = data.get("customer_id")
+    polar_product_id = data.get("product_id")
+    status = data.get("status", "incomplete")
+    metadata = data.get("metadata", {})
+
+    # Extract organisation_id from metadata
+    organisation_id = metadata.get("organization_id")
+    if not organisation_id:
+        logger.warning(
+            "subscription.created webhook missing organization_id in metadata",
+            extra={"polar_subscription_id": polar_subscription_id},
+        )
+        return None
+
+    try:
+        organisation = org_models.Organisation.objects.get(id=organisation_id)
+    except org_models.Organisation.DoesNotExist:
+        logger.error(
+            "subscription.created webhook references non-existent organisation",
+            extra={
+                "organisation_id": organisation_id,
+                "polar_subscription_id": polar_subscription_id,
+            },
+        )
+        return None
+
+    # Parse datetime fields
+    current_period_start = None
+    if data.get("current_period_start"):
+        current_period_start = datetime.fromisoformat(
+            data["current_period_start"].replace("Z", "+00:00")
+        )
+
+    current_period_end = None
+    if data.get("current_period_end"):
+        current_period_end = datetime.fromisoformat(
+            data["current_period_end"].replace("Z", "+00:00")
+        )
+
+    subscription = models.Subscription.objects.create(
+        organisation=organisation,
+        polar_subscription_id=polar_subscription_id,
+        polar_customer_id=polar_customer_id,
+        polar_product_id=polar_product_id,
+        status=status,
+        current_period_start=current_period_start,
+        current_period_end=current_period_end,
+        cancel_at_period_end=data.get("cancel_at_period_end", False),
+    )
+
+    # Call project-specific hook
+    on_subscription_created(subscription)
+
+    return subscription
+
+
+def handle_subscription_updated(data: dict[str, Any]) -> models.Subscription | None:
+    """Handle subscription.updated webhook event.
+
+    Updates an existing Subscription record.
+
+    Args:
+        data: Subscription data from Polar webhook
+
+    Returns:
+        Updated Subscription instance, or None if not found
+    """
+    polar_subscription_id = data.get("id")
+    if not polar_subscription_id:
+        logger.error("subscription.updated webhook missing subscription id")
+        return None
+
+    try:
+        subscription = models.Subscription.objects.get(
+            polar_subscription_id=polar_subscription_id
+        )
+    except models.Subscription.DoesNotExist:
+        logger.warning(
+            "subscription.updated webhook references non-existent subscription",
+            extra={"polar_subscription_id": polar_subscription_id},
+        )
+        return None
+
+    # Update fields
+    subscription.status = data.get("status", subscription.status)
+    subscription.polar_customer_id = data.get("customer_id", subscription.polar_customer_id)
+    subscription.polar_product_id = data.get("product_id", subscription.polar_product_id)
+    subscription.cancel_at_period_end = data.get(
+        "cancel_at_period_end", subscription.cancel_at_period_end
+    )
+
+    # Parse datetime fields
+    if data.get("current_period_start"):
+        subscription.current_period_start = datetime.fromisoformat(
+            data["current_period_start"].replace("Z", "+00:00")
+        )
+
+    if data.get("current_period_end"):
+        subscription.current_period_end = datetime.fromisoformat(
+            data["current_period_end"].replace("Z", "+00:00")
+        )
+
+    if data.get("canceled_at"):
+        subscription.canceled_at = datetime.fromisoformat(
+            data["canceled_at"].replace("Z", "+00:00")
+        )
+
+    subscription.save()
+
+    # Call project-specific hook
+    on_subscription_updated(subscription)
+
+    return subscription
+
+
+def handle_subscription_revoked(data: dict[str, Any]) -> models.Subscription | None:
+    """Handle subscription.revoked webhook event.
+
+    Sets subscription status to 'revoked'.
+
+    Args:
+        data: Subscription data from Polar webhook
+
+    Returns:
+        Updated Subscription instance, or None if not found
+    """
+    polar_subscription_id = data.get("id")
+    if not polar_subscription_id:
+        logger.error("subscription.revoked webhook missing subscription id")
+        return None
+
+    try:
+        subscription = models.Subscription.objects.get(
+            polar_subscription_id=polar_subscription_id
+        )
+    except models.Subscription.DoesNotExist:
+        logger.warning(
+            "subscription.revoked webhook references non-existent subscription",
+            extra={"polar_subscription_id": polar_subscription_id},
+        )
+        return None
+
+    subscription.status = models.Subscription.SubscriptionStatus.REVOKED
+    subscription.save()
+
+    # Call project-specific hook
+    on_subscription_revoked(subscription)
+
+    return subscription
+
+
+def handle_subscription_canceled(data: dict[str, Any]) -> models.Subscription | None:
+    """Handle subscription.canceled webhook event.
+
+    Sets subscription status to 'canceled'.
+
+    Args:
+        data: Subscription data from Polar webhook
+
+    Returns:
+        Updated Subscription instance, or None if not found
+    """
+    polar_subscription_id = data.get("id")
+    if not polar_subscription_id:
+        logger.error("subscription.canceled webhook missing subscription id")
+        return None
+
+    try:
+        subscription = models.Subscription.objects.get(
+            polar_subscription_id=polar_subscription_id
+        )
+    except models.Subscription.DoesNotExist:
+        logger.warning(
+            "subscription.canceled webhook references non-existent subscription",
+            extra={"polar_subscription_id": polar_subscription_id},
+        )
+        return None
+
+    subscription.status = models.Subscription.SubscriptionStatus.CANCELED
+    if data.get("canceled_at"):
+        subscription.canceled_at = datetime.fromisoformat(
+            data["canceled_at"].replace("Z", "+00:00")
+        )
+    subscription.save()
+
+    # Call project-specific hook
+    on_subscription_canceled(subscription)
+
+    return subscription
+
+
+# Project-specific hooks - override these in your project
+def on_subscription_created(subscription: models.Subscription) -> None:
+    """Called after a subscription is created locally.
+
+    Override this function to add project-specific logic:
+    - Send welcome email
+    - Provision resources
+    - Update user permissions
+
+    Args:
+        subscription: The newly created Subscription instance
+
+    Raises:
+        NotImplementedError: Implement this in your project
+    """
+    raise NotImplementedError(
+        "Implement on_subscription_created() for project-specific logic"
+    )
+
+
+def on_subscription_updated(subscription: models.Subscription) -> None:
+    """Called after a subscription is updated.
+
+    Override this function to add project-specific logic:
+    - Update feature access
+    - Send renewal notifications
+    - Adjust resource limits
+
+    Args:
+        subscription: The updated Subscription instance
+
+    Raises:
+        NotImplementedError: Implement this in your project
+    """
+    raise NotImplementedError(
+        "Implement on_subscription_updated() for project-specific logic"
+    )
+
+
+def on_subscription_revoked(subscription: models.Subscription) -> None:
+    """Called after a subscription is revoked.
+
+    Override this function to add project-specific logic:
+    - Revoke access immediately
+    - Send cancellation email
+    - Clean up resources
+
+    Args:
+        subscription: The revoked Subscription instance
+
+    Raises:
+        NotImplementedError: Implement this in your project
+    """
+    raise NotImplementedError(
+        "Implement on_subscription_revoked() for project-specific logic"
+    )
+
+
+def on_subscription_canceled(subscription: models.Subscription) -> None:
+    """Called after a subscription is canceled.
+
+    Override this function to add project-specific logic:
+    - Schedule access revocation at period end
+    - Send cancellation confirmation
+    - Update billing notifications
+
+    Args:
+        subscription: The canceled Subscription instance
+
+    Raises:
+        NotImplementedError: Implement this in your project
+    """
+    raise NotImplementedError(
+        "Implement on_subscription_canceled() for project-specific logic"
+    )
+

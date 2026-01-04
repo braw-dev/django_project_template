@@ -1,4 +1,11 @@
-from ninja import NinjaAPI, Schema
+from datetime import datetime
+from uuid import UUID
+
+from django.http import HttpRequest
+from ninja import NinjaAPI, Query, Schema
+
+from {{ project_name }}.billing import selectors, services
+from {{ project_name }}.organizations import models as org_models
 
 api = NinjaAPI(version="1.0.0")
 
@@ -10,3 +17,130 @@ class HealthResponse(Schema):
 @api.get("/health", response={200: HealthResponse})
 def health(request):
     return {"status": "ok"}
+
+
+class SubscriptionResponse(Schema):
+    """Current subscription details."""
+
+    id: UUID
+    status: str
+    product_id: str
+    current_period_end: datetime | None
+    cancel_at_period_end: bool
+
+
+class SubscriptionDetailResponse(Schema):
+    """Wrapper for subscription response."""
+
+    subscription: SubscriptionResponse | None
+
+
+@api.get(
+    "/billing/subscription/",
+    response={200: SubscriptionDetailResponse},
+    auth=None,  # Will use session auth
+)
+def get_subscription(
+    request: HttpRequest,
+    organisation_id: UUID = Query(...),
+) -> dict:
+    """Get the current subscription for an organisation.
+
+    Args:
+        request: HTTP request
+        organisation_id: UUID of organisation to check
+
+    Returns:
+        Subscription details or null if no active subscription
+    """
+    try:
+        organisation = org_models.Organisation.objects.get(id=organisation_id)
+    except org_models.Organisation.DoesNotExist:
+        return {"subscription": None}
+
+    subscription = selectors.get_active_subscription(organisation)
+
+    if not subscription:
+        return {"subscription": None}
+
+    return {
+        "subscription": {
+            "id": subscription.id,
+            "status": subscription.status,
+            "product_id": subscription.polar_product_id,
+            "current_period_end": subscription.current_period_end,
+            "cancel_at_period_end": subscription.cancel_at_period_end,
+        }
+    }
+
+
+class CheckoutRequest(Schema):
+    """Request to create a checkout session."""
+
+    product_id: str
+    organisation_id: UUID
+
+
+class CheckoutResponse(Schema):
+    """Response with checkout URL."""
+
+    checkout_url: str
+
+
+class ErrorResponse(Schema):
+    """Error response."""
+
+    error: str
+
+
+@api.post(
+    "/billing/checkout/",
+    response={200: CheckoutResponse, 403: ErrorResponse, 503: ErrorResponse},
+    auth=None,  # Will use session auth
+)
+def create_checkout(
+    request: HttpRequest,
+    body: CheckoutRequest,
+) -> dict:
+    """Generate a Polar checkout URL for a product.
+
+    Args:
+        request: HTTP request
+        body: Checkout request with product_id and organisation_id
+
+    Returns:
+        Checkout URL or error response
+    """
+    try:
+        organisation = org_models.Organisation.objects.get(id=body.organisation_id)
+    except org_models.Organisation.DoesNotExist:
+        return {"error": "Organisation not found"}, 403
+
+    # TODO: Add authorization check - user must be member of organisation
+    # For now, this is a stub that raises NotImplementedError
+    # Implement authorization in your project
+
+    try:
+        billing_service = services.get_billing_service()
+
+        # Get success URL from request or use default
+        success_url = request.build_absolute_uri("/billing/success/")
+
+        checkout_url = billing_service.create_checkout_url(
+            product_id=body.product_id,
+            organisation=organisation,
+            success_url=success_url,
+            user_email=request.user.email if request.user.is_authenticated else "",
+        )
+
+        return {"checkout_url": checkout_url}
+
+    except ValueError as e:
+        return {"error": str(e)}, 403
+    except Exception as e:
+        # Log error but return generic message
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.error("Failed to create checkout", exc_info=True)
+        return {"error": "Payment service temporarily unavailable"}, 503

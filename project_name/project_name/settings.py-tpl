@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     "{{ project_name }}.pages",  # Marketing landing pages
     "{{ project_name }}.flags",  # Feature flags
     "{{ project_name }}.organizations",  # Organizations and RBAC
+    "{{ project_name }}.billing",  # Billing and subscriptions
 ]
 
 MIDDLEWARE = [

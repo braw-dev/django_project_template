@@ -1,0 +1,103 @@
+"""Billing API endpoints for Polar.sh integration."""
+
+from datetime import datetime
+import logging
+from uuid import UUID
+
+from django.http import HttpRequest
+from ninja import NinjaAPI, Schema
+
+from {{ project_name }}.billing import webhooks
+
+logger = logging.getLogger(__name__)
+
+# Separate API for webhooks (CSRF exempt)
+webhooks_api = NinjaAPI(
+    urls_namespace="webhooks",
+    csrf=False,  # Webhooks are verified by signature, not CSRF
+)
+
+
+class WebhookResponse(Schema):
+    """Standard webhook response."""
+
+    status: str
+
+
+@webhooks_api.post("/polar", response={200: WebhookResponse, 400: WebhookResponse})
+def polar_webhook(request: HttpRequest) -> dict[str, str]:
+    """Handle Polar.sh webhook events.
+
+    Verifies webhook signature and dispatches to appropriate handler.
+
+    Returns:
+        200 OK with {"status": "ok"} on success
+        400 Bad Request with {"status": "error"} on verification failure
+    """
+    try:
+        # Get raw body and headers
+        body = request.body
+        headers = dict(request.headers)
+
+        # Verify signature
+        payload = webhooks.verify_webhook_signature(body, headers)
+
+        # Extract event type
+        event_type = payload.get("type")
+        data = payload.get("data", {})
+
+        logger.info(
+            "Received Polar webhook",
+            extra={"event_type": event_type, "subscription_id": data.get("id")},
+        )
+
+        # Dispatch to handler
+        if event_type == "subscription.created":
+            webhooks.handle_subscription_created(data)
+        elif event_type == "subscription.updated":
+            webhooks.handle_subscription_updated(data)
+        elif event_type == "subscription.revoked":
+            webhooks.handle_subscription_revoked(data)
+        elif event_type == "subscription.canceled":
+            webhooks.handle_subscription_canceled(data)
+        else:
+            logger.info(
+                "Ignoring unknown webhook event type",
+                extra={"event_type": event_type},
+            )
+            return {"status": "ignored"}
+
+        return {"status": "ok"}
+
+    except webhooks.WebhookVerificationError as e:
+        logger.error("Webhook signature verification failed", extra={"error": str(e)})
+        return {"status": "error"}, 400
+    except Exception as e:
+        # Log but return 200 to prevent Polar retries
+        logger.error(
+            "Error processing webhook",
+            extra={"error": str(e)},
+            exc_info=True,
+        )
+        return {"status": "ok"}  # Return 200 to prevent retries
+
+
+# Pydantic schemas for billing endpoints
+class SubscriptionResponse(Schema):
+    """Current subscription details."""
+
+    id: UUID
+    status: str
+    product_id: str
+    current_period_end: datetime | None
+    cancel_at_period_end: bool
+
+
+class SubscriptionDetailResponse(Schema):
+    """Wrapper for subscription response."""
+
+    subscription: SubscriptionResponse | None
+
+
+# Subscription endpoint will be added to main API in views_v1.py-tpl
+

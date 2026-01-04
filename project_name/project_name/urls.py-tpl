@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from {{ project_name }}.core import views as core_views
-from {{ project_name }}.core.api import api_v1
+from {{ project_name }}.core.api import api_v1, webhooks_api
 
 from . import views
 
@@ -16,6 +16,7 @@ newsletter_urls = [
 urlpatterns = (
     [
         path("api/v1/", api_v1.urls),  # Django Ninja API
+        path("api/webhooks/", webhooks_api.urls),  # Webhook endpoints (CSRF exempt)
         path("admin/", admin.site.urls),  # Django admin
         path("accounts/", include("allauth.urls")),  # Django allauth
         path("pricing/", views.pricing, name="pricing"),  # Pricing page

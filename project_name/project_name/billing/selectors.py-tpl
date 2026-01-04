@@ -1,0 +1,77 @@
+"""Data retrieval functions for billing."""
+
+from django.db.models import Q
+from django.utils import timezone
+
+from {{ project_name }}.organizations import models as org_models
+
+from . import models
+
+
+def has_active_subscription(organisation: org_models.Organisation) -> bool:
+    """Check if organisation has an active subscription.
+
+    A subscription is considered active if:
+    - Status is 'active' or 'trialing'
+    - current_period_end is in the future (or None)
+
+    Args:
+        organisation: Organisation instance to check
+
+    Returns:
+        True if organisation has an active subscription, False otherwise
+    """
+    now = timezone.now()
+    return models.Subscription.objects.filter(
+        organisation=organisation,
+        status__in=[
+            models.Subscription.SubscriptionStatus.ACTIVE,
+            models.Subscription.SubscriptionStatus.TRIALING,
+        ],
+    ).filter(
+        Q(current_period_end__gt=now) | Q(current_period_end__isnull=True)
+    ).exists()
+
+
+def get_active_subscription(
+    organisation: org_models.Organisation,
+) -> models.Subscription | None:
+    """Get the most recent active subscription for an organisation.
+
+    Args:
+        organisation: Organisation instance
+
+    Returns:
+        Most recent active Subscription, or None if none exists
+    """
+    now = timezone.now()
+    return (
+        models.Subscription.objects.filter(
+            organisation=organisation,
+            status__in=[
+                models.Subscription.SubscriptionStatus.ACTIVE,
+                models.Subscription.SubscriptionStatus.TRIALING,
+            ],
+        )
+        .filter(
+            Q(current_period_end__gt=now) | Q(current_period_end__isnull=True)
+        )
+        .order_by("-created_at")
+        .first()
+    )
+
+
+def get_subscription_by_polar_id(polar_id: str) -> models.Subscription | None:
+    """Get a subscription by Polar subscription ID.
+
+    Args:
+        polar_id: Polar subscription ID
+
+    Returns:
+        Subscription instance, or None if not found
+    """
+    try:
+        return models.Subscription.objects.get(polar_subscription_id=polar_id)
+    except models.Subscription.DoesNotExist:
+        return None
+

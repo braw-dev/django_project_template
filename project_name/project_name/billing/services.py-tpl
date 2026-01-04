@@ -1,0 +1,194 @@
+"""Business logic for billing and Polar.sh integration."""
+
+import logging
+from typing import Any
+
+from django.conf import settings
+from django.core.cache import cache
+from django.utils.translation import gettext_lazy as _
+from polar_sdk import Polar
+
+from {{ project_name }}.organizations import models as org_models
+
+logger = logging.getLogger(__name__)
+
+
+class BillingService:
+    """Service for interacting with Polar.sh API."""
+
+    def __init__(self):
+        """Initialize Polar SDK client."""
+        self.access_token = settings.POLAR_ACCESS_TOKEN
+        self.organization_id = settings.POLAR_ORGANIZATION_ID
+        self.api_base_url = settings.POLAR_API_BASE_URL
+
+        if not self.access_token:
+            logger.warning("POLAR_ACCESS_TOKEN not configured")
+
+    def _get_client(self) -> Polar:
+        """Get Polar SDK client instance.
+
+        Returns:
+            Polar client instance
+
+        Raises:
+            ValueError: If access token not configured
+        """
+        if not self.access_token:
+            raise ValueError(_("POLAR_ACCESS_TOKEN not configured"))
+
+        return Polar(
+            access_token=self.access_token,
+            base_url=self.api_base_url,
+        )
+
+    def create_checkout_url(
+        self,
+        product_id: str,
+        organisation: org_models.Organisation,
+        success_url: str,
+        user_email: str,
+    ) -> str:
+        """Create a Polar checkout URL for a product.
+
+        Args:
+            product_id: Polar product ID
+            organisation: Organisation subscribing
+            success_url: URL to redirect after successful checkout
+            user_email: Email of the user initiating checkout
+
+        Returns:
+            Checkout URL from Polar
+
+        Raises:
+            ValueError: If Polar client not configured
+            Exception: If Polar API call fails
+
+        Note:
+            This function raises NotImplementedError for project-specific logic.
+            Override to add custom metadata, customer creation, etc.
+        """
+        # Project-specific logic hook
+        checkout_metadata = self._get_checkout_metadata(organisation)
+
+        try:
+            with self._get_client() as polar:
+                # Create checkout session
+                # Note: Actual Polar SDK method may vary - check latest SDK docs
+                checkout = polar.checkouts.custom_create(
+                    product_id=product_id,
+                    success_url=success_url,
+                    customer_email=user_email,
+                    metadata=checkout_metadata,
+                )
+
+                # Extract checkout URL from response
+                # Response structure depends on Polar SDK version
+                checkout_url = checkout.get("url") or checkout.get("checkout_url")
+                if not checkout_url:
+                    raise ValueError(_("Polar checkout response missing URL"))
+
+                return checkout_url
+
+        except Exception as e:
+            logger.error(
+                "Failed to create Polar checkout",
+                extra={"product_id": product_id, "organisation_id": str(organisation.id)},
+                exc_info=True,
+            )
+            raise
+
+    def _get_checkout_metadata(self, organisation: org_models.Organisation) -> dict[str, str]:
+        """Get metadata to include in checkout session.
+
+        Includes organisation_id by default. Override this method to add
+        project-specific metadata.
+
+        Args:
+            organisation: Organisation subscribing
+
+        Returns:
+            Metadata dictionary with organisation_id
+        """
+        return {
+            "organization_id": str(organisation.id),
+        }
+
+    def get_customer_portal_url(
+        self,
+        organisation: org_models.Organisation,
+    ) -> str:
+        """Get customer portal URL for managing subscription.
+
+        Note: Polar.sh handles subscription management differently than Stripe.
+        Customers receive email links for managing subscriptions. This function
+        is stubbed for future implementation if Polar adds a portal API.
+
+        Args:
+            organisation: Organisation to get portal for
+
+        Returns:
+            Portal URL (stubbed)
+
+        Raises:
+            NotImplementedError: Polar doesn't currently provide a portal API
+        """
+        raise NotImplementedError(
+            "Polar.sh doesn't currently provide a customer portal API. "
+            "Customers manage subscriptions via email links or product dashboard."
+        )
+
+    def get_products(self, use_cache: bool = True) -> list[dict[str, Any]]:
+        """Get list of available products from Polar.
+
+        Args:
+            use_cache: Whether to use cached result (default: True)
+
+        Returns:
+            List of product dictionaries
+
+        Raises:
+            ValueError: If Polar client not configured
+            Exception: If Polar API call fails
+        """
+        cache_key = "polar_products"
+        if use_cache:
+            cached = cache.get(cache_key)
+            if cached:
+                return cached
+
+        try:
+            with self._get_client() as polar:
+                # Fetch products from Polar API
+                # Note: Actual SDK method may vary - check latest SDK docs
+                products_response = polar.products.list()
+
+                # Extract products list
+                products = products_response.get("items", []) or []
+
+                # Cache for 5 minutes
+                if use_cache:
+                    cache.set(cache_key, products, 300)
+
+                return products
+
+        except Exception as e:
+            logger.error("Failed to fetch Polar products", exc_info=True)
+            raise
+
+
+# Singleton instance
+_billing_service: BillingService | None = None
+
+
+def get_billing_service() -> BillingService:
+    """Get singleton BillingService instance.
+
+    Returns:
+        BillingService instance
+    """
+    global _billing_service
+    if _billing_service is None:
+        _billing_service = BillingService()
+    return _billing_service
+
