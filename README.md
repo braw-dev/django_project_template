@@ -23,8 +23,10 @@ uv run django-admin startproject \
 - [ ] Init a new git repository `git init .`
 - [ ] Install dev dependencies & lefthook git hooks `just install-dev`
 - [ ] Configure environment variables by copying `.env.dist` to `.env` and customizing
-- [ ] Search for `REPLACE_ME:` and update accordingly
-- [ ] Establish the [SpecKit project principals](https://github.com/github/spec-kit?tab=readme-ov-file#2-establish-project-principles) in AI agent of choice (Cursor and Claude support included)
+- [ ] Search for `REPLACE_ME:` and update accordingly.
+- [ ] Delete `specs` directory and `.specify/memory`.
+- [ ] Establish the [SpecKit project principals](https://github.com/github/spec-kit?tab=readme-ov-file#2-establish-project-principles) in AI agent of choice (Cursor and Claude support included).
+- [ ] Run `just ai-link` to link `ai/` directory to claude and cursor.
 - [ ] Review `settings.py` settings
 - [ ] Collect staticfiles `just collectstatic`
 - [ ] Run tests: `just test-unit` and `just test-e2e`
