@@ -195,7 +195,6 @@ Create dedicated webhook endpoint outside the versioned API namespace.
 # Separate NinjaAPI for webhooks (CSRF exempt)
 webhooks_api = NinjaAPI(
     urls_namespace="webhooks",
-    csrf=False,  # Webhooks are verified by signature, not CSRF
 )
 
 @webhooks_api.post("/polar")
