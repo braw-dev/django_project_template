@@ -5,7 +5,6 @@ import logging
 from uuid import UUID
 
 from django.http import HttpRequest
-from django.views.decorators.csrf import csrf_exempt
 from ninja import NinjaAPI, Schema
 
 from {{ project_name }}.billing import webhooks
@@ -25,7 +24,6 @@ class WebhookResponse(Schema):
 
 
 @webhooks_api.post("/polar", response={200: WebhookResponse, 400: WebhookResponse})
-@csrf_exempt
 def polar_webhook(request: HttpRequest) -> dict[str, str]:
     """Handle Polar.sh webhook events.
 
