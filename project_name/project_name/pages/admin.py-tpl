@@ -28,7 +28,6 @@ class PageAdmin(TranslatableAdmin):
         "slug",
         "translations__content",
     ]
-    prepopulated_fields = {"slug": ("title",)}
     readonly_fields = ["created_at", "updated_at"]
 
     fieldsets = [
@@ -72,5 +71,4 @@ class PageAdmin(TranslatableAdmin):
         # because slug should not change after creation
         if obj:
             return {}
-        return self.prepopulated_fields
-
+        return {"slug": ("title",)}
