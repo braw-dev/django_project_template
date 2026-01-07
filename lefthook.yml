@@ -7,6 +7,8 @@ pre-commit:
       glob:
         - "*.py"
         - "*.py-tpl"
+      exclude:
+        - "/migrations/*.py"
     djlint-reformat:
       run: uv run djlint --reformat --format-css {staged_files}
       stage_fixed: true
