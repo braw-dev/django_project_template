@@ -94,6 +94,8 @@
         state: absent
       with_items:
         - "{{ project_dir }}/{{ project_name }}/db.sqlite3"
+        - "{{ project_dir }}/specs"
+        - "{{ project_dir }}/.specify/memory/constitution.md"
 
     - name: Set some django settings for testing purposes
       ansible.builtin.lineinfile:
