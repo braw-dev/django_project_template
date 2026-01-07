@@ -13,9 +13,10 @@ uv run django-admin startproject \
     --exclude '.rumdl_cache' \
     --exclude '.venv' \
     --exclude 'node_modules' \
+    --exclude 'db.sqlite3' \
     --exclude 'dev' \
     --exclude 'tmp' \
-    project_name
+    project_name [project_dir]
 ```
 
 ## Post-setup checklist
