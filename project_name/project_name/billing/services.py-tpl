@@ -90,7 +90,7 @@ class BillingService:
 
                 return checkout_url
 
-        except Exception as e:
+        except Exception:
             logger.error(
                 "Failed to create Polar checkout",
                 extra={"product_id": product_id, "organisation_id": str(organisation.id)},
@@ -172,7 +172,7 @@ class BillingService:
 
                 return products
 
-        except Exception as e:
+        except Exception:
             logger.error("Failed to fetch Polar products", exc_info=True)
             raise
 

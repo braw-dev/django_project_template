@@ -2,8 +2,8 @@
 
 from typing import Protocol
 
-from django.core.cache import cache
 from django.conf import settings
+from django.core.cache import cache
 
 from {{ project_name }}.flags.models import FeatureFlag
 

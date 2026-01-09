@@ -1,7 +1,7 @@
 """Tests for billing app."""
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -64,8 +64,8 @@ class TestWebhookVerification:
         mock_webhook = MagicMock()
         mock_webhook.verify.side_effect = WebhookVerificationError("Invalid signature")
 
-        with patch("{{ project_name }}.billing.webhooks.Webhook", return_value=mock_webhook):
-            with pytest.raises(WebhookVerificationError):
+        with patch("{{ project_name }}.billing.webhooks.Webhook", return_value=mock_webhook), \
+            pytest.raises(WebhookVerificationError):
                 webhooks.verify_webhook_signature(b"body", {"header": "value"})
 
 
@@ -205,4 +205,3 @@ class TestSelectors:
 
         result = selectors.get_subscription_by_polar_id("sub_nonexistent")
         assert result is None
-
