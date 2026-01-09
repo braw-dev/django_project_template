@@ -2,8 +2,10 @@
 {% if attrs.type == "checkbox" %}
     <div class="form-control">
         <label class="label cursor-pointer">
-            <span class="label-text">{% slot label %}
-            {% endslot %}</span>
+            <span class="label-text">
+                {% slot label %}
+                {% endslot %}
+            </span>
             <input {% if attrs.required %}required{% endif %}
                    name="{{ attrs.name }}"
                    class="checkbox"
@@ -18,7 +20,8 @@
         <div class="label">
             <span class="label-text">
                 {% slot label %}
-            {% endslot %}</span>
+                {% endslot %}
+            </span>
         </div>
         {% if attrs.type == "textarea" %}
             <textarea {% if attrs.required %}required{% endif %}
@@ -48,9 +51,9 @@
             {% elif slots.help_text %}
                 <span class="label-text-alt">
                     {% slot help_text %}
-                {% endslot %}
-            </span>
-        {% endif %}
-    </div>
-</label>
+                    {% endslot %}
+                </span>
+            {% endif %}
+        </div>
+    </label>
 {% endif %}
