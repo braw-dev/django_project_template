@@ -121,12 +121,9 @@ class Page(TranslatableModel, ModelMeta, BaseModel):
             return False
 
         now = timezone.now()
-        if self.publish_at and self.publish_at > now:
-            return False
-        if self.unpublish_at and self.unpublish_at <= now:
-            return False
 
-        return True
+        return not (self.publish_at and self.publish_at > now) \
+            and not (self.unpublish_at and self.unpublish_at <= now)
 
     is_visible.boolean = True
     is_visible.short_description = _("Visible")

@@ -2,8 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from django.http import HttpRequest
-from ninja import NinjaAPI, Query, Schema
-
+from ninja import NinjaAPI, Schema
 from {{ project_name }}.billing import selectors, services
 from {{ project_name }}.organizations import models as org_models
 
@@ -42,8 +41,8 @@ class SubscriptionDetailResponse(Schema):
 )
 def get_subscription(
     request: HttpRequest,
-    organisation_id: UUID = Query(...),
-) -> dict:
+    organisation_id: UUID,
+) -> SubscriptionDetailResponse:
     """Get the current subscription for an organisation.
 
     Args:
@@ -137,7 +136,7 @@ def create_checkout(
 
     except ValueError as e:
         return {"error": str(e)}, 403
-    except Exception as e:
+    except Exception:
         # Log error but return generic message
         import logging
 
