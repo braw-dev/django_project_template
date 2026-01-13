@@ -134,7 +134,9 @@
 	},
 	"makefile.configureOnOpen": false,
 	"files.associations": {
-		"*.py-tpl": "python"
+		"*.py-tpl": "python",
+		"*.css": "tailwindcss",
+		"*.scss": "tailwindcss"
 	},
 	"emmet.includeLanguages": {
 		"django-html": "html"

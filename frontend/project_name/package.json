@@ -17,6 +17,7 @@
 		"tailwindcss": "^4.1.10"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "2.3.11",
 		"@eslint/js": "^9.25.0",
 		"@types/react": "^19.1.2",
 		"@types/react-dom": "^19.1.2",
