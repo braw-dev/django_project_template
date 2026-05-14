@@ -231,6 +231,25 @@ This finds instances where you should have used `{{ project_name }}` but didn't.
 2. Document why in comments (Grug brain: does it pay rent?)
 3. Test generation and verify installation
 
+### Upgrading Dependencies
+
+1. Upgrade all packages:
+
+   ```bash
+   uv sync --upgrade
+   ```
+
+2. Run the interoperability check script:
+
+   ```bash
+   ./dev/02-check-dependencies.sh
+   ```
+
+   This verifies all packages are installed, ruff is clean, and the Ansible
+   template generation still works end-to-end.
+
+3. Commit the updated `uv.lock`
+
 ### Modifying Settings
 
 1. Edit `project_name/project_name/settings.py-tpl`
