@@ -19,7 +19,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 import structlog
 from django.utils.translation import gettext_lazy as _
-from pydantic import ValidationInfo, field_validator
+from pydantic import SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Used for public display e.g as default in <title> tags
@@ -32,8 +32,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR.parent / "frontend" / PROJECT_SLUG
 
 
-def _require_non_blank(name: str, value: str) -> str:
-    if not value.strip():
+def _get_secret_value(value: str | SecretStr) -> str:
+    if isinstance(value, SecretStr):
+        return value.get_secret_value()
+    return value
+
+
+def _require_non_blank(name: str, value: str | SecretStr) -> str | SecretStr:
+    if not _get_secret_value(value).strip():
         raise ValueError(f"{name} must not be blank")
     return value
 
@@ -58,7 +64,8 @@ def _coerce_url_value(value: str) -> str | int | bool:
         return value
 
 
-def parse_database_url(database_url: str) -> dict[str, object]:
+def parse_database_url(database_url: str | SecretStr) -> dict[str, object]:
+    database_url = _get_secret_value(database_url)
     parsed = urlparse(database_url)
     scheme = parsed.scheme.lower()
 
@@ -108,7 +115,8 @@ def parse_database_url(database_url: str) -> dict[str, object]:
     return database
 
 
-def parse_cache_url(cache_url: str) -> dict[str, object]:
+def parse_cache_url(cache_url: str | SecretStr) -> dict[str, object]:
+    cache_url = _get_secret_value(cache_url)
     parsed = urlparse(cache_url)
     scheme = parsed.scheme.lower()
 
@@ -140,19 +148,19 @@ class AppSettings(BaseSettings):
         extra="ignore",
     )
 
-    SECRET_KEY: str
+    SECRET_KEY: SecretStr
     DEBUG: bool = False
     ENVIRONMENT: str = "prod"
     ALLOWED_HOSTS: str
     DJANGO_ADMINS: str
     LOG_LEVEL: str = "INFO"
-    DB_DEFAULT_URL: str
-    CACHE_DEFAULT_URL: str = "locmemcache://"
+    DB_DEFAULT_URL: SecretStr
+    CACHE_DEFAULT_URL: SecretStr = SecretStr("locmemcache://")
     SEND_EMAILS: bool = False
     EMAIL_DOMAIN: str
     SCALEWAY_PROJECT_ID: str = ""
-    SCALEWAY_ACCESS_KEY: str = ""
-    SCALEWAY_SECRET_KEY: str = ""
+    SCALEWAY_ACCESS_KEY: SecretStr = SecretStr("")
+    SCALEWAY_SECRET_KEY: SecretStr = SecretStr("")
     SCALEWAY_REGION: str = "fr-par"
     SCALEWAY_DOMAIN_ID: str = ""
     AXES_FAILURE_LIMIT: int = 5
@@ -167,13 +175,13 @@ class AppSettings(BaseSettings):
     PLAUSIBLE_API_HOST: str = ""
     USE_HTTP: bool = False
     FLAGS_CACHE_TIMEOUT: int = 300
-    POLAR_ACCESS_TOKEN: str = ""
+    POLAR_ACCESS_TOKEN: SecretStr = SecretStr("")
     POLAR_ORGANIZATION_ID: str = ""
-    POLAR_WEBHOOK_SECRET: str = ""
+    POLAR_WEBHOOK_SECRET: SecretStr = SecretStr("")
     POLAR_API_BASE_URL: str = "https://api.polar.sh"
-    CHATWOOT_WEBSITE_TOKEN: str = ""
+    CHATWOOT_WEBSITE_TOKEN: SecretStr = SecretStr("")
     CHATWOOT_BASE_URL: str = "https://app.chatwoot.com"
-    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: SecretStr = SecretStr("redis://localhost:6379/0")
 
     @field_validator("SECRET_KEY", "DB_DEFAULT_URL", "DJANGO_ADMINS", "EMAIL_DOMAIN")
     @classmethod
@@ -197,7 +205,7 @@ APP_SETTINGS = AppSettings()
 # See https://docs.djangoproject.com/en/{{ docs_version }}/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = APP_SETTINGS.SECRET_KEY
+SECRET_KEY = APP_SETTINGS.SECRET_KEY.get_secret_value()
 
 DEBUG = APP_SETTINGS.DEBUG
 
@@ -410,8 +418,8 @@ if APP_SETTINGS.SEND_EMAILS and not TESTING:
     EMAIL_BACKEND = "anymail.backends.scaleway.EmailBackend"
     ANYMAIL = {
         "SCW_PROJECT_ID": APP_SETTINGS.SCALEWAY_PROJECT_ID,
-        "SCW_ACCESS_KEY": APP_SETTINGS.SCALEWAY_ACCESS_KEY,
-        "SCW_SECRET_KEY": APP_SETTINGS.SCALEWAY_SECRET_KEY,
+        "SCW_ACCESS_KEY": APP_SETTINGS.SCALEWAY_ACCESS_KEY.get_secret_value(),
+        "SCW_SECRET_KEY": APP_SETTINGS.SCALEWAY_SECRET_KEY.get_secret_value(),
         "SCW_REGION": APP_SETTINGS.SCALEWAY_REGION,
         "SCW_DOMAIN_ID": APP_SETTINGS.SCALEWAY_DOMAIN_ID,
     }
@@ -569,13 +577,13 @@ COTTON_DIR = "components"
 # Feature flags
 FLAGS_CACHE_TIMEOUT = APP_SETTINGS.FLAGS_CACHE_TIMEOUT
 
-POLAR_ACCESS_TOKEN = APP_SETTINGS.POLAR_ACCESS_TOKEN
+POLAR_ACCESS_TOKEN = APP_SETTINGS.POLAR_ACCESS_TOKEN.get_secret_value()
 POLAR_ORGANIZATION_ID = APP_SETTINGS.POLAR_ORGANIZATION_ID
-POLAR_WEBHOOK_SECRET = APP_SETTINGS.POLAR_WEBHOOK_SECRET
+POLAR_WEBHOOK_SECRET = APP_SETTINGS.POLAR_WEBHOOK_SECRET.get_secret_value()
 POLAR_API_BASE_URL = APP_SETTINGS.POLAR_API_BASE_URL
 
 # Chatwoot
-CHATWOOT_WEBSITE_TOKEN = APP_SETTINGS.CHATWOOT_WEBSITE_TOKEN
+CHATWOOT_WEBSITE_TOKEN = APP_SETTINGS.CHATWOOT_WEBSITE_TOKEN.get_secret_value()
 CHATWOOT_BASE_URL = APP_SETTINGS.CHATWOOT_BASE_URL
 
 # Django SRI settings
@@ -652,7 +660,7 @@ DJANGO_VITE = {"default": {"dev_mode": DEBUG}}
 # Celery
 if USE_TZ:
     CELERY_TIMEZONE = TIME_ZONE
-CELERY_BROKER_URL = APP_SETTINGS.CELERY_BROKER_URL
+CELERY_BROKER_URL = APP_SETTINGS.CELERY_BROKER_URL.get_secret_value()
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_CACHE_BACKEND = "default"
 
