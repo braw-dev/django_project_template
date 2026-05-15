@@ -24,7 +24,7 @@ class WebhookResponse(Schema):
 
 
 @webhooks_api.post("/polar", response={200: WebhookResponse, 400: WebhookResponse})
-def polar_webhook(request: HttpRequest) -> dict[str, str]:
+def polar_webhook(request: HttpRequest) -> WebhookResponse | tuple[WebhookResponse, int]:
     """Handle Polar.sh webhook events.
 
     Verifies webhook signature and dispatches to appropriate handler.
@@ -64,13 +64,13 @@ def polar_webhook(request: HttpRequest) -> dict[str, str]:
                 "Ignoring unknown webhook event type",
                 extra={"event_type": event_type},
             )
-            return {"status": "ignored"}
+            return WebhookResponse(status="ignored")
 
-        return {"status": "ok"}
+        return WebhookResponse(status="ok")
 
     except webhooks.WebhookVerificationError as e:
         logger.error("Webhook signature verification failed", extra={"error": str(e)})
-        return {"status": "error"}, 400
+        return WebhookResponse(status="error"), 400
     except Exception as e:
         # Log but return 200 to prevent Polar retries
         logger.error(
@@ -78,7 +78,7 @@ def polar_webhook(request: HttpRequest) -> dict[str, str]:
             extra={"error": str(e)},
             exc_info=True,
         )
-        return {"status": "ok"}  # Return 200 to prevent retries
+        return WebhookResponse(status="ok")  # Return 200 to prevent retries
 
 
 # Pydantic schemas for billing endpoints

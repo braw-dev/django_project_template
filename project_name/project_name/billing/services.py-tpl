@@ -39,7 +39,7 @@ class BillingService:
 
         return Polar(
             access_token=self.access_token,
-            base_url=self.api_base_url,
+            server_url=self.api_base_url,
         )
 
     def create_checkout_url(

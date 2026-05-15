@@ -1,11 +1,14 @@
 """Flag provider protocol and implementations."""
 
-from typing import Protocol
+from typing import Any, Protocol, cast
 
 from django.conf import settings
 from django.core.cache import cache
 
 from {{ project_name }}.flags.models import FeatureFlag
+
+# TODO: Remove this workaround when ty supports Django's dynamic model attributes.
+FeatureFlagModel = cast(Any, FeatureFlag)
 
 
 class FlagProvider(Protocol):
@@ -69,11 +72,11 @@ class DjangoFlagProvider:
             return cached_value
 
         try:
-            flag = FeatureFlag.objects.get(name=flag_key)
+            flag = FeatureFlagModel.objects.get(name=flag_key)
             enabled = flag.enabled
             cache.set(cache_key, enabled, timeout=self.cache_timeout)
             return enabled
-        except FeatureFlag.DoesNotExist:
+        except FeatureFlagModel.DoesNotExist:
             cache.set(cache_key, default_value, timeout=self.cache_timeout)
             return default_value
 

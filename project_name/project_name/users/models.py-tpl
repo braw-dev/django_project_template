@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import CharField
@@ -34,9 +36,13 @@ class User(AbstractUser):
 
     def get_preference(self, key: str, default=None):
         """Get a specific preference value."""
-        return self.preferences.get(key, default)
+        # TODO: Remove this workaround when ty supports Django JSONField values.
+        preferences = cast(dict[str, Any], self.preferences)
+        return preferences.get(key, default)
 
     def set_preference(self, key: str, value) -> None:
         """Set a specific preference value."""
-        self.preferences[key] = value
+        preferences = cast(dict[str, Any], self.preferences)
+        preferences[key] = value
+        self.preferences = cast(Any, preferences)
         self.save(update_fields=["preferences"])

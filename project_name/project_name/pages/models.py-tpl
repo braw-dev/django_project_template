@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -112,7 +114,8 @@ class Page(TranslatableModel, ModelMeta, BaseModel):
     def get_meta_image(self):
         """Return the image URL for meta tags."""
         if self.image:
-            return self.image.url
+            # TODO: Remove this workaround when ty supports Django field attributes.
+            return cast(Any, self.image).url
         return None
 
     def is_visible(self):
@@ -125,6 +128,7 @@ class Page(TranslatableModel, ModelMeta, BaseModel):
         return not (self.publish_at and self.publish_at > now) \
             and not (self.unpublish_at and self.unpublish_at <= now)
 
-    is_visible.boolean = True
-    is_visible.short_description = _("Visible")
+    # TODO: Remove this workaround when ty supports Django admin metadata attributes.
+    cast(Any, is_visible).boolean = True
+    cast(Any, is_visible).short_description = _("Visible")
 

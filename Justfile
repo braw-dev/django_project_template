@@ -146,7 +146,7 @@ reset-db:
 
 # Run type checking with ty on project code
 typecheck:
-    @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} ty check {{ project_name }} --exclude '**/migrations/*.py' --exclude '**/tests.py' --exclude '**/test_*.py' --exclude '**/tests/**/*.py' --exclude '**/settings.py' --ignore unresolved-attribute --ignore unresolved-import --ignore unknown-argument --ignore invalid-return-type --ignore invalid-assignment
+    @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} ty check {{ project_name }} --exclude '**/migrations/*.py' --exclude '**/tests.py' --exclude '**/test_*.py' --exclude '**/tests/**/*.py' --exclude '**/settings.py'
 
 ###############################################
 ## Frontend
