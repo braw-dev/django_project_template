@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'Team',
                 'verbose_name_plural': 'Teams',
                 'ordering': ['name'],
-                'permissions': [('manage_team_members', 'Can manage team members'), ('manage_team_settings', 'Can manage team settings'), ('manage_team_billing', 'Can manage team billing'), ('transfer_team_ownership', 'Can transfer team ownership')],
+                'permissions': [('manage_team_members', 'Can manage team members'), ('manage_team_settings', 'Can manage team settings'), ('manage_team_api_tokens', 'Can manage team API tokens'), ('manage_team_billing', 'Can manage team billing'), ('transfer_team_ownership', 'Can transfer team ownership')],
             },
         ),
         migrations.CreateModel(

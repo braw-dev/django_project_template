@@ -30,3 +30,7 @@ class TenantScopedManager(models.Manager.from_queryset(TenantScopedQuerySet)):
         if current_team_id is None:
             return queryset
         return queryset.filter(team_id=current_team_id)
+
+    def unscoped(self):
+        """Return the base queryset without applying active-team filtering."""
+        return super().get_queryset()

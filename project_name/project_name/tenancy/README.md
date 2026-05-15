@@ -8,6 +8,7 @@ This app provides the default multi-tenancy model for generated projects.
 - **TeamMembership**: links a user to a team as `owner`, `admin`, or `member`
 - **TeamInvitation**: email-delivered invitation redeemed via a signed token
 - **TenantScopedModel**: abstract base for models that must belong to a team
+- **ApiToken**: example tenant-scoped model showing the explicit auth-time unscoped lookup
 
 ## Safe defaults
 
@@ -47,4 +48,4 @@ def create_project(*, actor, team, name):
 `Project.objects.all()` will auto-filter when an active team context exists, but Django
 ORM APIs can bypass that manager. Treat it as convenience only.
 
-See `SECURITY.md` for the full security model and Postgres RLS guidance.
+See `{{ project_name }}/tokens/README.md` for the API token example and `SECURITY.md` for the full security model and Postgres RLS guidance.

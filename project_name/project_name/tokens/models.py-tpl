@@ -1,0 +1,137 @@
+"""Models for team-scoped API tokens."""
+
+import secrets
+import string
+from datetime import timedelta
+
+from django.conf import settings
+from django.contrib.auth.hashers import check_password, make_password
+from django.db import models
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from typeid import TypeID
+
+from {{ project_name }}.tenancy.managers import TenantScopedManager
+from {{ project_name }}.tenancy.models import TenantScopedModel
+from {{ project_name }}.utils.models import BaseModel
+
+TOKEN_PREFIX = "mst"
+TOKEN_ENV_LIVE = "live"
+TOKEN_ENV_TEST = "test"
+TOKEN_LOOKUP_LENGTH = 16
+TOKEN_DISPLAY_PREFIX_LENGTH = 4
+TOKEN_SECRET_URLSAFE_BYTES = 32
+LOOKUP_ALPHABET = string.ascii_letters + string.digits
+
+
+class TokenEnvironment(models.TextChoices):
+    LIVE = TOKEN_ENV_LIVE, _("Live")
+    TEST = TOKEN_ENV_TEST, _("Test")
+
+
+class ApiTokenQuerySet(models.QuerySet):
+    """QuerySet helpers for API tokens."""
+
+    def active(self):
+        now = timezone.now()
+        return self.filter(revoked_at__isnull=True).filter(
+            models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=now)
+        )
+
+    def for_token_auth(self):
+        return self.active().select_related("team", "created_by")
+
+
+ApiTokenScopedManager = TenantScopedManager.from_queryset(ApiTokenQuerySet)
+ApiTokenAllObjectsManager = models.Manager.from_queryset(ApiTokenQuerySet)
+
+
+def generate_token_id() -> str:
+    """Generate a public TypeID for the token."""
+    return str(TypeID("tok"))
+
+
+class ApiToken(TenantScopedModel, BaseModel):
+    """Team-scoped API token with a hashed secret."""
+
+    token_id = models.CharField(max_length=64, unique=True, default=generate_token_id, editable=False)
+    name = models.CharField(max_length=120)
+    lookup_id = models.CharField(max_length=TOKEN_LOOKUP_LENGTH, unique=True, db_index=True)
+    secret_hash = models.CharField(max_length=128)
+    display_prefix = models.CharField(max_length=8)
+    environment = models.CharField(
+        max_length=10,
+        choices=TokenEnvironment.choices,
+        default=TokenEnvironment.LIVE,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="created_api_tokens",
+    )
+    expires_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revoked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="revoked_api_tokens",
+    )
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    scopes = models.JSONField(default=list, blank=True)
+
+    objects = ApiTokenScopedManager()
+    all_objects = ApiTokenAllObjectsManager()
+
+    class Meta:
+        verbose_name = _("API Token")
+        verbose_name_plural = _("API Tokens")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["team", "revoked_at"]),
+        ]
+
+    @property
+    def is_active(self) -> bool:
+        if self.revoked_at is not None:
+            return False
+        return self.expires_at is None or self.expires_at > timezone.now()
+
+    def check_secret(self, secret: str) -> bool:
+        """Check a plaintext token secret against the stored hash."""
+        return check_password(secret, self.secret_hash)
+
+    def touch_last_used(self) -> None:
+        """Update last_used_at at most once per minute."""
+        now = timezone.now()
+        cutoff = now - timedelta(minutes=1)
+        updated = type(self).all_objects.filter(pk=self.pk).filter(
+            models.Q(last_used_at__isnull=True) | models.Q(last_used_at__lt=cutoff)
+        ).update(last_used_at=now)
+        if updated:
+            self.last_used_at = now
+
+    def revoke(self, *, actor) -> None:
+        """Revoke the token."""
+        self.revoked_at = timezone.now()
+        self.revoked_by = actor
+        self.save(update_fields=["revoked_at", "revoked_by", "updated_at"])
+
+    def __str__(self):
+        return f"{self.name} ({self.team.name})"
+
+
+def generate_lookup_id() -> str:
+    """Generate a short public lookup identifier for token auth."""
+    return "".join(secrets.choice(LOOKUP_ALPHABET) for _ in range(TOKEN_LOOKUP_LENGTH))
+
+
+def generate_token_secret() -> str:
+    """Generate a high-entropy token secret."""
+    return secrets.token_urlsafe(TOKEN_SECRET_URLSAFE_BYTES)
+
+
+def hash_token_secret(secret: str) -> str:
+    """Hash the token secret for storage."""
+    return make_password(secret)

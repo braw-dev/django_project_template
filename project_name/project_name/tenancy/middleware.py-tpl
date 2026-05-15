@@ -12,7 +12,10 @@ from .context import (
     set_postgres_current_team_id,
 )
 
-TEAM_PATH_RE = re.compile(r"^/t/(?P<team_slug>[-a-zA-Z0-9_]+)(?:/|$)")
+TEAM_PATH_PATTERNS = [
+    re.compile(r"^/t/(?P<team_slug>[-a-zA-Z0-9_]+)(?:/|$)"),
+    re.compile(r"^/api/v1/teams/(?P<team_slug>[-a-zA-Z0-9_]+)(?:/|$)"),
+]
 
 
 class ActiveTeamMiddleware:
@@ -28,7 +31,11 @@ class ActiveTeamMiddleware:
         clear_postgres_current_team_id()
 
         try:
-            match = TEAM_PATH_RE.match(request.path_info)
+            match = None
+            for pattern in TEAM_PATH_PATTERNS:
+                match = pattern.match(request.path_info)
+                if match is not None:
+                    break
             if match:
                 team = models.Team.objects.filter(slug=match.group("team_slug")).first()
                 if team is None:

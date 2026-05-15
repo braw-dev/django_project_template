@@ -1,8 +1,8 @@
 """Request and database team context helpers."""
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import Iterator
 from uuid import UUID
 
 from django.conf import settings

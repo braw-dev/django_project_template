@@ -269,6 +269,7 @@ INSTALLED_APPS = [
     "{{ project_name }}.pages",  # Marketing landing pages
     "{{ project_name }}.flags",  # Feature flags
     "{{ project_name }}.tenancy",  # Team-first multi-tenancy
+    "{{ project_name }}.tokens",  # Team-scoped API tokens
     "{{ project_name }}.billing",  # Billing and subscriptions
 ]
 

@@ -7,6 +7,7 @@ from . import models
 ADMIN_ONLY_PERMISSIONS = {
     "tenancy.manage_team_members",
     "tenancy.manage_team_settings",
+    "tenancy.manage_team_api_tokens",
 }
 
 OWNER_ONLY_PERMISSIONS = {

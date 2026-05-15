@@ -1,0 +1,66 @@
+"""Bearer authentication for team-scoped API tokens."""
+
+import re
+from dataclasses import dataclass
+
+from django.contrib.auth.hashers import check_password, make_password
+from django.utils import timezone
+from ninja.security import HttpBearer
+
+from {{ project_name }}.tenancy.context import set_current_team_id, set_postgres_current_team_id
+
+from . import models
+
+TOKEN_RE = re.compile(
+    r"^(?P<prefix>[a-z]{2,8})_(?P<environment>live|test)_(?P<lookup_id>[A-Za-z0-9]{16})(?P<secret>[A-Za-z0-9_-]{32,})$"
+)
+DUMMY_SECRET_HASH = make_password("dummy-api-token-secret")
+
+
+@dataclass(frozen=True)
+class ParsedToken:
+    prefix: str
+    environment: str
+    lookup_id: str
+    secret: str
+
+
+def parse_token(raw: str) -> ParsedToken | None:
+    """Parse a plaintext API token with strict validation."""
+    if not raw or len(raw) > 200:
+        return None
+    match = TOKEN_RE.match(raw)
+    if match is None:
+        return None
+    return ParsedToken(**match.groupdict())
+
+
+class ApiTokenAuth(HttpBearer):
+    """Authenticate a request via a team-scoped API token."""
+
+    def authenticate(self, request, token: str) -> models.ApiToken | None:
+        parsed = parse_token(token)
+        if parsed is None:
+            return None
+        if parsed.prefix != models.TOKEN_PREFIX:
+            return None
+
+        candidate = (
+            models.ApiToken.objects.unscoped()
+            .for_token_auth()
+            .filter(lookup_id=parsed.lookup_id, environment=parsed.environment)
+            .first()
+        )
+        if candidate is None:
+            check_password(parsed.secret, DUMMY_SECRET_HASH)
+            return None
+        if not candidate.check_secret(parsed.secret):
+            return None
+
+        candidate.touch_last_used()
+        request.auth_token = candidate
+        request.team = candidate.team
+        request.team_membership = None
+        set_current_team_id(candidate.team_id)
+        set_postgres_current_team_id(candidate.team_id)
+        return candidate

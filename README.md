@@ -37,7 +37,7 @@ uv run django-admin startproject \
 
 ### Development
 
-- **Security**: Custom User with MFA, Argon2id hashing, SRI, `nh3` sanitization.
+- **Security**: Custom User with MFA, Argon2id hashing, SRI, `nh3` sanitization, team-scoped API tokens.
 - **Configuration**: Typed `pydantic-settings` setup with fast failure on missing required config.
 - **Structure**: Team-first multi-tenancy with memberships, invitations, and tenant-scoped models.
 - **Stack**: PostgreSQL (production), SQLite (test), Dragonfly (Redis-compatible cache), Django Ninja API.
@@ -79,9 +79,10 @@ This project includes a built-in multi-tenancy foundation for B2B SaaS products:
 - **TenantScopedModel**: Abstract base for team-owned models
 - **Active Team Middleware**: Resolves `/t/{team_slug}/` requests
 - **Signed Invitations**: Email-delivered invitation links with expiry and replay protection
+- **API Tokens**: Team-scoped bearer tokens with hashed secrets and one-time plaintext display
 - **Optional Postgres RLS**: Defence-in-depth row-level isolation for production Postgres deployments
 
-See `{{ project_name }}/tenancy/README.md` for usage details and `SECURITY.md` for the security model.
+See `{{ project_name }}/tenancy/README.md`, `{{ project_name }}/tokens/README.md`, and `SECURITY.md` for the security model.
 
 ## Development Setup
 

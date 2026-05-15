@@ -10,6 +10,7 @@ This template defaults to a **Team-first multi-tenancy** model.
 - `TenantScopedManager` is a convenience helper, **not** the security boundary.
 - Security-critical code must use explicit membership checks and explicit team filters.
 - Invitation links are signed, expiring, email-bound, and single-use.
+- API token auth is the one explicit unscoped lookup path and must remain tightly bounded.
 - Optional Postgres RLS is defence in depth, not the only isolation layer.
 
 ## Default tenant model
@@ -37,12 +38,14 @@ That guarantees a required `team_id` on the model.
 
 ### 2. Request team context
 
-`ActiveTeamMiddleware` inspects `/t/{team_slug}/...` routes and sets:
+`ActiveTeamMiddleware` inspects `/t/{team_slug}/...` and `/api/v1/teams/{team_slug}/...` routes and sets:
 
 - `request.team`
 - `request.team_membership`
 
 For authenticated users, non-members are denied with `404` to reduce tenant enumeration.
+
+For bearer-token API requests, the auth class sets `request.team` directly after token verification. That is deliberate: Django middleware runs before Django Ninja auth handlers, so token-auth team resolution cannot live only in middleware.
 
 ### 3. Explicit permission checks
 
@@ -91,6 +94,25 @@ That helps reduce accidental leaks, but it is **not sufficient for security** be
 - migrations/data backfills
 
 Treat the scoped manager as a convenience default, not a permission system.
+
+## API tokens
+
+API token authentication is the one place where tenant scoping must be bypassed on purpose.
+
+Flow:
+
+1. parse the bearer token strictly
+2. look up the candidate token via `ApiToken.objects.unscoped().for_token_auth()`
+3. run a dummy hash check when no candidate exists to reduce timing leakage
+4. verify the secret hash
+5. set `request.team` and the current team context for the rest of the request
+
+Rules:
+
+- never store plaintext token secrets
+- only show plaintext once at creation time
+- do not add new unscoped auth lookups casually
+- treat every `unscoped()` use as security-sensitive code review territory
 
 ## Invitations
 

@@ -38,6 +38,7 @@ class Team(models.Model):
         permissions = [
             ("manage_team_members", "Can manage team members"),
             ("manage_team_settings", "Can manage team settings"),
+            ("manage_team_api_tokens", "Can manage team API tokens"),
             ("manage_team_billing", "Can manage team billing"),
             ("transfer_team_ownership", "Can transfer team ownership"),
         ]

@@ -1,0 +1,110 @@
+"""API routes for managing and validating API tokens."""
+
+from datetime import datetime
+
+from ninja import Router, Schema
+from ninja.errors import HttpError
+from ninja.security import django_auth
+
+from {{ project_name }}.tenancy.permissions import user_has_team_perm
+
+from . import selectors, services
+from .auth import ApiTokenAuth
+
+management_router = Router(tags=["tokens"])
+auth_router = Router(tags=["tokens"])
+
+
+class ApiTokenResponse(Schema):
+    token_id: str
+    name: str
+    environment: str
+    display_prefix: str
+    scopes: list[str]
+    created_at: datetime
+    last_used_at: datetime | None
+    expires_at: datetime | None
+    revoked_at: datetime | None
+
+
+class ApiTokenCreatedResponse(ApiTokenResponse):
+    plaintext: str
+
+
+class ApiTokenCreateRequest(Schema):
+    name: str
+    scopes: list[str] = []
+    expires_at: datetime | None = None
+
+
+class ApiTokenAuthCheckResponse(Schema):
+    token_id: str
+    team_slug: str
+    team_name: str
+    scopes: list[str]
+
+
+@management_router.get("/{team_slug}/tokens/", response=list[ApiTokenResponse], auth=django_auth)
+def list_tokens(request, team_slug: str):
+    if request.team is None:
+        raise HttpError(404, "Team not found")
+    if not user_has_team_perm(request.user, "tenancy.manage_team_api_tokens", request.team):
+        raise HttpError(403, "Permission denied")
+    return selectors.list_tokens_for_team(team=request.team)
+
+
+@management_router.post("/{team_slug}/tokens/", response={201: ApiTokenCreatedResponse}, auth=django_auth)
+def create_token(request, team_slug: str, payload: ApiTokenCreateRequest):
+    if request.team is None:
+        raise HttpError(404, "Team not found")
+    try:
+        result = services.create_api_token(
+            team=request.team,
+            user=request.user,
+            name=payload.name,
+            scopes=payload.scopes,
+            expires_at=payload.expires_at,
+        )
+    except ValueError as exc:
+        raise HttpError(403, str(exc)) from exc
+
+    token = result.token
+    return 201, ApiTokenCreatedResponse(
+        token_id=token.token_id,
+        name=token.name,
+        environment=token.environment,
+        display_prefix=token.display_prefix,
+        scopes=token.scopes,
+        created_at=token.created_at,
+        last_used_at=token.last_used_at,
+        expires_at=token.expires_at,
+        revoked_at=token.revoked_at,
+        plaintext=result.plaintext,
+    )
+
+
+@management_router.delete("/{team_slug}/tokens/{token_id}/", response={204: None}, auth=django_auth)
+def revoke_token(request, team_slug: str, token_id: str):
+    if request.team is None:
+        raise HttpError(404, "Team not found")
+    token = selectors.get_token(team=request.team, token_id=token_id)
+    if token is None:
+        raise HttpError(404, "Token not found")
+
+    try:
+        services.revoke_api_token(token=token, user=request.user)
+    except ValueError as exc:
+        raise HttpError(403, str(exc)) from exc
+
+    return 204, None
+
+
+@auth_router.get("/me/", response=ApiTokenAuthCheckResponse, auth=ApiTokenAuth())
+def token_me(request):
+    token = request.auth
+    return ApiTokenAuthCheckResponse(
+        token_id=token.token_id,
+        team_slug=token.team.slug,
+        team_name=token.team.name,
+        scopes=token.scopes,
+    )

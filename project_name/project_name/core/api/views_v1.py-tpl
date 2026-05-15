@@ -7,6 +7,7 @@ from ninja import NinjaAPI, Schema
 from {{ project_name }}.billing import selectors, services
 from {{ project_name }}.tenancy import models as tenancy_models
 from {{ project_name }}.tenancy.permissions import user_has_team_perm
+from {{ project_name }}.tokens import api as tokens_api
 
 api = NinjaAPI(version="1.0.0")
 # TODO: Remove this workaround when ty supports Django's dynamic model attributes.
@@ -155,3 +156,7 @@ def create_checkout(
         logger = logging.getLogger(__name__)
         logger.error("Failed to create checkout", exc_info=True)
         return ErrorResponse(error="Payment service temporarily unavailable"), 503
+
+
+api.add_router("/teams/", tokens_api.management_router)
+api.add_router("/tokens/", tokens_api.auth_router)

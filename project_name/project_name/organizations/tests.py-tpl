@@ -1,6 +1,0 @@
-"""Legacy organizations app tests removed from the default template.
-
-The Team-first `tenancy` app is the default multi-tenant model for generated
-projects. This file remains only to prevent pytest from importing the old
-organizations test suite when the app is not installed by default.
-"""
