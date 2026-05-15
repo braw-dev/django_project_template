@@ -57,7 +57,7 @@ PACKAGES=(
     factory-boy
     playwright
     ruff
-    mypy
+    ty
 )
 for pkg in "${PACKAGES[@]}"; do
     check "$pkg"

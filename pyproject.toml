@@ -60,17 +60,6 @@ DJANGO_SETTINGS_MODULE = "{{ project_name }}.settings"
 python_files = ["tests.py", "test_*.py"]
 addopts = "-p no:warnings"
 
-[tool.mypy]
-mypy_path = "{{ project_name }}"
-plugins = ["mypy_django_plugin.main"]
-exclude = '''(?x)(
-    \/migrations\/.*\.py$    # migration files
-)'''
-ignore_missing_imports = true
-
-[tool.django-stubs]
-django_settings_module = "{{ project_name }}.settings"
-
 [tool.uv.sources]
 
 [project]
@@ -118,11 +107,10 @@ dev = [
     "coverage",
     "django-coverage-plugin",
     "django-debug-toolbar",
-    "django-stubs[compatible-mypy]",
     "djlint",
     "factory-boy",
-    "mypy",
     "playwright",
+    "ty",
     "ruff",
     "sphinx",
     "tblib",

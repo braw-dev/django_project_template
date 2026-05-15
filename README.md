@@ -41,7 +41,7 @@ uv run django-admin startproject \
 - **Structure**: Users in Teams (Django Groups) with permission levels.
 - **Stack**: PostgreSQL (production), SQLite (test), Dragonfly (Redis-compatible cache), Django Ninja API.
 - **Testing**: `pytest-django` coverage, Playwright e2e tests.
-- **Typing**: `mypy` static analysis.
+- **Typing**: `ty` static analysis.
 - **Frontend**: Whitenoise serving, Vite + React (optional), Tailwind CSS + Daisy UI, `django-cotton` components.
 - **Tooling**: `Justfile` command runner, Ruff linting/formatting via `lefthook`.
 
