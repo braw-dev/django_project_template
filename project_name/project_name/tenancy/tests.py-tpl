@@ -1,0 +1,190 @@
+"""Tests for team-first tenancy."""
+
+from datetime import timedelta
+
+import pytest
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+from django.http import Http404, HttpResponse
+from django.test import RequestFactory
+from django.utils import timezone
+
+from {{ project_name }}.billing import models as billing_models
+from {{ project_name }}.tenancy import context, middleware, models, permissions, services
+
+User = get_user_model()
+
+
+@pytest.fixture
+def owner(db):
+    return User.objects.create_user(email="owner@example.com", password="testpass123")
+
+
+@pytest.fixture
+def admin_user(db):
+    return User.objects.create_user(email="admin@example.com", password="testpass123")
+
+
+@pytest.fixture
+def member_user(db):
+    return User.objects.create_user(email="member@example.com", password="testpass123")
+
+
+@pytest.fixture
+def outsider(db):
+    return User.objects.create_user(email="outsider@example.com", password="testpass123")
+
+
+@pytest.fixture
+def team(owner):
+    return services.create_team(name="Acme", slug="acme", owner=owner)
+
+
+@pytest.mark.django_db
+class TestTeamServices:
+    def test_create_team_adds_owner_membership(self, owner):
+        team = services.create_team(name="Acme", slug="acme", owner=owner)
+
+        membership = models.TeamMembership.all_objects.get(team=team, user=owner)
+        assert membership.role == models.TeamRole.OWNER
+
+    def test_create_and_accept_invitation(self, owner, outsider, team):
+        invitation = services.create_invitation(
+            actor=owner,
+            team=team,
+            email=outsider.email,
+            role=models.TeamRole.MEMBER,
+        )
+
+        membership = services.accept_invitation_from_token(
+            token=services.get_invitation_token(invitation),
+            user=outsider,
+        )
+
+        invitation.refresh_from_db()
+        assert membership.team == team
+        assert membership.user == outsider
+        assert invitation.accepted_at is not None
+
+    def test_accept_invitation_rejects_wrong_email(self, owner, outsider, team):
+        invitation = services.create_invitation(
+            actor=owner,
+            team=team,
+            email="someone-else@example.com",
+            role=models.TeamRole.MEMBER,
+        )
+
+        with pytest.raises(ValueError, match="different email"):
+            services.accept_invitation_from_token(
+                token=services.get_invitation_token(invitation),
+                user=outsider,
+            )
+
+    def test_send_invitation_email(self, owner, team, rf, mailoutbox):
+        invitation = services.create_invitation(
+            actor=owner,
+            team=team,
+            email="invitee@example.com",
+            role=models.TeamRole.ADMIN,
+        )
+        request = rf.get("/")
+
+        services.send_invitation_email(invitation, request)
+
+        assert len(mailoutbox) == 1
+        assert "Acme" in mailoutbox[0].subject
+
+
+@pytest.mark.django_db
+class TestPermissions:
+    def test_role_permission_matrix(self, owner, admin_user, member_user, team):
+        models.TeamMembership.all_objects.create(
+            team=team,
+            user=admin_user,
+            role=models.TeamRole.ADMIN,
+        )
+        models.TeamMembership.all_objects.create(
+            team=team,
+            user=member_user,
+            role=models.TeamRole.MEMBER,
+        )
+
+        assert permissions.user_has_team_perm(owner, "tenancy.manage_team_billing", team) is True
+        assert permissions.user_has_team_perm(admin_user, "tenancy.manage_team_billing", team) is False
+        assert permissions.user_has_team_perm(admin_user, "billing.change_subscription", team) is True
+        assert permissions.user_has_team_perm(member_user, "billing.change_subscription", team) is False
+        assert permissions.user_has_team_perm(member_user, "billing.view_subscription", team) is True
+
+
+@pytest.mark.django_db
+class TestMiddleware:
+    def test_active_team_middleware_sets_request_team(self, owner, team):
+        captured = {}
+        request = RequestFactory().get(f"/t/{team.slug}/dashboard")
+        request.user = owner
+
+        def get_response(req):
+            captured["team"] = req.team
+            captured["membership"] = req.team_membership
+            return HttpResponse("ok")
+
+        response = middleware.ActiveTeamMiddleware(get_response)(request)
+
+        assert response.status_code == 200
+        assert captured["team"] == team
+        assert captured["membership"].user == owner
+
+    def test_active_team_middleware_rejects_non_member(self, outsider, team):
+        request = RequestFactory().get(f"/t/{team.slug}/dashboard")
+        request.user = outsider
+
+        def get_response(req):
+            return HttpResponse("ok")
+
+        with pytest.raises(Http404):
+            middleware.ActiveTeamMiddleware(get_response)(request)
+
+    def test_active_team_middleware_allows_anonymous_resolution(self, team):
+        captured = {}
+        request = RequestFactory().get(f"/t/{team.slug}/dashboard")
+        request.user = AnonymousUser()
+
+        def get_response(req):
+            captured["team"] = req.team
+            return HttpResponse("ok")
+
+        response = middleware.ActiveTeamMiddleware(get_response)(request)
+
+        assert response.status_code == 200
+        assert captured["team"] == team
+
+
+@pytest.mark.django_db
+class TestTenantScopedManager:
+    def test_scoped_manager_filters_by_active_team_context(self, owner):
+        team_a = services.create_team(name="Acme", slug="acme", owner=owner)
+        team_b = services.create_team(name="Beta", slug="beta", owner=owner)
+        now = timezone.now() + timedelta(days=30)
+        billing_models.Subscription.all_objects.create(
+            team=team_a,
+            polar_subscription_id="sub_team_a",
+            polar_customer_id="cust_team_a",
+            polar_product_id="prod_team_a",
+            status=billing_models.Subscription.SubscriptionStatus.ACTIVE,
+            current_period_end=now,
+        )
+        billing_models.Subscription.all_objects.create(
+            team=team_b,
+            polar_subscription_id="sub_team_b",
+            polar_customer_id="cust_team_b",
+            polar_product_id="prod_team_b",
+            status=billing_models.Subscription.SubscriptionStatus.ACTIVE,
+            current_period_end=now,
+        )
+
+        with context.team_context(team_a.id):
+            assert list(
+                billing_models.Subscription.objects.values_list("polar_subscription_id", flat=True)
+            ) == ["sub_team_a"]
+
+        assert billing_models.Subscription.all_objects.count() == 2

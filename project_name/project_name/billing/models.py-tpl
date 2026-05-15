@@ -5,9 +5,11 @@ import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from {{ project_name }}.tenancy.models import TenantScopedModel
 
-class Subscription(models.Model):
-    """Links a Polar subscription to a local Organization."""
+
+class Subscription(TenantScopedModel):
+    """Links a Polar subscription to a local Team."""
 
     class SubscriptionStatus(models.TextChoices):
         INCOMPLETE = "incomplete", _("Incomplete")
@@ -20,11 +22,6 @@ class Subscription(models.Model):
         REVOKED = "revoked", _("Revoked")
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organisation = models.ForeignKey(
-        "organizations.Organisation",
-        on_delete=models.CASCADE,
-        related_name="subscriptions",
-    )
     polar_subscription_id = models.CharField(
         max_length=255,
         unique=True,
@@ -49,8 +46,8 @@ class Subscription(models.Model):
         verbose_name_plural = _("Subscriptions")
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["organisation", "status"]),
+            models.Index(fields=["team", "status"]),
         ]
 
     def __str__(self):
-        return f"{self.organisation.name} - {self.status}"
+        return f"{self.team.name} - {self.status}"

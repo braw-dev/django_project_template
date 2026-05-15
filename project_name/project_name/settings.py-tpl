@@ -179,6 +179,8 @@ class AppSettings(BaseSettings):
     POLAR_ORGANIZATION_ID: str = ""
     POLAR_WEBHOOK_SECRET: SecretStr = SecretStr("")
     POLAR_API_BASE_URL: str = "https://api.polar.sh"
+    ENABLE_POSTGRES_RLS: bool = False
+    TEAM_INVITATION_EXPIRY_HOURS: int = 168
     CHATWOOT_WEBSITE_TOKEN: SecretStr = SecretStr("")
     CHATWOOT_BASE_URL: str = "https://app.chatwoot.com"
     CELERY_BROKER_URL: SecretStr = SecretStr("redis://localhost:6379/0")
@@ -227,6 +229,9 @@ SITE_ID = 1
 ADMINS = getaddresses([APP_SETTINGS.DJANGO_ADMINS])
 EMAIL_DOMAIN = APP_SETTINGS.EMAIL_DOMAIN
 USE_HTTP = APP_SETTINGS.USE_HTTP
+ENABLE_POSTGRES_RLS = APP_SETTINGS.ENABLE_POSTGRES_RLS
+TEAM_INVITATION_EXPIRY_HOURS = APP_SETTINGS.TEAM_INVITATION_EXPIRY_HOURS
+TENANCY_RESOLUTION_STRATEGY = "path"
 
 # Application definition
 
@@ -263,7 +268,7 @@ INSTALLED_APPS = [
     "{{ project_name }}.core",
     "{{ project_name }}.pages",  # Marketing landing pages
     "{{ project_name }}.flags",  # Feature flags
-    "{{ project_name }}.organizations",  # Organizations and RBAC
+    "{{ project_name }}.tenancy",  # Team-first multi-tenancy
     "{{ project_name }}.billing",  # Billing and subscriptions
 ]
 
@@ -277,6 +282,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "axes.middleware.AxesMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "{{ project_name }}.tenancy.middleware.ActiveTeamMiddleware",
     "{{ project_name }}.users.middleware.EnforceMFAMiddleware",
     "hijack.middleware.HijackUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",

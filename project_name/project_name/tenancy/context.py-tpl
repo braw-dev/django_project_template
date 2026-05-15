@@ -1,0 +1,56 @@
+"""Request and database team context helpers."""
+
+from contextlib import contextmanager
+from contextvars import ContextVar
+from typing import Iterator
+from uuid import UUID
+
+from django.conf import settings
+from django.db import connection
+
+_current_team_id: ContextVar[str | None] = ContextVar("current_team_id", default=None)
+
+
+def get_current_team_id() -> str | None:
+    """Return the active team id for the current execution context."""
+    return _current_team_id.get()
+
+
+def set_current_team_id(team_id: UUID | str | None) -> None:
+    """Set the active team id for the current execution context."""
+    _current_team_id.set(str(team_id) if team_id else None)
+
+
+def clear_current_team_id() -> None:
+    """Clear the active team id for the current execution context."""
+    _current_team_id.set(None)
+
+
+def set_postgres_current_team_id(team_id: UUID | str | None) -> None:
+    """Set the PostgreSQL session variable used by optional RLS policies."""
+    if not getattr(settings, "ENABLE_POSTGRES_RLS", False):
+        return
+    if connection.vendor != "postgresql":
+        return
+
+    value = "" if team_id is None else str(team_id)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT set_config('app.current_team_id', %s, false)", [value])
+
+
+def clear_postgres_current_team_id() -> None:
+    """Clear the PostgreSQL session variable used by optional RLS policies."""
+    set_postgres_current_team_id(None)
+
+
+@contextmanager
+def team_context(team_id: UUID | str | None) -> Iterator[None]:
+    """Temporarily set the active team context for queries and optional RLS."""
+    previous_team_id = get_current_team_id()
+    set_current_team_id(team_id)
+    set_postgres_current_team_id(team_id)
+    try:
+        yield
+    finally:
+        set_current_team_id(previous_team_id)
+        set_postgres_current_team_id(previous_team_id)

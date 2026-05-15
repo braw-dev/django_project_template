@@ -39,7 +39,7 @@ uv run django-admin startproject \
 
 - **Security**: Custom User with MFA, Argon2id hashing, SRI, `nh3` sanitization.
 - **Configuration**: Typed `pydantic-settings` setup with fast failure on missing required config.
-- **Structure**: Users in Teams (Django Groups) with permission levels.
+- **Structure**: Team-first multi-tenancy with memberships, invitations, and tenant-scoped models.
 - **Stack**: PostgreSQL (production), SQLite (test), Dragonfly (Redis-compatible cache), Django Ninja API.
 - **Testing**: `pytest` + `pytest-django` for backend tests, Playwright for browser/e2e tests.
 - **Typing**: `ty` static analysis.
@@ -70,17 +70,18 @@ just startapp {{ app_name }}
 
 ## Built-in Features
 
-### Organizations & Teams (RBAC)
+### Team-First Multi-Tenancy
 
-This project includes a built-in role-based access control (RBAC) system for managing
-multi-tenant organizational hierarchies:
+This project includes a built-in multi-tenancy foundation for B2B SaaS products:
 
-- **Organizations**: Top-level tenants/workspaces
-- **Teams**: Sub-groups within organizations
-- **Roles**: Define permissions (Admin, Editor, Viewer)
-- **Cascading Permissions**: Organization admins automatically access all teams
+- **Teams**: Top-level tenants/workspaces/accounts
+- **TeamMembership**: Fixed roles (`owner`, `admin`, `member`)
+- **TenantScopedModel**: Abstract base for team-owned models
+- **Active Team Middleware**: Resolves `/t/{team_slug}/` requests
+- **Signed Invitations**: Email-delivered invitation links with expiry and replay protection
+- **Optional Postgres RLS**: Defence-in-depth row-level isolation for production Postgres deployments
 
-See `{{ project_name }}/organizations/README.md` for usage details.
+See `{{ project_name }}/tenancy/README.md` for usage details and `SECURITY.md` for the security model.
 
 ## Development Setup
 
@@ -136,6 +137,7 @@ Always remember the [grug developer](https://grugbrain.dev/).
 
 - [Motivation & Philosophy](MOTIVATION.md)
 - [Production Architecture & Deployment](DEPLOYMENT.md)
+- [Security Model](SECURITY.md)
 
 ## Todo
 

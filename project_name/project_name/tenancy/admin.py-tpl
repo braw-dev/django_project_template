@@ -1,0 +1,27 @@
+from django.contrib import admin
+
+from . import models
+
+
+@admin.register(models.Team)
+class TeamAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug", "created_at")
+    search_fields = ("name", "slug")
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(models.TeamMembership)
+class TeamMembershipAdmin(admin.ModelAdmin):
+    list_display = ("team", "user", "role", "created_at")
+    list_filter = ("role", "created_at")
+    search_fields = ("team__name", "team__slug", "user__email")
+    raw_id_fields = ("team", "user")
+
+
+@admin.register(models.TeamInvitation)
+class TeamInvitationAdmin(admin.ModelAdmin):
+    list_display = ("team", "email", "role", "expires_at", "accepted_at", "revoked_at")
+    list_filter = ("role", "accepted_at", "revoked_at")
+    search_fields = ("team__name", "email")
+    raw_id_fields = ("team", "invited_by")
+    readonly_fields = ("token_key", "created_at", "updated_at")

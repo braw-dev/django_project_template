@@ -5,11 +5,12 @@ from uuid import UUID
 from django.http import HttpRequest
 from ninja import NinjaAPI, Schema
 from {{ project_name }}.billing import selectors, services
-from {{ project_name }}.organizations import models as org_models
+from {{ project_name }}.tenancy import models as tenancy_models
+from {{ project_name }}.tenancy.permissions import user_has_team_perm
 
 api = NinjaAPI(version="1.0.0")
 # TODO: Remove this workaround when ty supports Django's dynamic model attributes.
-OrganisationModel = cast(Any, org_models.Organisation)
+TeamModel = cast(Any, tenancy_models.Team)
 
 
 class HealthResponse(Schema):
@@ -37,30 +38,42 @@ class SubscriptionDetailResponse(Schema):
     subscription: SubscriptionResponse | None
 
 
+class ErrorResponse(Schema):
+    """Error response."""
+
+    error: str
+
+
 @api.get(
     "/billing/subscription/",
-    response={200: SubscriptionDetailResponse},
+    response={200: SubscriptionDetailResponse, 403: ErrorResponse},
     auth=None,  # Will use session auth
 )
 def get_subscription(
     request: HttpRequest,
-    organisation_id: UUID,
-) -> SubscriptionDetailResponse:
-    """Get the current subscription for an organisation.
+    team_id: UUID,
+) -> SubscriptionDetailResponse | tuple[ErrorResponse, int]:
+    """Get the current subscription for a team.
 
     Args:
         request: HTTP request
-        organisation_id: UUID of organisation to check
+        team_id: UUID of team to check
 
     Returns:
         Subscription details or null if no active subscription
     """
     try:
-        organisation = OrganisationModel.objects.get(id=organisation_id)
-    except OrganisationModel.DoesNotExist:
+        team = TeamModel.objects.get(id=team_id)
+    except TeamModel.DoesNotExist:
         return SubscriptionDetailResponse(subscription=None)
 
-    subscription = selectors.get_active_subscription(organisation)
+    request_user = cast(Any, request).user
+    if not request_user.is_authenticated:
+        return ErrorResponse(error="Authentication required"), 403
+    if not user_has_team_perm(request_user, "tenancy.manage_team_billing", team):
+        return ErrorResponse(error="Permission denied"), 403
+
+    subscription = selectors.get_active_subscription(team)
 
     if not subscription:
         return SubscriptionDetailResponse(subscription=None)
@@ -80,19 +93,13 @@ class CheckoutRequest(Schema):
     """Request to create a checkout session."""
 
     product_id: str
-    organisation_id: UUID
+    team_id: UUID
 
 
 class CheckoutResponse(Schema):
     """Response with checkout URL."""
 
     checkout_url: str
-
-
-class ErrorResponse(Schema):
-    """Error response."""
-
-    error: str
 
 
 @api.post(
@@ -108,19 +115,21 @@ def create_checkout(
 
     Args:
         request: HTTP request
-        body: Checkout request with product_id and organisation_id
+        body: Checkout request with product_id and team_id
 
     Returns:
         Checkout URL or error response
     """
     try:
-        organisation = OrganisationModel.objects.get(id=body.organisation_id)
-    except OrganisationModel.DoesNotExist:
-        return ErrorResponse(error="Organisation not found"), 403
+        team = TeamModel.objects.get(id=body.team_id)
+    except TeamModel.DoesNotExist:
+        return ErrorResponse(error="Team not found"), 403
 
-    # TODO: Add authorization check - user must be member of organisation
-    # For now, this is a stub that raises NotImplementedError
-    # Implement authorization in your project
+    request_user = cast(Any, request).user
+    if not request_user.is_authenticated:
+        return ErrorResponse(error="Authentication required"), 403
+    if not user_has_team_perm(request_user, "tenancy.manage_team_billing", team):
+        return ErrorResponse(error="Permission denied"), 403
 
     try:
         billing_service = services.get_billing_service()
@@ -128,13 +137,11 @@ def create_checkout(
         # Get success URL from request or use default
         success_url = request.build_absolute_uri("/billing/success/")
 
-        # TODO: Remove this workaround when ty supports Django request.user.
-        request_user = cast(Any, request).user
         checkout_url = billing_service.create_checkout_url(
             product_id=body.product_id,
-            organisation=organisation,
+            team=team,
             success_url=success_url,
-            user_email=request_user.email if request_user.is_authenticated else "",
+            user_email=request_user.email,
         )
 
         return CheckoutResponse(checkout_url=checkout_url)

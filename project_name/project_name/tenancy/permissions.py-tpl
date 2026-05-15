@@ -1,0 +1,70 @@
+"""Team permission helpers built on top of Django permission names."""
+
+from django.contrib.auth.models import AbstractBaseUser
+
+from . import models
+
+ADMIN_ONLY_PERMISSIONS = {
+    "tenancy.manage_team_members",
+    "tenancy.manage_team_settings",
+}
+
+OWNER_ONLY_PERMISSIONS = {
+    "tenancy.manage_team_billing",
+    "tenancy.transfer_team_ownership",
+}
+
+STANDARD_PERMISSION_ACTIONS = {"view", "add", "change", "delete"}
+
+
+def _get_standard_permission_action(permission_name: str) -> str | None:
+    try:
+        _, codename = permission_name.split(".", 1)
+    except ValueError:
+        return None
+
+    action, _, _ = codename.partition("_")
+    if action in STANDARD_PERMISSION_ACTIONS:
+        return action
+    return None
+
+
+def user_has_team_perm(
+    user: AbstractBaseUser,
+    permission_name: str,
+    team: models.Team | None,
+    obj=None,
+) -> bool:
+    """Return whether a user has a permission within a specific team."""
+    if not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "is_superuser", False):
+        return True
+    if team is None:
+        return False
+
+    if obj is not None and getattr(obj, "team_id", None) != team.id:
+        return False
+
+    membership = models.TeamMembership.all_objects.filter(team=team, user=user).first()
+    if membership is None:
+        return False
+
+    if membership.role == models.TeamRole.OWNER:
+        return True
+
+    if permission_name in OWNER_ONLY_PERMISSIONS:
+        return False
+
+    if membership.role == models.TeamRole.ADMIN:
+        if permission_name in ADMIN_ONLY_PERMISSIONS:
+            return True
+
+        standard_action = _get_standard_permission_action(permission_name)
+        return standard_action in {"view", "add", "change", "delete"}
+
+    if permission_name in ADMIN_ONLY_PERMISSIONS:
+        return False
+
+    standard_action = _get_standard_permission_action(permission_name)
+    return standard_action == "view"

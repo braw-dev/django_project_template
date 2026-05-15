@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
 from polar_sdk import Polar
 
-from {{ project_name }}.organizations import models as org_models
+from {{ project_name }}.tenancy import models as tenancy_models
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ class BillingService:
     def create_checkout_url(
         self,
         product_id: str,
-        organisation: org_models.Organisation,
+        team: tenancy_models.Team,
         success_url: str,
         user_email: str,
     ) -> str:
@@ -53,7 +53,7 @@ class BillingService:
 
         Args:
             product_id: Polar product ID
-            organisation: Organisation subscribing
+            team: Team subscribing
             success_url: URL to redirect after successful checkout
             user_email: Email of the user initiating checkout
 
@@ -69,7 +69,7 @@ class BillingService:
             Override to add custom metadata, customer creation, etc.
         """
         # Project-specific logic hook
-        checkout_metadata = self._get_checkout_metadata(organisation)
+        checkout_metadata = self._get_checkout_metadata(team)
 
         try:
             with self._get_client() as polar:
@@ -93,30 +93,30 @@ class BillingService:
         except Exception:
             logger.error(
                 "Failed to create Polar checkout",
-                extra={"product_id": product_id, "organisation_id": str(organisation.id)},
+                extra={"product_id": product_id, "team_id": str(team.id)},
                 exc_info=True,
             )
             raise
 
-    def _get_checkout_metadata(self, organisation: org_models.Organisation) -> dict[str, str]:
+    def _get_checkout_metadata(self, team: tenancy_models.Team) -> dict[str, str]:
         """Get metadata to include in checkout session.
 
-        Includes organisation_id by default. Override this method to add
+        Includes team_id by default. Override this method to add
         project-specific metadata.
 
         Args:
-            organisation: Organisation subscribing
+            team: Team subscribing
 
         Returns:
-            Metadata dictionary with organisation_id
+            Metadata dictionary with team_id
         """
         return {
-            "organization_id": str(organisation.id),
+            "team_id": str(team.id),
         }
 
     def get_customer_portal_url(
         self,
-        organisation: org_models.Organisation,
+        team: tenancy_models.Team,
     ) -> str:
         """Get customer portal URL for managing subscription.
 
@@ -125,7 +125,7 @@ class BillingService:
         is stubbed for future implementation if Polar adds a portal API.
 
         Args:
-            organisation: Organisation to get portal for
+            team: Team to get portal for
 
         Returns:
             Portal URL (stubbed)

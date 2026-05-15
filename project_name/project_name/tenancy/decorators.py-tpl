@@ -1,0 +1,39 @@
+"""Decorators for team-scoped views."""
+
+from functools import wraps
+
+from django.http import Http404
+
+from .permissions import user_has_team_perm
+
+
+def require_active_team(view_func):
+    """Require an active team on the request."""
+
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        if getattr(request, "team", None) is None:
+            raise Http404()
+        if not request.user.is_authenticated:
+            raise Http404()
+        if request.team_membership is None and not request.user.is_superuser:
+            raise Http404()
+        return view_func(request, *args, **kwargs)
+
+    return wrapped
+
+
+def require_team_permission(permission_name: str):
+    """Require a specific team permission on the request's active team."""
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapped(request, *args, **kwargs):
+            team = getattr(request, "team", None)
+            if not user_has_team_perm(request.user, permission_name, team):
+                raise Http404()
+            return view_func(request, *args, **kwargs)
+
+        return wrapped
+
+    return decorator

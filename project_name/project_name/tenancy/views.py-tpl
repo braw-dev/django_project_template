@@ -1,0 +1,17 @@
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+
+from . import services
+
+
+@login_required
+def accept_team_invitation(request, token):
+    try:
+        membership = services.accept_invitation_from_token(token=token, user=request.user)
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("homepage")
+
+    messages.success(request, f"You joined {membership.team.name}.")
+    return redirect("team_dashboard", team_slug=membership.team.slug)

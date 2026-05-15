@@ -1,0 +1,145 @@
+"""Team-first tenancy models."""
+
+import secrets
+import uuid
+
+from django.conf import settings
+from django.db import models
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
+from .managers import TenantScopedManager
+
+
+def generate_token_key() -> str:
+    """Generate a random token key used to invalidate invitation links."""
+    return secrets.token_urlsafe(32)
+
+
+class TeamRole(models.TextChoices):
+    OWNER = "owner", _("Owner")
+    ADMIN = "admin", _("Admin")
+    MEMBER = "member", _("Member")
+
+
+class Team(models.Model):
+    """Top-level tenant/workspace for the application."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(_("Name"), max_length=255)
+    slug = models.SlugField(_("Slug"), unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Team")
+        verbose_name_plural = _("Teams")
+        ordering = ["name"]
+        permissions = [
+            ("manage_team_members", "Can manage team members"),
+            ("manage_team_settings", "Can manage team settings"),
+            ("manage_team_billing", "Can manage team billing"),
+            ("transfer_team_ownership", "Can transfer team ownership"),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class TenantScopedModel(models.Model):
+    """Abstract base for models that are owned by a team."""
+
+    team = models.ForeignKey(
+        "tenancy.Team",
+        on_delete=models.CASCADE,
+        related_name="%(class)ss",
+    )
+
+    objects = TenantScopedManager()
+    all_objects = models.Manager()
+
+    class Meta:
+        abstract = True
+
+
+class TeamMembership(TenantScopedModel):
+    """Membership linking a user to a team with a fixed role."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="team_memberships",
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=TeamRole.choices,
+        default=TeamRole.MEMBER,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Team Membership")
+        verbose_name_plural = _("Team Memberships")
+        ordering = ["team__name", "user__email"]
+        constraints = [
+            models.UniqueConstraint(fields=["team", "user"], name="unique_team_membership")
+        ]
+
+    @property
+    def is_owner(self) -> bool:
+        return self.role == TeamRole.OWNER
+
+    @property
+    def is_admin(self) -> bool:
+        return self.role in {TeamRole.OWNER, TeamRole.ADMIN}
+
+    @property
+    def can_manage_members(self) -> bool:
+        return self.role in {TeamRole.OWNER, TeamRole.ADMIN}
+
+    def __str__(self):
+        return f"{self.user} in {self.team} as {self.role}"
+
+
+class TeamInvitation(TenantScopedModel):
+    """Invitation to join a team via a signed, expiring token."""
+
+    email = models.EmailField(_("Email"), db_index=True)
+    role = models.CharField(
+        max_length=20,
+        choices=TeamRole.choices,
+        default=TeamRole.MEMBER,
+    )
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_team_invitations",
+    )
+    token_key = models.CharField(max_length=255, default=generate_token_key, editable=False)
+    expires_at = models.DateTimeField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Team Invitation")
+        verbose_name_plural = _("Team Invitations")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["team", "email"]),
+        ]
+
+    @property
+    def is_expired(self) -> bool:
+        return self.expires_at <= timezone.now()
+
+    @property
+    def is_active(self) -> bool:
+        return not self.is_expired and self.accepted_at is None and self.revoked_at is None
+
+    def __str__(self):
+        return f"{self.email} invited to {self.team}"

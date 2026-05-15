@@ -1,0 +1,156 @@
+"""Service-layer helpers for team tenancy."""
+
+from datetime import timedelta
+from typing import Any, cast
+
+from django.conf import settings
+from django.core import signing
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils import timezone
+
+from . import models, permissions
+
+INVITATION_TOKEN_SALT = "tenancy.team-invitation"
+
+TeamModel = cast(Any, models.Team)
+TeamMembershipModel = cast(Any, models.TeamMembership)
+TeamInvitationModel = cast(Any, models.TeamInvitation)
+
+
+def _normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
+def create_team(*, name: str, slug: str, owner) -> models.Team:
+    """Create a team and add the owner membership."""
+    team = TeamModel.objects.create(name=name, slug=slug)
+    TeamMembershipModel.all_objects.create(
+        team=team,
+        user=owner,
+        role=models.TeamRole.OWNER,
+    )
+    return team
+
+
+def add_user_to_team(*, actor, team: models.Team, user, role: str) -> models.TeamMembership:
+    """Add a user to a team after verifying member-management permission."""
+    if not permissions.user_has_team_perm(actor, "tenancy.manage_team_members", team):
+        raise ValueError("You do not have permission to manage team members.")
+
+    membership, created = TeamMembershipModel.all_objects.get_or_create(
+        team=team,
+        user=user,
+        defaults={"role": role},
+    )
+    if not created:
+        raise ValueError("User is already a member of this team.")
+
+    return membership
+
+
+def get_user_teams(user):
+    """Return all teams the user belongs to."""
+    return TeamModel.objects.filter(teammemberships__user=user).distinct()
+
+
+def create_invitation(*, actor, team: models.Team, email: str, role: str) -> models.TeamInvitation:
+    """Create a team invitation after verifying member-management permission."""
+    if not permissions.user_has_team_perm(actor, "tenancy.manage_team_members", team):
+        raise ValueError("You do not have permission to manage team members.")
+
+    normalized_email = _normalize_email(email)
+    now = timezone.now()
+    TeamInvitationModel.all_objects.filter(
+        team=team,
+        email__iexact=normalized_email,
+        accepted_at__isnull=True,
+        revoked_at__isnull=True,
+        expires_at__gt=now,
+    ).update(revoked_at=now)
+
+    expiry_hours = getattr(settings, "TEAM_INVITATION_EXPIRY_HOURS", 168)
+    return TeamInvitationModel.all_objects.create(
+        team=team,
+        email=normalized_email,
+        role=role,
+        invited_by=actor,
+        expires_at=now + timedelta(hours=expiry_hours),
+    )
+
+
+def get_invitation_token(invitation: models.TeamInvitation) -> str:
+    """Create a signed invitation token."""
+    return signing.dumps(
+        {
+            "invitation_id": str(invitation.id),
+            "email": invitation.email,
+            "token_key": invitation.token_key,
+        },
+        salt=INVITATION_TOKEN_SALT,
+    )
+
+
+def build_invitation_accept_url(invitation: models.TeamInvitation, request) -> str:
+    """Build an absolute invitation acceptance URL."""
+    token = get_invitation_token(invitation)
+    return request.build_absolute_uri(
+        reverse("accept_team_invitation", kwargs={"token": token})
+    )
+
+
+def send_invitation_email(invitation: models.TeamInvitation, request) -> None:
+    """Render and send a team invitation email."""
+    accept_url = build_invitation_accept_url(invitation, request)
+    body = render_to_string(
+        "tenancy/email/team_invitation.txt",
+        {
+            "accept_url": accept_url,
+            "invitation": invitation,
+            "team": invitation.team,
+        },
+    )
+    send_mail(
+        subject=f"You have been invited to join {invitation.team.name}",
+        message=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[invitation.email],
+    )
+
+
+def accept_invitation_from_token(*, token: str, user) -> models.TeamMembership:
+    """Validate a signed token and create the membership if allowed."""
+    max_age = getattr(settings, "TEAM_INVITATION_EXPIRY_HOURS", 168) * 3600
+    try:
+        payload = signing.loads(token, salt=INVITATION_TOKEN_SALT, max_age=max_age)
+    except signing.SignatureExpired as exc:
+        raise ValueError("This invitation link has expired.") from exc
+    except signing.BadSignature as exc:
+        raise ValueError("This invitation link is invalid or has expired.") from exc
+
+    invitation = TeamInvitationModel.all_objects.filter(
+        id=payload.get("invitation_id")
+    ).first()
+    if invitation is None:
+        raise ValueError("This invitation no longer exists.")
+
+    if invitation.token_key != payload.get("token_key"):
+        raise ValueError("This invitation link is invalid.")
+    if invitation.accepted_at is not None:
+        raise ValueError("This invitation has already been accepted.")
+    if invitation.revoked_at is not None:
+        raise ValueError("This invitation has been revoked.")
+    if invitation.is_expired:
+        raise ValueError("This invitation has expired.")
+    if _normalize_email(user.email) != _normalize_email(invitation.email):
+        raise ValueError("This invitation was sent to a different email address.")
+
+    membership, _ = TeamMembershipModel.all_objects.get_or_create(
+        team=invitation.team,
+        user=user,
+        defaults={"role": invitation.role},
+    )
+    invitation.accepted_at = timezone.now()
+    invitation.save(update_fields=["accepted_at", "updated_at"])
+    return membership

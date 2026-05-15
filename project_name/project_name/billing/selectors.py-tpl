@@ -5,7 +5,7 @@ from typing import Any, cast
 from django.db.models import Q
 from django.utils import timezone
 
-from {{ project_name }}.organizations import models as org_models
+from {{ project_name }}.tenancy import models as tenancy_models
 
 from . import models
 
@@ -13,22 +13,22 @@ from . import models
 SubscriptionModel = cast(Any, models.Subscription)
 
 
-def has_active_subscription(organisation: org_models.Organisation) -> bool:
-    """Check if organisation has an active subscription.
+def has_active_subscription(team: tenancy_models.Team) -> bool:
+    """Check if team has an active subscription.
 
     A subscription is considered active if:
     - Status is 'active' or 'trialing'
     - current_period_end is in the future (or None)
 
     Args:
-        organisation: Organisation instance to check
+        team: Team instance to check
 
     Returns:
-        True if organisation has an active subscription, False otherwise
+        True if team has an active subscription, False otherwise
     """
     now = timezone.now()
-    return SubscriptionModel.objects.filter(
-        organisation=organisation,
+    return SubscriptionModel.all_objects.filter(
+        team=team,
         status__in=[
             models.Subscription.SubscriptionStatus.ACTIVE,
             models.Subscription.SubscriptionStatus.TRIALING,
@@ -39,20 +39,20 @@ def has_active_subscription(organisation: org_models.Organisation) -> bool:
 
 
 def get_active_subscription(
-    organisation: org_models.Organisation,
+    team: tenancy_models.Team,
 ) -> models.Subscription | None:
-    """Get the most recent active subscription for an organisation.
+    """Get the most recent active subscription for a team.
 
     Args:
-        organisation: Organisation instance
+        team: Team instance
 
     Returns:
         Most recent active Subscription, or None if none exists
     """
     now = timezone.now()
     return (
-        SubscriptionModel.objects.filter(
-            organisation=organisation,
+        SubscriptionModel.all_objects.filter(
+            team=team,
             status__in=[
                 models.Subscription.SubscriptionStatus.ACTIVE,
                 models.Subscription.SubscriptionStatus.TRIALING,
@@ -76,7 +76,7 @@ def get_subscription_by_polar_id(polar_id: str) -> models.Subscription | None:
         Subscription instance, or None if not found
     """
     try:
-        return SubscriptionModel.objects.get(polar_subscription_id=polar_id)
+        return SubscriptionModel.all_objects.get(polar_subscription_id=polar_id)
     except SubscriptionModel.DoesNotExist:
         return None
 

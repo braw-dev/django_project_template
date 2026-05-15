@@ -8,25 +8,25 @@ import pytest
 from django.utils import timezone
 from standardwebhooks.webhooks import WebhookVerificationError
 
-from {{ project_name }}.organizations import models as org_models
+from {{ project_name }}.tenancy import models as tenancy_models
 
 from . import models, webhooks
 
 
 @pytest.fixture
-def organisation():
-    """Create a test organisation."""
-    return org_models.Organisation.objects.create(
-        name="Test Org",
-        slug="test-org",
+def team():
+    """Create a test team."""
+    return tenancy_models.Team.objects.create(
+        name="Test Team",
+        slug="test-team",
     )
 
 
 @pytest.fixture
-def subscription(organisation):
+def subscription(team):
     """Create a test subscription."""
-    return models.Subscription.objects.create(
-        organisation=organisation,
+    return models.Subscription.all_objects.create(
+        team=team,
         polar_subscription_id="sub_test123",
         polar_customer_id="cust_test123",
         polar_product_id="prod_test123",
@@ -73,7 +73,7 @@ class TestWebhookVerification:
 class TestSubscriptionHandlers:
     """Test subscription webhook handlers."""
 
-    def test_handle_subscription_created(self, organisation):
+    def test_handle_subscription_created(self, team):
         """Test creating a subscription from webhook."""
         data = {
             "id": "sub_new123",
@@ -83,7 +83,7 @@ class TestSubscriptionHandlers:
             "current_period_start": "2026-01-01T00:00:00Z",
             "current_period_end": "2026-02-01T00:00:00Z",
             "cancel_at_period_end": False,
-            "metadata": {"organization_id": str(organisation.id)},
+            "metadata": {"team_id": str(team.id)},
         }
 
         with patch("{{ project_name }}.billing.webhooks.on_subscription_created"):
@@ -91,17 +91,17 @@ class TestSubscriptionHandlers:
 
         assert subscription is not None
         assert subscription.polar_subscription_id == "sub_new123"
-        assert subscription.organisation == organisation
+        assert subscription.team == team
         assert subscription.status == "active"
 
-    def test_handle_subscription_created_missing_org(self):
-        """Test creating subscription with missing organisation."""
+    def test_handle_subscription_created_missing_team(self):
+        """Test creating subscription with missing team."""
         data = {
             "id": "sub_new123",
             "customer_id": "cust_new123",
             "product_id": "prod_new123",
             "status": "active",
-            "metadata": {"organization_id": str(uuid.uuid4())},
+            "metadata": {"team_id": str(uuid.uuid4())},
         }
 
         subscription = webhooks.handle_subscription_created(data)
@@ -156,40 +156,40 @@ class TestSelectors:
         """Test has_active_subscription returns True for active subscription."""
         from {{ project_name }}.billing import selectors
 
-        assert selectors.has_active_subscription(subscription.organisation) is True
+        assert selectors.has_active_subscription(subscription.team) is True
 
-    def test_has_active_subscription_false_revoked(self, organisation):
+    def test_has_active_subscription_false_revoked(self, team):
         """Test has_active_subscription returns False for revoked subscription."""
         from {{ project_name }}.billing import selectors
 
-        models.Subscription.objects.create(
-            organisation=organisation,
+        models.Subscription.all_objects.create(
+            team=team,
             polar_subscription_id="sub_revoked",
             polar_customer_id="cust_revoked",
             polar_product_id="prod_revoked",
             status=models.Subscription.SubscriptionStatus.REVOKED,
         )
 
-        assert selectors.has_active_subscription(organisation) is False
+        assert selectors.has_active_subscription(team) is False
 
-    def test_has_active_subscription_false_no_subscription(self, organisation):
+    def test_has_active_subscription_false_no_subscription(self, team):
         """Test has_active_subscription returns False when no subscription exists."""
         from {{ project_name }}.billing import selectors
 
-        assert selectors.has_active_subscription(organisation) is False
+        assert selectors.has_active_subscription(team) is False
 
     def test_get_active_subscription(self, subscription):
         """Test get_active_subscription returns subscription."""
         from {{ project_name }}.billing import selectors
 
-        result = selectors.get_active_subscription(subscription.organisation)
+        result = selectors.get_active_subscription(subscription.team)
         assert result == subscription
 
-    def test_get_active_subscription_none(self, organisation):
+    def test_get_active_subscription_none(self, team):
         """Test get_active_subscription returns None when no active subscription."""
         from {{ project_name }}.billing import selectors
 
-        result = selectors.get_active_subscription(organisation)
+        result = selectors.get_active_subscription(team)
         assert result is None
 
     def test_get_subscription_by_polar_id(self, subscription):

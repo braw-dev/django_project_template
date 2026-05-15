@@ -6,7 +6,7 @@ from . import models
 @admin.register(models.Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = (
-        "organisation",
+        "team",
         "polar_subscription_id",
         "status",
         "current_period_end",
@@ -17,7 +17,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
     search_fields = (
         "polar_subscription_id",
         "polar_customer_id",
-        "organisation__name",
+        "team__name",
     )
     readonly_fields = ("created_at", "updated_at")
-    raw_id_fields = ("organisation",)
+    raw_id_fields = ("team",)

@@ -8,13 +8,13 @@ from django.conf import settings
 from standardwebhooks import Webhook
 from standardwebhooks.webhooks import WebhookVerificationError
 
-from {{ project_name }}.organizations import models as org_models
+from {{ project_name }}.tenancy import models as tenancy_models
 
 from . import models
 
 logger = logging.getLogger(__name__)
 # TODO: Remove these workarounds when ty supports Django's dynamic model attributes.
-OrganisationModel = cast(Any, org_models.Organisation)
+TeamModel = cast(Any, tenancy_models.Team)
 SubscriptionModel = cast(Any, models.Subscription)
 
 
@@ -48,7 +48,7 @@ def handle_subscription_created(data: dict[str, Any]) -> models.Subscription | N
         data: Subscription data from Polar webhook
 
     Returns:
-        Created Subscription instance, or None if organisation not found
+        Created Subscription instance, or None if team not found
     """
     polar_subscription_id = data.get("id")
     polar_customer_id = data.get("customer_id")
@@ -56,22 +56,21 @@ def handle_subscription_created(data: dict[str, Any]) -> models.Subscription | N
     status = data.get("status", "incomplete")
     metadata = data.get("metadata", {})
 
-    # Extract organisation_id from metadata
-    organisation_id = metadata.get("organization_id")
-    if not organisation_id:
+    team_id = metadata.get("team_id")
+    if not team_id:
         logger.warning(
-            "subscription.created webhook missing organization_id in metadata",
+            "subscription.created webhook missing team_id in metadata",
             extra={"polar_subscription_id": polar_subscription_id},
         )
         return None
 
     try:
-        organisation = OrganisationModel.objects.get(id=organisation_id)
-    except OrganisationModel.DoesNotExist:
+        team = TeamModel.objects.get(id=team_id)
+    except TeamModel.DoesNotExist:
         logger.error(
-            "subscription.created webhook references non-existent organisation",
+            "subscription.created webhook references non-existent team",
             extra={
-                "organisation_id": organisation_id,
+                "team_id": team_id,
                 "polar_subscription_id": polar_subscription_id,
             },
         )
@@ -90,8 +89,8 @@ def handle_subscription_created(data: dict[str, Any]) -> models.Subscription | N
             data["current_period_end"].replace("Z", "+00:00")
         )
 
-    subscription = SubscriptionModel.objects.create(
-        organisation=organisation,
+    subscription = SubscriptionModel.all_objects.create(
+        team=team,
         polar_subscription_id=polar_subscription_id,
         polar_customer_id=polar_customer_id,
         polar_product_id=polar_product_id,
@@ -124,7 +123,7 @@ def handle_subscription_updated(data: dict[str, Any]) -> models.Subscription | N
         return None
 
     try:
-        subscription = SubscriptionModel.objects.get(
+        subscription = SubscriptionModel.all_objects.get(
             polar_subscription_id=polar_subscription_id
         )
     except SubscriptionModel.DoesNotExist:
@@ -183,7 +182,7 @@ def handle_subscription_revoked(data: dict[str, Any]) -> models.Subscription | N
         return None
 
     try:
-        subscription = SubscriptionModel.objects.get(
+        subscription = SubscriptionModel.all_objects.get(
             polar_subscription_id=polar_subscription_id
         )
     except SubscriptionModel.DoesNotExist:
@@ -219,7 +218,7 @@ def handle_subscription_canceled(data: dict[str, Any]) -> models.Subscription | 
         return None
 
     try:
-        subscription = SubscriptionModel.objects.get(
+        subscription = SubscriptionModel.all_objects.get(
             polar_subscription_id=polar_subscription_id
         )
     except SubscriptionModel.DoesNotExist:

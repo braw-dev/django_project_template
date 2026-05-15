@@ -10,17 +10,17 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('billing', '0001_initial'),
-        ('organizations', '0001_initial'),
+        ('tenancy', '0001_initial'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='subscription',
-            name='organisation',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subscriptions', to='organizations.organisation'),
+            name='team',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='%(class)ss', to='tenancy.team'),
         ),
         migrations.AddIndex(
             model_name='subscription',
-            index=models.Index(fields=['organisation', 'status'], name='billing_sub_organis_e5be28_idx'),
+            index=models.Index(fields=['team', 'status'], name='billing_sub_team_id_b3a6b8_idx'),
         ),
     ]
