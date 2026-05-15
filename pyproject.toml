@@ -57,8 +57,12 @@ custom_blocks = "element,slot,setvar"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "{{ project_name }}.settings"
+pythonpath = ["{{ project_name }}"]
 python_files = ["tests.py", "test_*.py"]
-addopts = "-p no:warnings"
+addopts = "-p no:warnings -m 'not browser'"
+markers = [
+    "browser: browser-based Playwright tests",
+]
 
 [tool.uv.sources]
 
@@ -110,6 +114,8 @@ dev = [
     "djlint",
     "factory-boy",
     "playwright",
+    "pytest",
+    "pytest-django",
     "ty",
     "ruff",
     "sphinx",

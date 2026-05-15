@@ -48,7 +48,19 @@ To verify that the template generates a valid project:
    This will:
    - Generate a new project in a temporary directory.
    - Install dependencies in that new project.
-   - Run migrations and tests to ensure stability.
+   - Run migrations and basic validation to ensure stability.
+
+3. **Verify generated-project tests explicitly**:
+
+   ```bash
+   cd /path/to/generated/project
+   just test-unit
+   ```
+
+   Notes:
+   - `just test-unit` uses `pytest`/`pytest-django` for backend tests only.
+   - Plain `pytest` is also supported and excludes browser-marked tests by default.
+   - Browser/Playwright tests are separate from unit tests.
 
 ---
 
@@ -67,8 +79,8 @@ Always use `just` commands to ensure environment consistency.
 - **Setup**: `just install-dev` (sets up venv, installs python/node deps, hooks).
 - **Start Server**: `just runserver` (runs Django + Vite).
 - **Tests**:
-  - Unit: `just test-unit`
-  - E2E: `just test-e2e`
+  - Unit/backend: `just test-unit`
+  - E2E/browser: `just playwright-install` then `just test-e2e`
   - Fast (watch mode): `just test-fast-watch`
 - **Linting**: `just format` (runs Ruff).
 - **Database**: `just migrate`, `just reset-db`.
@@ -76,7 +88,8 @@ Always use `just` commands to ensure environment consistency.
 ### Project Structure
 
 - `{{ project_name }}/`: Django app code (settings, urls, wsgi).
-- `{{ project_name }}/tests/e2e`: Typescript + Playwright end2end tests also for Django logic.
+- `{{ project_name }}/tests/e2e`: Typescript + Playwright end-to-end tests.
+- `{{ project_name }}/tests/`: browser-style Django/Playwright tests, excluded from plain `pytest` by default via the `browser` marker.
 - `frontend/`: React application.
 - `templates/`: Django HTML templates (mostly for auth/accounts).
 - `static/`: Static assets.

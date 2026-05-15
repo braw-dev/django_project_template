@@ -30,7 +30,8 @@ uv run django-admin startproject \
 - [ ] Run `just ai-link` to link `ai/` directory to claude and cursor.
 - [ ] Review `settings.py` settings
 - [ ] Collect staticfiles `just collectstatic`
-- [ ] Run tests: `just test-unit` and `just test-e2e`
+- [ ] Run backend tests: `just test-unit`
+- [ ] Run browser tests separately: `just playwright-install` then `just test-e2e`
 
 ## What's included?
 
@@ -40,7 +41,7 @@ uv run django-admin startproject \
 - **Configuration**: Typed `pydantic-settings` setup with fast failure on missing required config.
 - **Structure**: Users in Teams (Django Groups) with permission levels.
 - **Stack**: PostgreSQL (production), SQLite (test), Dragonfly (Redis-compatible cache), Django Ninja API.
-- **Testing**: `pytest-django` coverage, Playwright e2e tests.
+- **Testing**: `pytest` + `pytest-django` for backend tests, Playwright for browser/e2e tests.
 - **Typing**: `ty` static analysis.
 - **Frontend**: Whitenoise serving, Vite + React (optional), Tailwind CSS + Daisy UI, `django-cotton` components.
 - **Tooling**: `Justfile` command runner, Ruff linting/formatting via `lefthook`.
@@ -87,7 +88,7 @@ See `{{ project_name }}/organizations/README.md` for usage details.
 
 - [`uv`](https://docs.astral.sh/uv/) (Python) & [`pnpm`](https://github.com/pnpm/pnpm) (Frontend)
 - [`entr`](https://github.com/eradman/entr) & [`rg`](https://github.com/BurntSushi/ripgrep) (Hot reloading)
-- [Playwright](https://playwright.dev/) (E2E tests)
+- [Playwright](https://playwright.dev/) (browser/E2E tests)
 
 ### Installation
 
@@ -98,7 +99,10 @@ See `{{ project_name }}/organizations/README.md` for usage details.
 ### Workflow
 
 - **Code Quality**: Ruff enforces style via `lefthook` on commit.
-- **Testing**: TDD encouraged. Write `pytest` in `tests/` or Playwright specs in `tests/e2e/tests`.
+- **Testing**:
+  - Use `just test-unit` for backend/unit tests.
+  - Plain `pytest` is supported and excludes browser-marked tests by default.
+  - Browser tests are separate and require Playwright browser installation via `just playwright-install`.
 - **Debugging**: `django-debug-toolbar` included for SQL analysis.
 
 ## Developing on the template

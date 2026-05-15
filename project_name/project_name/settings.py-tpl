@@ -209,7 +209,9 @@ SECRET_KEY = APP_SETTINGS.SECRET_KEY.get_secret_value()
 
 DEBUG = APP_SETTINGS.DEBUG
 
-TESTING = "test" in sys.argv
+TESTING = "pytest" in sys.modules or any(
+    arg == "test" or arg.endswith("pytest") for arg in sys.argv
+)
 
 ENVIRONMENT = APP_SETTINGS.ENVIRONMENT
 IS_PRODUCTION = ENVIRONMENT in ["production", "prod"]

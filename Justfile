@@ -57,9 +57,8 @@ test:
 test-watch:
     @rg --files -t python -t html | entr {% templatetag openvariable %} test_command {% templatetag closevariable %} {% templatetag openvariable %} test_options {% templatetag closevariable %}
 
-[working-directory('{{ project_name }}')]
 test-unit:
-    @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} pytest
+    @{% templatetag openvariable %} UV_RUN {% templatetag closevariable %} pytest {{ project_name }}/{{ project_name }}
 
 [working-directory('{{ project_name }}/tests/e2e')]
 test-e2e:
