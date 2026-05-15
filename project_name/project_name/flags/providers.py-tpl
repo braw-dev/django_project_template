@@ -73,12 +73,12 @@ class DjangoFlagProvider:
 
         try:
             flag = FeatureFlagModel.objects.get(name=flag_key)
-            enabled = flag.enabled
-            cache.set(cache_key, enabled, timeout=self.cache_timeout)
-            return enabled
         except FeatureFlagModel.DoesNotExist:
-            cache.set(cache_key, default_value, timeout=self.cache_timeout)
             return default_value
+
+        enabled = flag.enabled
+        cache.set(cache_key, enabled, timeout=self.cache_timeout)
+        return enabled
 
     def invalidate_cache(self, flag_key: str) -> None:
         """Invalidate the cache for a specific flag."""

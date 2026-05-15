@@ -4,34 +4,45 @@ import rules
 
 from . import predicates  # noqa: F401
 
-# Organization rules
-rules.add_rule(
+
+@rules.predicate
+def can_change_organisation(user, org):
+    return predicates.has_org_permission(user, org, "can_edit")
+
+
+@rules.predicate
+def can_change_team(user, team):
+    return predicates.has_team_permission(user, team, "can_edit")
+
+
+# Organization permissions
+rules.add_perm(
     "organizations.view_organisation",
     predicates.is_org_member | rules.is_superuser,
 )
 
-rules.add_rule(
+rules.add_perm(
     "organizations.change_organisation",
-    predicates.is_org_admin | rules.is_superuser,
+    can_change_organisation | rules.is_superuser,
 )
 
-rules.add_rule(
+rules.add_perm(
     "organizations.delete_organisation",
     predicates.is_org_admin | rules.is_superuser,
 )
 
-# Team rules
-rules.add_rule(
+# Team permissions
+rules.add_perm(
     "organizations.view_team",
     predicates.is_team_member | predicates.is_org_admin_for_team | rules.is_superuser,
 )
 
-rules.add_rule(
+rules.add_perm(
     "organizations.change_team",
-    predicates.is_team_admin | predicates.is_org_admin_for_team | rules.is_superuser,
+    can_change_team | rules.is_superuser,
 )
 
-rules.add_rule(
+rules.add_perm(
     "organizations.delete_team",
     predicates.is_team_admin | predicates.is_org_admin_for_team | rules.is_superuser,
 )
