@@ -21,7 +21,7 @@ This project uses a specific Django stack. Follow these conventions.
 | `django-allauth` | Authentication (email, social, MFA) |
 | `django-ninja` | REST API framework |
 | `django-guardian` | Row-level permissions |
-| `django-environ` | Environment configuration |
+| `pydantic-settings` | Environment configuration |
 | `django-cotton` | HTML components |
 | `celery` + `redis` | Background tasks |
 | `diskcache` | Caching |

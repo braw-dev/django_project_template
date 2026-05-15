@@ -68,7 +68,7 @@ As an end-user, I want to be able to subscribe to a plan or manage my existing s
 - **FR-003**: System MUST provide a Service layer to interact with the Polar SDK for creating Checkout and Customer Portal sessions.
 - **FR-004**: System MUST provide a clear, easy-to-use method (Selector or Property) to check if an Organization has a valid, active subscription.
 - **FR-005**: System MUST allow retrieving the list of available products/prices, optionally caching the result to avoid API rate limits.
-- **FR-006**: The integration MUST rely on `django-environ` for configuration (`POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET`, etc.).
+- **FR-006**: The integration MUST rely on `pydantic-settings` for configuration (`POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET`, etc.).
 
 ### Key Entities
 

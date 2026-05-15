@@ -37,7 +37,7 @@ uv run django-admin startproject \
 ### Development
 
 - **Security**: Custom User with MFA, Argon2id hashing, SRI, `nh3` sanitization.
-- **Configuration**: Simple `django-environ` setup.
+- **Configuration**: Typed `pydantic-settings` setup with fast failure on missing required config.
 - **Structure**: Users in Teams (Django Groups) with permission levels.
 - **Stack**: PostgreSQL (production), SQLite (test), Dragonfly (Redis-compatible cache), Django Ninja API.
 - **Testing**: `pytest-django` coverage, Playwright e2e tests.

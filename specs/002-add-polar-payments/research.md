@@ -204,23 +204,23 @@ def polar_webhook(request):
     pass
 ```
 
-## 8. Configuration via django-environ
+## 8. Configuration via pydantic-settings
 
 ### Decision
 
-All Polar configuration via environment variables using existing `django-environ` pattern.
+All Polar configuration via environment variables using the existing `pydantic-settings` pattern.
 
 ### Rationale
 
-- Settings.py already uses `env.str()` pattern
+- Settings.py already uses a typed settings model loaded from the environment
 - Polar settings already defined: `POLAR_ACCESS_TOKEN`, `POLAR_ORGANIZATION_ID`, `POLAR_WEBHOOK_SECRET`, `POLAR_API_BASE_URL`
 - Secrets never in code
 
 ### Existing Configuration (no changes needed)
 
 ```python
-POLAR_ACCESS_TOKEN = env.str("POLAR_ACCESS_TOKEN", default="")
-POLAR_ORGANIZATION_ID = env.str("POLAR_ORGANIZATION_ID", default="")
-POLAR_WEBHOOK_SECRET = env.str("POLAR_WEBHOOK_SECRET", default="")
-POLAR_API_BASE_URL = env.str("POLAR_API_BASE_URL", default="https://api.polar.sh")
+POLAR_ACCESS_TOKEN = APP_SETTINGS.POLAR_ACCESS_TOKEN
+POLAR_ORGANIZATION_ID = APP_SETTINGS.POLAR_ORGANIZATION_ID
+POLAR_WEBHOOK_SECRET = APP_SETTINGS.POLAR_WEBHOOK_SECRET
+POLAR_API_BASE_URL = APP_SETTINGS.POLAR_API_BASE_URL
 ```

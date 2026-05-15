@@ -4,7 +4,7 @@ Deployment is opinionated and is expected to be deployed to a VPS/Dedicated serv
 
 ## App Configuration
 
-[`django-environ`](https://django-environ.readthedocs.io/en/latest/) is used to manage configuration in the `settings.py` file. To use, copy the `.env.dist` file to `.env` and update the values as needed. If local overrides are required, put them into `.env.local`.
+[`pydantic-settings`](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) is used to manage configuration in the `settings.py` file. To use, copy the `.env.dist` file to `.env` and update the values as needed. If local overrides are required, put them into `.env.local`. Required settings fail fast during Django startup if they are missing or blank.
 
 ## Production Architecture
 

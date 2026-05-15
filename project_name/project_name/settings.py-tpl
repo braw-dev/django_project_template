@@ -15,12 +15,12 @@ import sys
 from datetime import timedelta
 from email.utils import getaddresses
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 
-import environ
 import structlog
 from django.utils.translation import gettext_lazy as _
-
-env = environ.Env()
+from pydantic import ValidationInfo, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Used for public display e.g as default in <title> tags
 PROJECT_DISPLAY_NAME = "{{ project_name }}"
@@ -31,23 +31,182 @@ PROJECT_SLUG = "{{ project_name }}"
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR.parent / "frontend" / PROJECT_SLUG
 
-environ.Env.read_env(BASE_DIR / ".env")
-environ.Env.read_env(BASE_DIR / ".env.local")
+
+def _require_non_blank(name: str, value: str) -> str:
+    if not value.strip():
+        raise ValueError(f"{name} must not be blank")
+    return value
+
+
+def parse_csv(value_name: str, value: str) -> list[str]:
+    items = [item.strip() for item in value.split(",") if item.strip()]
+    if not items:
+        raise ValueError(f"{value_name} must contain at least one value")
+    return items
+
+
+def _coerce_url_value(value: str) -> str | int | bool:
+    lowered = value.lower()
+    if lowered == "true":
+        return True
+    if lowered == "false":
+        return False
+
+    try:
+        return int(value)
+    except ValueError:
+        return value
+
+
+def parse_database_url(database_url: str) -> dict[str, object]:
+    parsed = urlparse(database_url)
+    scheme = parsed.scheme.lower()
+
+    if scheme == "sqlite":
+        path = unquote(parsed.path or "")
+        if parsed.netloc:
+            name = f"/{parsed.netloc}{path}"
+        elif path.startswith("//"):
+            name = f"/{path.lstrip('/')}"
+        else:
+            name = path.lstrip("/")
+        if not name:
+            raise ValueError("DB_DEFAULT_URL must include a sqlite database path")
+        if name == ":memory:":
+            name = ":memory:"
+        return {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": name,
+        }
+
+    if scheme in {"postgres", "postgresql"}:
+        engine = "django.db.backends.postgresql"
+    elif scheme == "postgis":
+        engine = "django.contrib.gis.db.backends.postgis"
+    elif scheme in {"mysql", "mysql2"}:
+        engine = "django.db.backends.mysql"
+    else:
+        raise ValueError(f"Unsupported DB_DEFAULT_URL scheme: {parsed.scheme}")
+
+    name = unquote(parsed.path.lstrip("/"))
+    if not name:
+        raise ValueError("DB_DEFAULT_URL must include a database name")
+
+    database = {
+        "ENGINE": engine,
+        "NAME": name,
+        "USER": unquote(parsed.username or ""),
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname or "",
+        "PORT": parsed.port or "",
+    }
+
+    options = {key: _coerce_url_value(values[-1]) for key, values in parse_qs(parsed.query).items()}
+    if options:
+        database["OPTIONS"] = options
+
+    return database
+
+
+def parse_cache_url(cache_url: str) -> dict[str, object]:
+    parsed = urlparse(cache_url)
+    scheme = parsed.scheme.lower()
+
+    if scheme == "locmemcache":
+        location = parsed.netloc or parsed.path.lstrip("/") or PROJECT_SLUG
+        return {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": location,
+        }
+
+    if scheme in {"redis", "rediss"}:
+        return {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": cache_url,
+        }
+
+    if scheme == "dummycache":
+        return {
+            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        }
+
+    raise ValueError(f"Unsupported CACHE_DEFAULT_URL scheme: {parsed.scheme}")
+
+
+class AppSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=(BASE_DIR / ".env", BASE_DIR / ".env.local"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    SECRET_KEY: str
+    DEBUG: bool = False
+    ENVIRONMENT: str = "prod"
+    ALLOWED_HOSTS: str
+    DJANGO_ADMINS: str
+    LOG_LEVEL: str = "INFO"
+    DB_DEFAULT_URL: str
+    CACHE_DEFAULT_URL: str = "locmemcache://"
+    SEND_EMAILS: bool = False
+    EMAIL_DOMAIN: str
+    SCALEWAY_PROJECT_ID: str = ""
+    SCALEWAY_ACCESS_KEY: str = ""
+    SCALEWAY_SECRET_KEY: str = ""
+    SCALEWAY_REGION: str = "fr-par"
+    SCALEWAY_DOMAIN_ID: str = ""
+    AXES_FAILURE_LIMIT: int = 5
+    AWS_STORAGE_BUCKET_NAME: str = ""
+    AWS_S3_REGION_NAME: str = ""
+    AWS_S3_ENDPOINT_URL: str = ""
+    AWS_S3_CUSTOM_DOMAIN: str = ""
+    DJANGO_STATIC_HOST: str = ""
+    BUNNY_CDN_HOST: str = ""
+    PLAUSIBLE_DOMAIN: str = ""
+    PLAUSIBLE_SCRIPT_HOST: str = "https://plausible.io"
+    PLAUSIBLE_API_HOST: str = ""
+    USE_HTTP: bool = False
+    FLAGS_CACHE_TIMEOUT: int = 300
+    POLAR_ACCESS_TOKEN: str = ""
+    POLAR_ORGANIZATION_ID: str = ""
+    POLAR_WEBHOOK_SECRET: str = ""
+    POLAR_API_BASE_URL: str = "https://api.polar.sh"
+    CHATWOOT_WEBSITE_TOKEN: str = ""
+    CHATWOOT_BASE_URL: str = "https://app.chatwoot.com"
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+
+    @field_validator("SECRET_KEY", "DB_DEFAULT_URL", "DJANGO_ADMINS", "EMAIL_DOMAIN")
+    @classmethod
+    def validate_non_blank(cls, value: str, info: ValidationInfo) -> str:
+        return _require_non_blank(info.field_name, value)
+
+    @field_validator("ENVIRONMENT")
+    @classmethod
+    def normalize_environment(cls, value: str) -> str:
+        return value.lower()
+
+    @field_validator("LOG_LEVEL")
+    @classmethod
+    def normalize_log_level(cls, value: str) -> str:
+        return value.upper()
+
+
+APP_SETTINGS = AppSettings()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/{{ docs_version }}/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env.str("SECRET_KEY")
+SECRET_KEY = APP_SETTINGS.SECRET_KEY
 
-DEBUG = env.bool("DEBUG", False)
+DEBUG = APP_SETTINGS.DEBUG
 
 TESTING = "test" in sys.argv
 
-ENVIRONMENT = env.str("ENVIRONMENT", default="prod").lower()
+ENVIRONMENT = APP_SETTINGS.ENVIRONMENT
 IS_PRODUCTION = ENVIRONMENT in ["production", "prod"]
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+ALLOWED_HOSTS = parse_csv("ALLOWED_HOSTS", APP_SETTINGS.ALLOWED_HOSTS)
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -55,7 +214,9 @@ INTERNAL_IPS = [
 
 SITE_ID = 1
 
-ADMINS = getaddresses([env("DJANGO_ADMINS")])
+ADMINS = getaddresses([APP_SETTINGS.DJANGO_ADMINS])
+EMAIL_DOMAIN = APP_SETTINGS.EMAIL_DOMAIN
+USE_HTTP = APP_SETTINGS.USE_HTTP
 
 # Application definition
 
@@ -145,7 +306,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "{{ project_name }}.wsgi.application"
 
-LOG_LEVEL = env.str("LOG_LEVEL", default="INFO").upper()
+LOG_LEVEL = APP_SETTINGS.LOG_LEVEL
 LOGGING_QUEUE = queue.SimpleQueue()
 LOG_FILE_PATH = BASE_DIR.parent / "logs" / "django.log"
 
@@ -220,7 +381,7 @@ STRUCTLOG_SETTINGS = {
 # https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/#databases
 
 DATABASES = {
-    "default": env.db_url("DB_DEFAULT_URL"),
+    "default": parse_database_url(APP_SETTINGS.DB_DEFAULT_URL),
 }
 
 # For databases, if using SQLITE, add the following options
@@ -241,26 +402,26 @@ SQLITE_OPTIONS = {
 
 # Cache
 # https://docs.djangoproject.com/en/{{ docs_version }}/topics/cache/#redis
-CACHES = {"default": env.cache(var="CACHE_DEFAULT_URL", default="locmemcache://")}
+CACHES = {"default": parse_cache_url(APP_SETTINGS.CACHE_DEFAULT_URL)}
 
 # Email settings
 # https://docs.djangoproject.com/en/{{ docs_version }}/topics/email/
-if env.bool("SEND_EMAILS", default=False) and not TESTING:
+if APP_SETTINGS.SEND_EMAILS and not TESTING:
     EMAIL_BACKEND = "anymail.backends.scaleway.EmailBackend"
     ANYMAIL = {
-        "SCW_PROJECT_ID": env.str("SCALEWAY_PROJECT_ID", default=""),
-        "SCW_ACCESS_KEY": env.str("SCALEWAY_ACCESS_KEY", default=""),
-        "SCW_SECRET_KEY": env.str("SCALEWAY_SECRET_KEY", default=""),
-        "SCW_REGION": env.str("SCALEWAY_REGION", default="fr-par"),
-        "SCW_DOMAIN_ID": env.str("SCALEWAY_DOMAIN_ID", default=""),
+        "SCW_PROJECT_ID": APP_SETTINGS.SCALEWAY_PROJECT_ID,
+        "SCW_ACCESS_KEY": APP_SETTINGS.SCALEWAY_ACCESS_KEY,
+        "SCW_SECRET_KEY": APP_SETTINGS.SCALEWAY_SECRET_KEY,
+        "SCW_REGION": APP_SETTINGS.SCALEWAY_REGION,
+        "SCW_DOMAIN_ID": APP_SETTINGS.SCALEWAY_DOMAIN_ID,
     }
 else:
     # Use console backend for development
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
     ANYMAIL = {}
 
-DEFAULT_FROM_EMAIL = f"noreply@{env.str('EMAIL_DOMAIN')}"
-SERVER_EMAIL = f"django@{env.str('EMAIL_DOMAIN')}"
+DEFAULT_FROM_EMAIL = f"noreply@{EMAIL_DOMAIN}"
+SERVER_EMAIL = f"django@{EMAIL_DOMAIN}"
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-timeout
 EMAIL_TIMEOUT = 5
@@ -329,7 +490,7 @@ ACCOUNT_USERNAME_MIN_LENGTH = 3
 DJANGO_ADMIN_FORCE_ALLAUTH = True
 
 # django-axes configuration
-AXES_FAILURE_LIMIT = env.int("AXES_FAILURE_LIMIT", default=5)
+AXES_FAILURE_LIMIT = APP_SETTINGS.AXES_FAILURE_LIMIT
 AXES_COOLOFF_TIME = timedelta(hours=1)
 AXES_LOCKOUT_TEMPLATE = "429.html"
 AXES_ENABLED = not TESTING
@@ -367,10 +528,10 @@ STORAGES = {
     },
 }
 if IS_PRODUCTION:
-    AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME", default="")
-    AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME", default="")
-    AWS_S3_ENDPOINT_URL = env.str("AWS_S3_ENDPOINT_URL", default="")
-    AWS_S3_CUSTOM_DOMAIN = env.str("AWS_S3_CUSTOM_DOMAIN", default="")
+    AWS_STORAGE_BUCKET_NAME = APP_SETTINGS.AWS_STORAGE_BUCKET_NAME
+    AWS_S3_REGION_NAME = APP_SETTINGS.AWS_S3_REGION_NAME
+    AWS_S3_ENDPOINT_URL = APP_SETTINGS.AWS_S3_ENDPOINT_URL
+    AWS_S3_CUSTOM_DOMAIN = APP_SETTINGS.AWS_S3_CUSTOM_DOMAIN
     STORAGES["default"] = {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
     }
@@ -380,19 +541,19 @@ STATICFILES_DIRS = [
     FRONTEND_DIR / "dist",
 ]  # Add additional static file directories other than the app directories
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATIC_HOST = env.str("DJANGO_STATIC_HOST", default="")
+STATIC_HOST = APP_SETTINGS.DJANGO_STATIC_HOST
 if not STATIC_HOST:
-    STATIC_HOST = env.str("BUNNY_CDN_HOST", default="")
+    STATIC_HOST = APP_SETTINGS.BUNNY_CDN_HOST
 STATIC_URL = f"{STATIC_HOST}/static/" if STATIC_HOST else "/static/"
 
-PLAUSIBLE_DOMAIN = env.str("PLAUSIBLE_DOMAIN", default="")
-PLAUSIBLE_SCRIPT_HOST = env.str("PLAUSIBLE_SCRIPT_HOST", default="https://plausible.io")
-PLAUSIBLE_API_HOST = env.str("PLAUSIBLE_API_HOST", default=PLAUSIBLE_SCRIPT_HOST)
+PLAUSIBLE_DOMAIN = APP_SETTINGS.PLAUSIBLE_DOMAIN
+PLAUSIBLE_SCRIPT_HOST = APP_SETTINGS.PLAUSIBLE_SCRIPT_HOST
+PLAUSIBLE_API_HOST = APP_SETTINGS.PLAUSIBLE_API_HOST or PLAUSIBLE_SCRIPT_HOST
 
 # Django meta settings
 # https://django-meta.readthedocs.io/en/latest/settings.html
 META_SITE_PROTOCOL = "https"
-if env.bool("USE_HTTP", default=False) or TESTING:
+if USE_HTTP or TESTING:
     META_SITE_PROTOCOL = "http"
 META_SITE_TYPE = "website"
 META_SITE_NAME = PROJECT_DISPLAY_NAME
@@ -406,16 +567,16 @@ META_USE_SITES = True
 COTTON_DIR = "components"
 
 # Feature flags
-FLAGS_CACHE_TIMEOUT = env.int("FLAGS_CACHE_TIMEOUT", default=300)
+FLAGS_CACHE_TIMEOUT = APP_SETTINGS.FLAGS_CACHE_TIMEOUT
 
-POLAR_ACCESS_TOKEN = env.str("POLAR_ACCESS_TOKEN", default="")
-POLAR_ORGANIZATION_ID = env.str("POLAR_ORGANIZATION_ID", default="")
-POLAR_WEBHOOK_SECRET = env.str("POLAR_WEBHOOK_SECRET", default="")
-POLAR_API_BASE_URL = env.str("POLAR_API_BASE_URL", default="https://api.polar.sh")
+POLAR_ACCESS_TOKEN = APP_SETTINGS.POLAR_ACCESS_TOKEN
+POLAR_ORGANIZATION_ID = APP_SETTINGS.POLAR_ORGANIZATION_ID
+POLAR_WEBHOOK_SECRET = APP_SETTINGS.POLAR_WEBHOOK_SECRET
+POLAR_API_BASE_URL = APP_SETTINGS.POLAR_API_BASE_URL
 
 # Chatwoot
-CHATWOOT_WEBSITE_TOKEN = env.str("CHATWOOT_WEBSITE_TOKEN", default="")
-CHATWOOT_BASE_URL = env.str("CHATWOOT_BASE_URL", default="https://app.chatwoot.com")
+CHATWOOT_WEBSITE_TOKEN = APP_SETTINGS.CHATWOOT_WEBSITE_TOKEN
+CHATWOOT_BASE_URL = APP_SETTINGS.CHATWOOT_BASE_URL
 
 # Django SRI settings
 
@@ -491,7 +652,7 @@ DJANGO_VITE = {"default": {"dev_mode": DEBUG}}
 # Celery
 if USE_TZ:
     CELERY_TIMEZONE = TIME_ZONE
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
+CELERY_BROKER_URL = APP_SETTINGS.CELERY_BROKER_URL
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_CACHE_BACKEND = "default"
 

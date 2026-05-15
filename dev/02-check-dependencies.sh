@@ -26,7 +26,7 @@ PACKAGES=(
     django-axes
     django-braces
     django-cotton
-    django-environ
+    pydantic-settings
     django-extensions
     django-filter
     django-hijack

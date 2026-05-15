@@ -19,17 +19,6 @@
       register: django_admin_version
       failed_when: django_admin_version.rc != 0
 
-    - name: Check if .env file exists as this seems to fail if it isn't
-      ansible.builtin.stat:
-        path: "{{ playbook_dir }}/../../django_project_template/project_name/.env"
-      register: env_file
-
-    - name: Make a copy of .env.dist to .env if not already present
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../../django_project_template/project_name/.env.dist"
-        dest: "{{ playbook_dir }}/../../django_project_template/project_name/.env"
-      when: env_file.stat.exists == false
-
     - name: Use a temporary directory if project_dir is not set
       when: not project_dir | bool
       block:
@@ -79,6 +68,8 @@
             --template={{ playbook_dir }}/..
             --extension 'py,yaml,md,template,dist,toml,json,css,js,dev,prod'
             --name Justfile
+            --exclude '.env'
+            --exclude '.env.local'
             --exclude '.ruff_cache'
             --exclude '.rumdl_cache'
             --exclude 'dev'
@@ -97,6 +88,12 @@
         - "{{ project_dir }}/specs"
         - "{{ project_dir }}/.specify/memory/constitution.md"
 
+    - name: Create a project .env from .env.dist
+      ansible.builtin.copy:
+        src: "{{ project_dir }}/{{ project_name }}/.env.dist"
+        dest: "{{ project_dir }}/{{ project_name }}/.env"
+        remote_src: true
+
     - name: Set some django settings for testing purposes
       ansible.builtin.lineinfile:
         search_string: "{{ item.search }}"
@@ -111,6 +108,8 @@
           replacement: "SEND_EMAILS=False"
         - search: "LOG_LEVEL="
           replacement: "LOG_LEVEL=DEBUG"
+        - search: "DB_DEFAULT_URL="
+          replacement: "DB_DEFAULT_URL=sqlite:///db.sqlite3"
 
     - name: Install dependencies
       when: install_project_dependencies
