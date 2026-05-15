@@ -1,0 +1,69 @@
+from allauth.account.models import EmailAddress
+from allauth.mfa.models import Authenticator
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+from django.urls import reverse
+
+User = get_user_model()
+
+
+class UserModelTest(TestCase):
+    def test_user_model_uses_email_as_username(self):
+        self.assertEqual(User.USERNAME_FIELD, "email")
+
+
+class PasskeySignupTest(TestCase):
+    def test_signup_page_shows_passkey_signup_option(self):
+        response = self.client.get(reverse("account_signup"))
+
+        self.assertContains(response, reverse("account_signup_by_passkey"))
+
+    def test_passkey_signup_page_uses_template(self):
+        response = self.client.get(reverse("account_signup_by_passkey"))
+
+        self.assertTemplateUsed(response, "account/signup_by_passkey.html")
+
+
+class EnforceMFAMiddlewareTest(TestCase):
+    email = "jane@example.com"
+    password = "iKDt6EFwyQEjkgqSzCdvFdC7imS5JN0H"
+
+    def setUp(self):
+        self.user = User.objects.create_user(email=self.email, password=self.password)
+        EmailAddress.objects.create(
+            user=self.user,
+            email=self.email,
+            primary=True,
+            verified=True,
+        )
+
+    def test_verified_user_without_mfa_is_redirected_to_mfa_setup(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("account:dashboard"))
+
+        self.assertRedirects(response, reverse("mfa_index"))
+
+    def test_verified_user_can_access_dashboard_with_totp_enabled(self):
+        Authenticator.objects.create(
+            user=self.user,
+            type=Authenticator.Type.TOTP,
+            data={"secret": "totp-secret"},
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("account:dashboard"))
+
+        self.assertTemplateUsed(response, "core/pages/dashboard.html")
+
+    def test_verified_user_can_access_dashboard_with_passkey_enabled(self):
+        Authenticator.objects.create(
+            user=self.user,
+            type=Authenticator.Type.WEBAUTHN,
+            data={"credential_id": "passkey-id"},
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("account:dashboard"))
+
+        self.assertTemplateUsed(response, "core/pages/dashboard.html")

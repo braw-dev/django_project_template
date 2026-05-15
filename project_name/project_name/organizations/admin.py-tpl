@@ -29,7 +29,7 @@ class RoleAdmin(admin.ModelAdmin):
 class OrganisationMemberAdmin(admin.ModelAdmin):
     list_display = ("user", "organisation", "role", "joined_at")
     list_filter = ("organisation", "role", "joined_at")
-    search_fields = ("user__email", "user__username", "organisation__name")
+    search_fields = ("user__email", "organisation__name")
     readonly_fields = ("joined_at",)
 
 
@@ -37,5 +37,5 @@ class OrganisationMemberAdmin(admin.ModelAdmin):
 class TeamMemberAdmin(admin.ModelAdmin):
     list_display = ("user", "team", "role", "joined_at")
     list_filter = ("team__organisation", "role", "joined_at")
-    search_fields = ("user__email", "user__username", "team__name")
+    search_fields = ("user__email", "team__name")
     readonly_fields = ("joined_at",)

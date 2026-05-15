@@ -149,7 +149,7 @@
 
         - name: Create an insecure superuser
           ansible.builtin.command:
-            cmd: just createsuperuser --noinput --username admin
+            cmd: just createsuperuser --noinput --email admin@example.com
             chdir: "{{ project_dir }}"
           environment:
             DJANGO_SUPERUSER_PASSWORD: admin

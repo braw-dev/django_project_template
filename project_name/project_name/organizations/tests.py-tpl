@@ -15,12 +15,10 @@ class OrganisationTestCase(TestCase):
     def setUp(self):
         """Set up test data."""
         self.user = User.objects.create_user(
-            username="testuser",
             email="test@example.com",
             password="testpass123",
         )
         self.other_user = User.objects.create_user(
-            username="otheruser",
             email="other@example.com",
             password="testpass123",
         )
@@ -126,12 +124,10 @@ class TeamTestCase(TestCase):
     def setUp(self):
         """Set up test data."""
         self.user = User.objects.create_user(
-            username="testuser",
             email="test@example.com",
             password="testpass123",
         )
         self.other_user = User.objects.create_user(
-            username="otheruser",
             email="other@example.com",
             password="testpass123",
         )
