@@ -12,12 +12,6 @@ Principles used for suggested fixes:
 
 ## P0 — fix first
 
-### 2. Wire language switching properly
-
-**Problem:** The template includes a language switcher partial, but the `set_language` route does not appear to be wired in the main URL config.
-
-**Potential fix:** Add Django’s standard i18n URL include and test the language switch flow. Use Django built-ins rather than custom locale switching.
-
 ### 3. Make generated templates actually i18n-first
 
 **Problem:** Many user-facing strings in templates and views are still hardcoded in English.
