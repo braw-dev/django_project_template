@@ -1,6 +1,9 @@
-{% load static meta core sri django_vite %}
+{% load i18n static meta core sri django_vite %}
 <!DOCTYPE html>
-<html lang="en">
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
+<html lang="{{ LANGUAGE_CODE }}"
+      dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
     <head {% meta_namespaces %}>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">

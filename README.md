@@ -126,11 +126,13 @@ This template supports Django's built-in gettext workflow for Python and templat
 - Python strings marked with `gettext_lazy` / `_()`
 - Template strings marked with `{% templatetag openblock %} trans {% templatetag closeblock %}` / `{% templatetag openblock %} blocktrans {% templatetag closeblock %}`
 - Django's built-in language switching via the `set_language` view under `/i18n/`
+- Base templates set `<html lang>` and `dir` from the active language
 - Locale-prefixed URLs for the `pages` catch-all routes via `i18n_patterns`
 
 ### What it does not cover
 
 - Translated database content stored with `django-parler` such as `Page` model content. That content needs a separate export/import workflow.
+- Custom date/number/currency presentation still needs explicit template-level decisions where those values are shown.
 
 ### Prerequisites
 
@@ -186,6 +188,7 @@ just compilemessages
 - wrap visible text with `{% templatetag openblock %} trans {% templatetag closeblock %}` or `{% templatetag openblock %} blocktrans {% templatetag closeblock %}`
 - wrap Python-side user-facing strings in views, forms, and messages with `_()` / `gettext_lazy()`
 - prefer `{% templatetag openblock %} blocktrans {% templatetag closeblock %}` or named interpolation for strings with variables
+- when rendering dates or numbers, use Django's locale-aware template tools rather than manual string formatting
 - run `just makemessages -l de` and confirm new strings were extracted
 - test the page with the built-in language switcher before shipping
 

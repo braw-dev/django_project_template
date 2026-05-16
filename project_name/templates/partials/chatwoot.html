@@ -1,9 +1,11 @@
+{% load i18n %}
 {% if website_token %}
+    {% get_current_language as LANGUAGE_CODE %}
     <script>
         window.chatwootSettings = {
             hideMessageBubble: false,
             position: 'right',
-            locale: 'en',
+            locale: '{{ LANGUAGE_CODE }}',
             type: 'standard'
         };
         (function(d, t) {
