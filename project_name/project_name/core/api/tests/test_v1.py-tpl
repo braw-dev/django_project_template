@@ -1,0 +1,28 @@
+from django.test import TestCase
+
+
+class HealthCheckTestCase(TestCase):
+    def test_health_check_endpoint_returns_json_status(self):
+        response = self.client.get(
+            "/api/v1/health",
+            HTTP_ACCEPT="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("application/json", response["Content-Type"])
+        payload = response.json()
+        self.assertTrue(any(key.startswith("Database(") for key in payload))
+        self.assertTrue(any(key.startswith("Cache(") for key in payload))
+        self.assertEqual(
+            next(value for key, value in payload.items() if key.startswith("Database(")),
+            "OK",
+        )
+        self.assertEqual(
+            next(value for key, value in payload.items() if key.startswith("Cache(")),
+            "OK",
+        )
+
+    def test_health_check_endpoint_accepts_trailing_slash(self):
+        response = self.client.get("/api/v1/health/")
+
+        self.assertEqual(response.status_code, 200)

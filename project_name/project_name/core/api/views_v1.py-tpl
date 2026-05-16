@@ -14,15 +14,6 @@ api = NinjaAPI(version="1.0.0")
 TeamModel = cast(Any, tenancy_models.Team)
 
 
-class HealthResponse(Schema):
-    status: str
-
-
-@api.get("/health", response={200: HealthResponse})
-def health(request):
-    return {"status": "ok"}
-
-
 class SubscriptionResponse(Schema):
     """Current subscription details."""
 

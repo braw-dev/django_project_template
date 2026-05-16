@@ -80,6 +80,7 @@ dependencies = [
     "django-extensions",
     "django-filter",
     "django-hijack",
+    "django-health-check",
     "django-meta",
     "django-parler",
     "django-model-utils",

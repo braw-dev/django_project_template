@@ -251,6 +251,7 @@ INSTALLED_APPS = [
     "django_structlog",
     "django_filters",  # Filtering based on user input
     "django_extensions",  # Additional django extensions
+    "health_check",
     "anymail",
     "storages",
     "hijack",
