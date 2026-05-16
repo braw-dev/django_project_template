@@ -57,6 +57,7 @@ urlpatterns = [
     path("api/v1/health/", ReadinessCheckView.as_view()),
     path("api/v1/", api_v1.urls),  # Django Ninja API
     path("api/webhooks/", webhooks_api.urls),  # Webhook endpoints (CSRF exempt)
+    path("i18n/", include("django.conf.urls.i18n")),
     path("admin/", admin.site.urls),  # Django admin
     path("accounts/", include("allauth.urls")),  # Django allauth
     path(
