@@ -111,6 +111,20 @@
         - search: "DB_DEFAULT_URL="
           replacement: "DB_DEFAULT_URL=sqlite:///db.sqlite3"
 
+    - name: Run some formatting checks
+      block:
+        - name: ty typecheck
+          cmd: just typecheck
+          chdir: "{{ project_dir }}"
+
+        - name: Lint
+          cmd: uv run ruff check
+          chdir: "{{ project_dir }}"
+
+        - name: Format
+          cmd: uv run ruff format --check
+          chdir: "{{ project_dir }}"
+
     - name: Install dependencies
       when: install_project_dependencies
       block:
