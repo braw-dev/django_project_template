@@ -12,12 +12,6 @@ Principles used for suggested fixes:
 
 ## P0 — fix first
 
-### 3. Make generated templates actually i18n-first
-
-**Problem:** Many user-facing strings in templates and views are still hardcoded in English.
-
-**Potential fix:** Wrap all visible copy with Django i18n tools and add a small regression checklist so new template pages do not ship with hardcoded strings.
-
 ### 4. Fix `<html lang>` and locale-aware rendering
 
 **Problem:** `base.html` hardcodes `lang="en"`, which undermines localisation.
