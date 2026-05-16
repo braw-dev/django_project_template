@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block body %}
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Subscribe</button>
+        <button type="submit">{% trans "Subscribe" %}</button>
     </form>
 {% endblock body %}

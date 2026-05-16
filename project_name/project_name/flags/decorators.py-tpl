@@ -5,6 +5,7 @@ from functools import wraps
 
 from django.http import Http404, HttpResponseForbidden
 from django.shortcuts import redirect
+from django.utils.translation import gettext as _
 
 from {{ project_name }}.flags.services import is_flag_enabled
 
@@ -49,12 +50,12 @@ def feature_flag(
                 return view_func(request, *args, **kwargs)
 
             if raise_404:
-                raise Http404("Feature not available")
+                raise Http404(_("Feature not available"))
 
             if fallback_view:
                 return redirect(fallback_view)
 
-            return HttpResponseForbidden("Feature not enabled")
+            return HttpResponseForbidden(_("Feature not enabled"))
 
         return _wrapped_view
 

@@ -9,6 +9,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from . import models, permissions
 
@@ -37,7 +38,7 @@ def create_team(*, name: str, slug: str, owner) -> models.Team:
 def add_user_to_team(*, actor, team: models.Team, user, role: str) -> models.TeamMembership:
     """Add a user to a team after verifying member-management permission."""
     if not permissions.user_has_team_perm(actor, "tenancy.manage_team_members", team):
-        raise ValueError("You do not have permission to manage team members.")
+        raise ValueError(_("You do not have permission to manage team members."))
 
     membership, created = TeamMembershipModel.all_objects.get_or_create(
         team=team,
@@ -45,7 +46,7 @@ def add_user_to_team(*, actor, team: models.Team, user, role: str) -> models.Tea
         defaults={"role": role},
     )
     if not created:
-        raise ValueError("User is already a member of this team.")
+        raise ValueError(_("User is already a member of this team."))
 
     return membership
 
@@ -58,7 +59,7 @@ def get_user_teams(user):
 def create_invitation(*, actor, team: models.Team, email: str, role: str) -> models.TeamInvitation:
     """Create a team invitation after verifying member-management permission."""
     if not permissions.user_has_team_perm(actor, "tenancy.manage_team_members", team):
-        raise ValueError("You do not have permission to manage team members.")
+        raise ValueError(_("You do not have permission to manage team members."))
 
     normalized_email = _normalize_email(email)
     now = timezone.now()
@@ -111,7 +112,8 @@ def send_invitation_email(invitation: models.TeamInvitation, request) -> None:
         },
     )
     send_mail(
-        subject=f"You have been invited to join {invitation.team.name}",
+        subject=_("You have been invited to join %(team_name)s")
+        % {"team_name": invitation.team.name},
         message=body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[invitation.email],
@@ -124,30 +126,30 @@ def accept_invitation_from_token(*, token: str, user) -> models.TeamMembership:
     try:
         payload = signing.loads(token, salt=INVITATION_TOKEN_SALT, max_age=max_age)
     except signing.SignatureExpired as exc:
-        raise ValueError("This invitation link has expired.") from exc
+        raise ValueError(_("This invitation link has expired.")) from exc
     except signing.BadSignature as exc:
-        raise ValueError("This invitation link is invalid or has expired.") from exc
+        raise ValueError(_("This invitation link is invalid or has expired.")) from exc
 
     invitation = TeamInvitationModel.all_objects.filter(id=payload.get("invitation_id")).first()
     if invitation is None:
-        raise ValueError("This invitation no longer exists.")
+        raise ValueError(_("This invitation no longer exists."))
 
     if invitation.token_key != payload.get("token_key"):
-        raise ValueError("This invitation link is invalid.")
+        raise ValueError(_("This invitation link is invalid."))
     if invitation.accepted_at is not None:
-        raise ValueError("This invitation has already been accepted.")
+        raise ValueError(_("This invitation has already been accepted."))
     if invitation.revoked_at is not None:
-        raise ValueError("This invitation has been revoked.")
+        raise ValueError(_("This invitation has been revoked."))
     if invitation.is_expired:
-        raise ValueError("This invitation has expired.")
+        raise ValueError(_("This invitation has expired."))
     if _normalize_email(user.email) != _normalize_email(invitation.email):
-        raise ValueError("This invitation was sent to a different email address.")
+        raise ValueError(_("This invitation was sent to a different email address."))
 
-    membership, _ = TeamMembershipModel.all_objects.get_or_create(
+    membership = TeamMembershipModel.all_objects.get_or_create(
         team=invitation.team,
         user=user,
         defaults={"role": invitation.role},
-    )
+    )[0]
     invitation.accepted_at = timezone.now()
     invitation.save(update_fields=["accepted_at", "updated_at"])
     return membership

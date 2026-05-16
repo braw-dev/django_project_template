@@ -1,10 +1,11 @@
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from . import models
 
 
 class NewsletterSignupForm(forms.ModelForm):
-    ALREADY_SUBSCRIBED_ERROR = "You are already subscribed."
+    ALREADY_SUBSCRIBED_ERROR = _("You are already subscribed.")
 
     class Meta:
         model = models.NewsletterSignup

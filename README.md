@@ -180,6 +180,15 @@ just translate-locale de
 just compilemessages
 ```
 
+### Checklist for new template pages
+
+- add `{% templatetag openblock %} load i18n {% templatetag closeblock %}` to templates with user-facing copy
+- wrap visible text with `{% templatetag openblock %} trans {% templatetag closeblock %}` or `{% templatetag openblock %} blocktrans {% templatetag closeblock %}`
+- wrap Python-side user-facing strings in views, forms, and messages with `_()` / `gettext_lazy()`
+- prefer `{% templatetag openblock %} blocktrans {% templatetag closeblock %}` or named interpolation for strings with variables
+- run `just makemessages -l de` and confirm new strings were extracted
+- test the page with the built-in language switcher before shipping
+
 ## Developing on the template
 
 If contributing to this template, use the provided Ansible playbook to test changes:

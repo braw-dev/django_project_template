@@ -1,4 +1,5 @@
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext_lazy as _
 from meta.views import Meta
 
 from .forms import NewsletterSignupForm
@@ -6,7 +7,7 @@ from .forms import NewsletterSignupForm
 
 def newsletter_signup(request):
     form = NewsletterSignupForm()
-    meta = Meta(title="Newsletter Signup")
+    meta = Meta(title=_("Newsletter signup"))
 
     if request.method == "POST":
         form = NewsletterSignupForm(request.POST)
@@ -17,12 +18,12 @@ def newsletter_signup(request):
 
 
 def newsletter_success(request):
-    meta = Meta(title="Thank you")
+    meta = Meta(title=_("Thank you"))
     return render(request, "core/pages/newsletter/success.html", {"meta": meta})
 
 
 def coming_soon(request):
-    meta = Meta(title="{{ project_name }} - Coming Soon")
+    meta = Meta(title=_("{{ project_name }} - Coming soon"))
     newsletter_form = NewsletterSignupForm()
 
     return render(

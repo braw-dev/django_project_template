@@ -3,6 +3,7 @@ from typing import Any, cast
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
+from django.utils.translation import gettext as _
 
 from . import services
 
@@ -17,5 +18,5 @@ def accept_team_invitation(request, token):
 
     membership_model = cast(Any, membership)
     team = membership_model.team
-    messages.success(request, f"You joined {team.name}.")
+    messages.success(request, _("You joined %(team_name)s.") % {"team_name": team.name})
     return redirect("team_dashboard", team_slug=team.slug)

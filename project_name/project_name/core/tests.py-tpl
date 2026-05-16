@@ -9,6 +9,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils.functional import Promise
 from django.utils.html import escape
 
 from . import models as core_models
@@ -69,6 +70,32 @@ class LanguageSwitchingTestCase(TestCase):
 
         self.assertRedirects(response, "/")
         self.assertEqual(response.cookies[settings.LANGUAGE_COOKIE_NAME].value, "de")
+
+
+class InternationalizationTestCase(TestCase):
+    def test_newsletter_duplicate_error_is_marked_for_translation(self):
+        self.assertIsInstance(NewsletterSignupForm.ALREADY_SUBSCRIBED_ERROR, Promise)
+
+    def test_core_templates_mark_user_facing_copy_for_translation(self):
+        template_dir = Path(__file__).resolve().parent / "templates" / "core"
+        template_paths = [
+            template_dir / "pages" / "coming_soon.html",
+            template_dir / "pages" / "dashboard.html",
+            template_dir / "pages" / "homepage.html",
+            template_dir / "pages" / "newsletter" / "signup.html",
+            template_dir / "pages" / "newsletter" / "success.html",
+            template_dir / "pages" / "pricing.html",
+            template_dir / "partials" / "footer.html",
+            template_dir / "partials" / "newsletter" / "signup.html",
+        ]
+
+        for template_path in template_paths:
+            with self.subTest(template_path=template_path):
+                content = template_path.read_text()
+                self.assertTrue(
+                    "{%" + " trans" in content or "{%" + " blocktrans" in content,
+                    f"Expected translation markers in {template_path}",
+                )
 
 
 class TranslateLocaleCommandTestCase(TestCase):

@@ -1,6 +1,7 @@
 import markdown
 from django.http import Http404
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext as _
 from django.views.generic import DetailView
 
 from .models import Page
@@ -28,7 +29,7 @@ class PageDetailView(DetailView):
         """Get the page or raise 404 if not found/not visible."""
         obj = super().get_object(queryset)
         if not obj.is_visible():
-            raise Http404("Page not found")
+            raise Http404(_("Page not found"))
         return obj
 
     def get_template_names(self):
