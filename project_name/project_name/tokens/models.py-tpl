@@ -111,9 +111,12 @@ class ApiToken(TenantScopedModel, BaseModel):
         """Update last_used_at at most once per minute."""
         now = timezone.now()
         cutoff = now - timedelta(minutes=1)
-        updated = type(self).all_objects.filter(pk=self.pk).filter(
-            models.Q(last_used_at__isnull=True) | models.Q(last_used_at__lt=cutoff)
-        ).update(last_used_at=now)
+        updated = (
+            type(self)
+            .all_objects.filter(pk=self.pk)
+            .filter(models.Q(last_used_at__isnull=True) | models.Q(last_used_at__lt=cutoff))
+            .update(last_used_at=now)
+        )
         if updated:
             self.last_used_at = now
 

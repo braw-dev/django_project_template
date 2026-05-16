@@ -4,7 +4,6 @@ import re
 from dataclasses import dataclass
 
 from django.contrib.auth.hashers import check_password, make_password
-from django.utils import timezone
 from ninja.security import HttpBearer
 
 from {{ project_name }}.tenancy.context import set_current_team_id, set_postgres_current_team_id

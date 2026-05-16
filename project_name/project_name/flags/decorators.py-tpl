@@ -59,4 +59,3 @@ def feature_flag(
         return _wrapped_view
 
     return decorator
-

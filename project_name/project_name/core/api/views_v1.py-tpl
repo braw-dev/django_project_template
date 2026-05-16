@@ -4,6 +4,7 @@ from uuid import UUID
 
 from django.http import HttpRequest
 from ninja import NinjaAPI, Schema
+
 from {{ project_name }}.billing import selectors, services
 from {{ project_name }}.tenancy import models as tenancy_models
 from {{ project_name }}.tenancy.permissions import user_has_team_perm

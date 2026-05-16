@@ -16,4 +16,3 @@ class PageSitemap(Sitemap):
     def lastmod(self, obj):
         """Return the last modification date."""
         return obj.updated_at
-

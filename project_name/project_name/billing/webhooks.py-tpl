@@ -256,9 +256,7 @@ def on_subscription_created(subscription: models.Subscription) -> None:
     Raises:
         NotImplementedError: Implement this in your project
     """
-    raise NotImplementedError(
-        "Implement on_subscription_created() for project-specific logic"
-    )
+    raise NotImplementedError("Implement on_subscription_created() for project-specific logic")
 
 
 def on_subscription_updated(subscription: models.Subscription) -> None:
@@ -275,9 +273,7 @@ def on_subscription_updated(subscription: models.Subscription) -> None:
     Raises:
         NotImplementedError: Implement this in your project
     """
-    raise NotImplementedError(
-        "Implement on_subscription_updated() for project-specific logic"
-    )
+    raise NotImplementedError("Implement on_subscription_updated() for project-specific logic")
 
 
 def on_subscription_revoked(subscription: models.Subscription) -> None:
@@ -294,9 +290,7 @@ def on_subscription_revoked(subscription: models.Subscription) -> None:
     Raises:
         NotImplementedError: Implement this in your project
     """
-    raise NotImplementedError(
-        "Implement on_subscription_revoked() for project-specific logic"
-    )
+    raise NotImplementedError("Implement on_subscription_revoked() for project-specific logic")
 
 
 def on_subscription_canceled(subscription: models.Subscription) -> None:
@@ -313,7 +307,4 @@ def on_subscription_canceled(subscription: models.Subscription) -> None:
     Raises:
         NotImplementedError: Implement this in your project
     """
-    raise NotImplementedError(
-        "Implement on_subscription_canceled() for project-specific logic"
-    )
-
+    raise NotImplementedError("Implement on_subscription_canceled() for project-specific logic")

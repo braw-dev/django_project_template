@@ -99,4 +99,3 @@ class SubscriptionDetailResponse(Schema):
 
 
 # Subscription endpoint will be added to main API in views_v1.py-tpl
-

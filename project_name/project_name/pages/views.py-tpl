@@ -51,4 +51,3 @@ class PageDetailView(DetailView):
         # Pass meta object for django-meta template
         context["meta"] = self.object.as_meta()
         return context
-

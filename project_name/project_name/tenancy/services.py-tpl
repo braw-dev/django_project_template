@@ -95,9 +95,7 @@ def get_invitation_token(invitation: models.TeamInvitation) -> str:
 def build_invitation_accept_url(invitation: models.TeamInvitation, request) -> str:
     """Build an absolute invitation acceptance URL."""
     token = get_invitation_token(invitation)
-    return request.build_absolute_uri(
-        reverse("accept_team_invitation", kwargs={"token": token})
-    )
+    return request.build_absolute_uri(reverse("accept_team_invitation", kwargs={"token": token}))
 
 
 def send_invitation_email(invitation: models.TeamInvitation, request) -> None:
@@ -129,9 +127,7 @@ def accept_invitation_from_token(*, token: str, user) -> models.TeamMembership:
     except signing.BadSignature as exc:
         raise ValueError("This invitation link is invalid or has expired.") from exc
 
-    invitation = TeamInvitationModel.all_objects.filter(
-        id=payload.get("invitation_id")
-    ).first()
+    invitation = TeamInvitationModel.all_objects.filter(id=payload.get("invitation_id")).first()
     if invitation is None:
         raise ValueError("This invitation no longer exists.")
 

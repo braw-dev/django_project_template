@@ -44,9 +44,7 @@ class DjangoFlagProvider:
         Args:
             cache_timeout: Cache timeout in seconds. Defaults to FLAGS_CACHE_TIMEOUT setting.
         """
-        self.cache_timeout = cache_timeout or getattr(
-            settings, "FLAGS_CACHE_TIMEOUT", 300
-        )
+        self.cache_timeout = cache_timeout or getattr(settings, "FLAGS_CACHE_TIMEOUT", 300)
 
     def resolve_boolean_value(
         self,
@@ -84,4 +82,3 @@ class DjangoFlagProvider:
         """Invalidate the cache for a specific flag."""
         cache_key = f"flag:{flag_key}"
         cache.delete(cache_key)
-

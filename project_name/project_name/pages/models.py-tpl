@@ -125,10 +125,10 @@ class Page(TranslatableModel, ModelMeta, BaseModel):
 
         now = timezone.now()
 
-        return not (self.publish_at and self.publish_at > now) \
-            and not (self.unpublish_at and self.unpublish_at <= now)
+        return not (self.publish_at and self.publish_at > now) and not (
+            self.unpublish_at and self.unpublish_at <= now
+        )
 
     # TODO: Remove this workaround when ty supports Django admin metadata attributes.
     cast(Any, is_visible).boolean = True
     cast(Any, is_visible).short_description = _("Visible")
-

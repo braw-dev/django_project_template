@@ -63,4 +63,3 @@ class FeatureFlagServiceTest(TestCase):
 
         # Should return default after deletion
         self.assertFalse(is_flag_enabled("delete_flag"))
-

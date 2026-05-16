@@ -13,7 +13,7 @@ def flag_enabled_tag(flag_name: str, default: bool = False) -> bool:
     Check if a feature flag is enabled in templates.
 
     Usage:
-        {% templatetag openblock %} load flags %}
+        {% templatetag openblock %} load flags {% templatetag closeblock %}
         {% templatetag openblock %}
             flag_enabled "new_checkout" as checkout_enabled
         {% templatetag closeblock %}
@@ -36,4 +36,3 @@ def flag_enabled_filter(flag_name: str, default: bool = False) -> bool:
         {% templatetag openblock %} endif {% templatetag closeblock %}
     """
     return is_flag_enabled(flag_name, default=default)
-

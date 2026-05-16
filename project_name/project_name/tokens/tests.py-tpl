@@ -67,9 +67,7 @@ class TestTokenServices:
 @pytest.mark.django_db
 class TestTokenAuth:
     def test_parse_token(self):
-        parsed = auth.parse_token(
-            "mst_live_ABCDEFGHIJKLMNO1abcdefghijklmnopqrstuvwxyz_012345"
-        )
+        parsed = auth.parse_token("mst_live_ABCDEFGHIJKLMNO1abcdefghijklmnopqrstuvwxyz_012345")
 
         assert parsed is not None
         assert parsed.lookup_id == "ABCDEFGHIJKLMNO1"

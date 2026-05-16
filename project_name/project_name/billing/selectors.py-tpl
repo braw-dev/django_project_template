@@ -27,15 +27,17 @@ def has_active_subscription(team: tenancy_models.Team) -> bool:
         True if team has an active subscription, False otherwise
     """
     now = timezone.now()
-    return SubscriptionModel.all_objects.filter(
-        team=team,
-        status__in=[
-            models.Subscription.SubscriptionStatus.ACTIVE,
-            models.Subscription.SubscriptionStatus.TRIALING,
-        ],
-    ).filter(
-        Q(current_period_end__gt=now) | Q(current_period_end__isnull=True)
-    ).exists()
+    return (
+        SubscriptionModel.all_objects.filter(
+            team=team,
+            status__in=[
+                models.Subscription.SubscriptionStatus.ACTIVE,
+                models.Subscription.SubscriptionStatus.TRIALING,
+            ],
+        )
+        .filter(Q(current_period_end__gt=now) | Q(current_period_end__isnull=True))
+        .exists()
+    )
 
 
 def get_active_subscription(
@@ -58,9 +60,7 @@ def get_active_subscription(
                 models.Subscription.SubscriptionStatus.TRIALING,
             ],
         )
-        .filter(
-            Q(current_period_end__gt=now) | Q(current_period_end__isnull=True)
-        )
+        .filter(Q(current_period_end__gt=now) | Q(current_period_end__isnull=True))
         .order_by("-created_at")
         .first()
     )
@@ -79,4 +79,3 @@ def get_subscription_by_polar_id(polar_id: str) -> models.Subscription | None:
         return SubscriptionModel.all_objects.get(polar_subscription_id=polar_id)
     except SubscriptionModel.DoesNotExist:
         return None
-

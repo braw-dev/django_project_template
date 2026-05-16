@@ -53,4 +53,3 @@ def is_flag_enabled(flag_key: str, default: bool = False) -> bool:
     """
     provider = get_provider()
     return provider.resolve_boolean_value(flag_key, default_value=default)
-

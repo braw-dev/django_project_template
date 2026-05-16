@@ -5,4 +5,3 @@ class PagesConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "{{ project_name }}.pages"
     verbose_name = "Pages"
-

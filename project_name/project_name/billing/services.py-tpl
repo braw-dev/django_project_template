@@ -191,4 +191,3 @@ def get_billing_service() -> BillingService:
     if _billing_service is None:
         _billing_service = BillingService()
     return _billing_service
-

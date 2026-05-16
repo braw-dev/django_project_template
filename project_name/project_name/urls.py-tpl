@@ -11,6 +11,7 @@ else:
     def debug_toolbar_urls():
         return []
 
+
 from {{ project_name }}.core import views as core_views
 from {{ project_name }}.core.api import api_v1, webhooks_api
 from {{ project_name }}.core.health import ReadinessCheckView

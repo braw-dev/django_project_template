@@ -20,4 +20,3 @@ class FlagsConfig(AppConfig):
 
         post_save.connect(invalidate_flag_cache, sender=FeatureFlag)
         post_delete.connect(invalidate_flag_cache, sender=FeatureFlag)
-

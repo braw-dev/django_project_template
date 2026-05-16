@@ -73,4 +73,3 @@ def _format_price(product: dict) -> str:
             return f"${amount:.0f}/{interval}"
 
     return "Custom"
-

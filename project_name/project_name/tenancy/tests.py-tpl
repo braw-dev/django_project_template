@@ -109,24 +109,19 @@ class TestPermissions:
             role=models.TeamRole.MEMBER,
         )
 
+        assert permissions.user_has_team_perm(owner, "tenancy.manage_team_billing", team) is True
         assert (
-            permissions.user_has_team_perm(owner, "tenancy.manage_team_billing", team) is True
+            permissions.user_has_team_perm(admin_user, "tenancy.manage_team_billing", team) is False
         )
         assert (
-            permissions.user_has_team_perm(admin_user, "tenancy.manage_team_billing", team)
-            is False
-        )
-        assert (
-            permissions.user_has_team_perm(admin_user, "billing.change_subscription", team)
-            is True
+            permissions.user_has_team_perm(admin_user, "billing.change_subscription", team) is True
         )
         assert (
             permissions.user_has_team_perm(member_user, "billing.change_subscription", team)
             is False
         )
         assert (
-            permissions.user_has_team_perm(member_user, "billing.view_subscription", team)
-            is True
+            permissions.user_has_team_perm(member_user, "billing.view_subscription", team) is True
         )
 
 
