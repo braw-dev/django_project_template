@@ -1,6 +1,7 @@
 """API routes for managing and validating API tokens."""
 
 from datetime import datetime
+from typing import Any, cast
 
 from ninja import Router, Schema
 from ninja.errors import HttpError
@@ -72,7 +73,7 @@ def create_token(request, team_slug: str, payload: ApiTokenCreateRequest):
     except ValueError as exc:
         raise HttpError(403, str(exc)) from exc
 
-    token = result.token
+    token = cast(Any, result.token)
     return 201, ApiTokenCreatedResponse(
         token_id=token.token_id,
         name=token.name,
@@ -105,10 +106,11 @@ def revoke_token(request, team_slug: str, token_id: str):
 
 @auth_router.get("/me/", response=ApiTokenAuthCheckResponse, auth=ApiTokenAuth())
 def token_me(request):
-    token = request.auth
+    token = cast(Any, request.auth)
+    team = token.team
     return ApiTokenAuthCheckResponse(
         token_id=token.token_id,
-        team_slug=token.team.slug,
-        team_name=token.team.name,
+        team_slug=team.slug,
+        team_name=team.name,
         scopes=token.scopes,
     )

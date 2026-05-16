@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, cast
 
 from {{ project_name }}.tenancy.permissions import user_has_team_perm
 
@@ -47,7 +48,8 @@ def create_api_token(
 
 def revoke_api_token(*, token: models.ApiToken, user) -> None:
     """Revoke a team-scoped API token."""
-    if not user_has_team_perm(user, "tenancy.manage_team_api_tokens", token.team):
+    token_model = cast(Any, token)
+    if not user_has_team_perm(user, "tenancy.manage_team_api_tokens", token_model.team):
         raise ValueError("You do not have permission to manage API tokens.")
     if token.revoked_at is not None:
         raise ValueError("This API token has already been revoked.")

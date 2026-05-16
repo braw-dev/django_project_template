@@ -1,6 +1,7 @@
 """Middleware for resolving the active team from the request path."""
 
 import re
+from typing import Any, cast
 
 from django.http import Http404
 
@@ -16,6 +17,9 @@ TEAM_PATH_PATTERNS = [
     re.compile(r"^/t/(?P<team_slug>[-a-zA-Z0-9_]+)(?:/|$)"),
     re.compile(r"^/api/v1/teams/(?P<team_slug>[-a-zA-Z0-9_]+)(?:/|$)"),
 ]
+
+# TODO: Remove this workaround when ty supports Django's dynamic model attributes.
+TeamModel = cast(Any, models.Team)
 
 
 class ActiveTeamMiddleware:
@@ -37,7 +41,7 @@ class ActiveTeamMiddleware:
                 if match is not None:
                     break
             if match:
-                team = models.Team.objects.filter(slug=match.group("team_slug")).first()
+                team = TeamModel.objects.filter(slug=match.group("team_slug")).first()
                 if team is None:
                     raise Http404()
 

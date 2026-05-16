@@ -82,11 +82,12 @@ def create_invitation(*, actor, team: models.Team, email: str, role: str) -> mod
 
 def get_invitation_token(invitation: models.TeamInvitation) -> str:
     """Create a signed invitation token."""
+    invitation_model = cast(Any, invitation)
     return signing.dumps(
         {
-            "invitation_id": str(invitation.id),
-            "email": invitation.email,
-            "token_key": invitation.token_key,
+            "invitation_id": str(invitation_model.id),
+            "email": invitation_model.email,
+            "token_key": invitation_model.token_key,
         },
         salt=INVITATION_TOKEN_SALT,
     )
