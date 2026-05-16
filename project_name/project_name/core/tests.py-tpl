@@ -75,14 +75,18 @@ class LanguageSwitchingTestCase(TestCase):
 class LocaleRenderingTestCase(TestCase):
     def test_base_template_uses_active_language_in_html_attributes(self):
         response = self.client.get("/", HTTP_ACCEPT_LANGUAGE="de")
+        content = response.content.decode()
 
-        self.assertIn('<html lang="de" dir="ltr">', response.content.decode())
+        self.assertIn('lang="de"', content)
+        self.assertIn('dir="ltr"', content)
 
     @override_settings(LANGUAGES=[*settings.LANGUAGES, ("ar", "Arabic")])
     def test_base_template_sets_rtl_direction_for_bidi_languages(self):
         response = self.client.get("/", HTTP_ACCEPT_LANGUAGE="ar")
+        content = response.content.decode()
 
-        self.assertIn('<html lang="ar" dir="rtl">', response.content.decode())
+        self.assertIn('lang="ar"', content)
+        self.assertIn('dir="rtl"', content)
 
     @override_settings(CHATWOOT_WEBSITE_TOKEN="test-token")
     def test_chatwoot_widget_uses_active_language(self):

@@ -49,7 +49,7 @@ uv run django-admin startproject \
 
 ### Marketing
 
-- **Content**: Markdown `Page` model for FAQs and landing pages.
+- **Content**: Markdown `Page` model for FAQs and landing pages, sanitised with `nh3` at render time.
 - **SEO**: `django-meta` integration.
 - **Legal**: Footer legal links are placeholders; privacy/terms/security pages are not scaffolded yet.
 - **Analytics**: Optional Plausible analytics include.

@@ -1,6 +1,6 @@
-import markdown as md
 from django import template
-from django.utils.safestring import mark_safe
+
+from {{ project_name }}.pages.markdown_utils import render_markdown_html
 
 register = template.Library()
 
@@ -13,19 +13,10 @@ def markdown_filter(value):
     Usage in templates:
         {% templatetag openvariable %} page.content|markdown {% templatetag closevariable %}
 
-    Or with the safe filter if needed:
-        {% templatetag openvariable %} page.content|markdown|safe {% templatetag closevariable %}
+
+    Returns sanitised HTML already marked safe for template output.
     """
-    if not value:
-        return ""
-
-    extensions = [
-        "extra",  # Tables, fenced code blocks, footnotes, etc.
-        "smarty",  # Smart quotes, dashes
-        "toc",  # Table of contents
-    ]
-
-    return mark_safe(md.markdown(value, extensions=extensions))
+    return render_markdown_html(value)
 
 
 @register.simple_tag
@@ -37,13 +28,4 @@ def render_markdown(text):
         {% templatetag openblock %} load markdown_tags {% templatetag closeblock %}
         {% templatetag openblock %} render_markdown page.content {% templatetag closeblock %}
     """
-    if not text:
-        return ""
-
-    extensions = [
-        "extra",
-        "smarty",
-        "toc",
-    ]
-
-    return mark_safe(md.markdown(text, extensions=extensions))
+    return render_markdown_html(text)

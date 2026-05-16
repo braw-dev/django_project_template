@@ -1,0 +1,47 @@
+from django.template import Context, Template
+from django.test import TestCase
+from django.urls import reverse
+
+from .models import Page
+
+
+class PageMarkdownSanitizationTestCase(TestCase):
+    def test_page_detail_sanitizes_rendered_markdown(self):
+        Page.objects.create(
+            slug="about",
+            is_published=True,
+            title="About",
+            content=(
+                "# Hello\n\n"
+                "<script>alert('xss')</script>\n\n"
+                "[Safe link](https://example.com)\n\n"
+                "[Bad link](javascript:alert('xss'))"
+            ),
+        )
+
+        response = self.client.get(reverse("pages:page_detail", kwargs={"slug": "about"}))
+        content = response.content.decode()
+
+        self.assertContains(response, "<h1")
+        self.assertIn('href="https://example.com"', content)
+        self.assertNotIn("alert('xss')", content)
+        self.assertNotIn("javascript:alert", content)
+
+    def test_markdown_template_filter_sanitizes_rendered_html(self):
+        rendered = Template(
+            "{" + "% load markdown_tags %}" + "{" + "{ content|markdown }}"
+        ).render(
+            Context(
+                {
+                    "content": (
+                        "<script>alert('xss')</script>\n\n"
+                        "[Safe link](https://example.com)\n\n"
+                        "[Bad link](javascript:alert('xss'))"
+                    )
+                }
+            )
+        )
+
+        self.assertIn('href="https://example.com"', rendered)
+        self.assertNotIn("<script", rendered)
+        self.assertNotIn("javascript:alert", rendered)

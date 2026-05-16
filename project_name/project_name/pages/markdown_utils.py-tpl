@@ -1,0 +1,29 @@
+import markdown
+import nh3
+from django.utils.safestring import mark_safe
+
+MARKDOWN_EXTENSIONS = [
+    "extra",  # Tables, fenced code blocks, footnotes, etc.
+    "smarty",  # Smart quotes, dashes
+    "toc",  # Table of contents
+]
+
+MARKDOWN_ALLOWED_ATTRIBUTES = {
+    **nh3.ALLOWED_ATTRIBUTES,
+    "*": {"class", "id"},
+    "a": {*nh3.ALLOWED_ATTRIBUTES.get("a", set()), "title"},
+}
+
+
+def render_markdown_html(text):
+    """Render markdown to sanitised HTML safe for template output."""
+    if not text:
+        return ""
+
+    unsafe_html = markdown.markdown(text, extensions=MARKDOWN_EXTENSIONS)
+    sanitised_html = nh3.clean(
+        unsafe_html,
+        tags=nh3.ALLOWED_TAGS,
+        attributes=MARKDOWN_ALLOWED_ATTRIBUTES,
+    )
+    return mark_safe(sanitised_html)

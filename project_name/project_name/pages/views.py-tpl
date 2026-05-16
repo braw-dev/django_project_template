@@ -1,9 +1,8 @@
-import markdown
 from django.http import Http404
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.views.generic import DetailView
 
+from .markdown_utils import render_markdown_html
 from .models import Page
 
 
@@ -40,15 +39,8 @@ class PageDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Render markdown to HTML
-        md = markdown.Markdown(
-            extensions=[
-                "extra",  # Tables, fenced code, etc.
-                "smarty",  # Smart quotes
-                "toc",  # Table of contents
-            ]
-        )
-        context["content_html"] = mark_safe(md.convert(self.object.content))
+        # Render markdown to sanitised HTML
+        context["content_html"] = render_markdown_html(self.object.content)
         # Pass meta object for django-meta template
         context["meta"] = self.object.as_meta()
         return context
