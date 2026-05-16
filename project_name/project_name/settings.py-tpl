@@ -17,6 +17,7 @@ from email.utils import getaddresses
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
+import sentry_sdk
 import structlog
 from django.utils.translation import gettext_lazy as _
 from pydantic import SecretStr, ValidationInfo, field_validator
@@ -184,6 +185,7 @@ class AppSettings(BaseSettings):
     CHATWOOT_WEBSITE_TOKEN: SecretStr = SecretStr("")
     CHATWOOT_BASE_URL: str = "https://app.chatwoot.com"
     CELERY_BROKER_URL: SecretStr = SecretStr("redis://localhost:6379/0")
+    SENTRY_DSN: SecretStr = SecretStr("")
 
     @field_validator("SECRET_KEY", "DB_DEFAULT_URL", "DJANGO_ADMINS", "EMAIL_DOMAIN")
     @classmethod
@@ -217,6 +219,9 @@ TESTING = "pytest" in sys.modules or any(
 
 ENVIRONMENT = APP_SETTINGS.ENVIRONMENT
 IS_PRODUCTION = ENVIRONMENT in ["production", "prod"]
+
+if sentry_dsn := APP_SETTINGS.SENTRY_DSN.get_secret_value().strip():
+    sentry_sdk.init(dsn=sentry_dsn)
 
 ALLOWED_HOSTS = parse_csv("ALLOWED_HOSTS", APP_SETTINGS.ALLOWED_HOSTS)
 

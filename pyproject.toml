@@ -105,6 +105,7 @@ dependencies = [
     "httpx>=0.28.1",
     "psycopg[pool]>=3.3.1",
     "pydantic>=2.11.7",
+    "sentry-sdk>=2.60.0",
 ]
 
 [dependency-groups]
