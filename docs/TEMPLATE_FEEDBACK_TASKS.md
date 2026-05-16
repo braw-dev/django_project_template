@@ -12,12 +12,6 @@ Principles used for suggested fixes:
 
 ## P0 — fix first
 
-### 1. Make docs match reality
-
-**Problem:** README, DEPLOYMENT, and SECURITY contain claims that do not fully match the current implementation.
-
-**Potential fix:** Do a documentation pass and remove or rewrite anything not actually scaffolded. Prefer accurate, smaller docs over aspirational docs.
-
 ### 2. Wire language switching properly
 
 **Problem:** The template includes a language switcher partial, but the `set_language` route does not appear to be wired in the main URL config.
