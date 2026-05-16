@@ -94,6 +94,21 @@ migrate:
 collectstatic:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} collectstatic --noinput
 
+# Extract Django translation strings into .po files
+[working-directory('{{ project_name }}')]
+makemessages *FLAGS:
+    @{% templatetag openvariable %} manage {% templatetag closevariable %} makemessages {% templatetag openvariable %} FLAGS {% templatetag closevariable %}
+
+# Compile .po files into .mo files
+[working-directory('{{ project_name }}')]
+compilemessages:
+    @{% templatetag openvariable %} manage {% templatetag closevariable %} compilemessages
+
+# Translate untranslated .po entries with an OpenAI-compatible API
+[working-directory('{{ project_name }}')]
+translate-locale LOCALE *FLAGS:
+    @{% templatetag openvariable %} manage {% templatetag closevariable %} translate_locale --locale {% templatetag openvariable %} LOCALE {% templatetag closevariable %} {% templatetag openvariable %} FLAGS {% templatetag closevariable %}
+
 # Create a new Django app in the correct directory
 [working-directory('{{ project_name }}')]
 startapp APP_NAME:

@@ -1,0 +1,260 @@
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+from typing import Any
+
+import httpx
+import polib
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
+
+DEFAULT_TRANSLATION_API_BASE_URL = "https://api.openai.com/v1"
+DEFAULT_TRANSLATION_MODEL = "gpt-4.1-mini"
+DEFAULT_BATCH_SIZE = 20
+JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
+
+
+def get_po_file_path(locale: str) -> Path:
+    return settings.BASE_DIR / "locale" / locale / "LC_MESSAGES" / "django.po"
+
+
+def get_plural_count(po_file: polib.POFile) -> int:
+    plural_forms = po_file.metadata.get("Plural-Forms", "")
+    match = re.search(r"nplurals\s*=\s*(\d+)", plural_forms)
+    if match is not None:
+        return int(match.group(1))
+    return 2
+
+
+def is_untranslated(entry: polib.POEntry, plural_count: int) -> bool:
+    if entry.obsolete or not entry.msgid:
+        return False
+    if entry.msgstr == "":
+        return True
+    if entry.msgid_plural:
+        for index in range(plural_count):
+            if entry.msgstr_plural.get(index, "") == "":
+                return True
+    return False
+
+
+def get_untranslated_entries(po_file: polib.POFile) -> list[polib.POEntry]:
+    plural_count = get_plural_count(po_file)
+    return [entry for entry in po_file if is_untranslated(entry, plural_count)]
+
+
+def build_translation_payload(entries: list[polib.POEntry]) -> list[dict[str, Any]]:
+    payload: list[dict[str, Any]] = []
+    for index, entry in enumerate(entries):
+        payload.append(
+            {
+                "index": index,
+                "msgctxt": entry.msgctxt,
+                "msgid": entry.msgid,
+                "msgid_plural": entry.msgid_plural or None,
+                "occurrences": [
+                    f"{file_path}:{line_number}" for file_path, line_number in entry.occurrences
+                ],
+            }
+        )
+    return payload
+
+
+def build_prompt(*, locale: str, plural_count: int, entries: list[dict[str, Any]]) -> str:
+    instructions = {
+        "target_locale": locale,
+        "plural_forms_required": plural_count,
+        "rules": [
+            "Translate for a SaaS web application.",
+            (
+                "Preserve placeholders, variable names, HTML tags, punctuation, "
+                "and whitespace semantics."
+            ),
+            "Do not translate Django template variables such as {{ name }}.",
+            "Do not translate format placeholders such as %(name)s or {name}.",
+            "Return valid JSON only.",
+            "For singular entries, return msgstr as a string.",
+            (
+                "For plural entries, return msgstr_plural as an array with exactly "
+                "plural_forms_required items."
+            ),
+        ],
+        "response_schema": {
+            "translations": [
+                {
+                    "index": 0,
+                    "msgstr": "Translated string for singular entries",
+                    "msgstr_plural": ["Plural form 0", "Plural form 1"],
+                }
+            ]
+        },
+        "entries": entries,
+    }
+    return json.dumps(instructions, ensure_ascii=False, indent=2)
+
+
+def extract_json_object(content: str) -> dict[str, Any]:
+    match = JSON_OBJECT_RE.search(content)
+    if match is None:
+        raise CommandError("Translation model did not return a JSON object")
+    try:
+        return json.loads(match.group(0))
+    except json.JSONDecodeError as exc:
+        raise CommandError("Translation model returned invalid JSON") from exc
+
+
+def request_translations(
+    *,
+    api_key: str,
+    base_url: str,
+    model: str,
+    locale: str,
+    plural_count: int,
+    entries: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    response = httpx.post(
+        f"{base_url.rstrip('/')}/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": model,
+            "temperature": 0.2,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You translate Django gettext strings. Return JSON only.",
+                },
+                {
+                    "role": "user",
+                    "content": build_prompt(
+                        locale=locale,
+                        plural_count=plural_count,
+                        entries=entries,
+                    ),
+                },
+            ],
+        },
+        timeout=120.0,
+    )
+    response.raise_for_status()
+    response_data = response.json()
+    try:
+        content = response_data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise CommandError("Translation API returned an unexpected response shape") from exc
+    if not isinstance(content, str):
+        raise CommandError("Translation API returned non-text content")
+    data = extract_json_object(content)
+    translations = data.get("translations")
+    if not isinstance(translations, list):
+        raise CommandError("Translation API response did not include a translations list")
+    return translations
+
+
+def apply_translations(
+    *,
+    entries: list[polib.POEntry],
+    translations: list[dict[str, Any]],
+    plural_count: int,
+) -> int:
+    updated_entries = 0
+    for translation in translations:
+        if not isinstance(translation, dict):
+            continue
+        index = translation.get("index")
+        if not isinstance(index, int) or index < 0 or index >= len(entries):
+            continue
+
+        entry = entries[index]
+        if entry.msgid_plural:
+            translated_plural = translation.get("msgstr_plural")
+            if not isinstance(translated_plural, list) or len(translated_plural) != plural_count:
+                continue
+            for plural_index, value in enumerate(translated_plural):
+                if not isinstance(value, str) or not value.strip():
+                    break
+                entry.msgstr_plural[plural_index] = value
+            else:
+                updated_entries += 1
+            continue
+
+        translated_string = translation.get("msgstr")
+        if not isinstance(translated_string, str) or not translated_string.strip():
+            continue
+        entry.msgstr = translated_string
+        updated_entries += 1
+
+    return updated_entries
+
+
+class Command(BaseCommand):
+    help = "Translate untranslated Django locale messages using an OpenAI-compatible API."
+
+    def add_arguments(self, parser) -> None:
+        parser.add_argument(
+            "--locale",
+            required=True,
+            help="Locale code, for example 'de' or 'fr'.",
+        )
+        parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
+        parser.add_argument("--model", default=DEFAULT_TRANSLATION_MODEL)
+        parser.add_argument("--base-url", default=DEFAULT_TRANSLATION_API_BASE_URL)
+
+    def handle(self, *args, **options) -> None:
+        locale = options["locale"]
+        batch_size = options["batch_size"]
+        model = options["model"]
+        base_url = options["base_url"]
+        api_key = settings.__dict__.get("AI_TRANSLATION_API_KEY") or None
+        if api_key is None:
+            api_key = __import__("os").environ.get("AI_TRANSLATION_API_KEY")
+        if not api_key:
+            raise CommandError("AI_TRANSLATION_API_KEY must be set in the environment")
+        if batch_size <= 0:
+            raise CommandError("--batch-size must be greater than zero")
+
+        po_file_path = get_po_file_path(locale)
+        if not po_file_path.exists():
+            raise CommandError(
+                "Locale file does not exist: "
+                f"{po_file_path}. Run makemessages first for this locale."
+            )
+
+        po_file = polib.pofile(str(po_file_path))
+        plural_count = get_plural_count(po_file)
+        untranslated_entries = get_untranslated_entries(po_file)
+
+        if not untranslated_entries:
+            self.stdout.write(self.style.SUCCESS(f"No untranslated entries found for {locale}."))
+            return
+
+        total_updated = 0
+        for start_index in range(0, len(untranslated_entries), batch_size):
+            batch_entries = untranslated_entries[start_index : start_index + batch_size]
+            payload = build_translation_payload(batch_entries)
+            translations = request_translations(
+                api_key=api_key,
+                base_url=base_url,
+                model=model,
+                locale=locale,
+                plural_count=plural_count,
+                entries=payload,
+            )
+            updated = apply_translations(
+                entries=batch_entries,
+                translations=translations,
+                plural_count=plural_count,
+            )
+            total_updated += updated
+            self.stdout.write(
+                f"Translated {updated} entries in batch {start_index // batch_size + 1}."
+            )
+
+        po_file.save(str(po_file_path))
+        self.stdout.write(
+            self.style.SUCCESS(f"Updated {total_updated} untranslated entries in {po_file_path}.")
+        )

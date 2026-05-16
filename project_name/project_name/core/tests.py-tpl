@@ -1,6 +1,12 @@
+import os
+import tempfile
 import uuid
+from pathlib import Path
+from unittest.mock import patch
 
-from django.test import TestCase
+import polib
+from django.core.management import call_command
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.html import escape
 
@@ -51,3 +57,52 @@ class NewsletterTestCase(TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "core/partials/newsletter/signup.html")
+
+
+class TranslateLocaleCommandTestCase(TestCase):
+    def test_translate_locale_updates_untranslated_entries(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base_dir = Path(temp_dir)
+            locale_dir = base_dir / "locale" / "de" / "LC_MESSAGES"
+            locale_dir.mkdir(parents=True)
+            po_file_path = locale_dir / "django.po"
+
+            po_file = polib.POFile()
+            po_file.metadata = {
+                "Language": "de",
+                "Plural-Forms": "nplurals=2; plural=(n != 1);",
+            }
+            po_file.append(polib.POEntry(msgid="Sign In", msgstr=""))
+            po_file.append(
+                polib.POEntry(
+                    msgid="There is %(count)s team.",
+                    msgid_plural="There are %(count)s teams.",
+                    msgstr_plural={0: "", 1: ""},
+                )
+            )
+            po_file.save(str(po_file_path))
+
+            with (
+                override_settings(BASE_DIR=base_dir),
+                patch.dict(os.environ, {"AI_TRANSLATION_API_KEY": "test-key"}),
+                patch(
+                    "{{ project_name }}.core.management.commands.translate_locale.request_translations",  # noqa: E501
+                    return_value=[
+                        {"index": 0, "msgstr": "Anmelden"},
+                        {
+                            "index": 1,
+                            "msgstr_plural": [
+                                "Es gibt %(count)s Team.",
+                                "Es gibt %(count)s Teams.",
+                            ],
+                        },
+                    ],
+                ),
+            ):
+                call_command("translate_locale", locale="de")
+
+            updated_po_file = polib.pofile(str(po_file_path))
+            self.assertEqual(updated_po_file.find("Sign In").msgstr, "Anmelden")
+            plural_entry = updated_po_file.find("There is %(count)s team.")
+            self.assertEqual(plural_entry.msgstr_plural[0], "Es gibt %(count)s Team.")
+            self.assertEqual(plural_entry.msgstr_plural[1], "Es gibt %(count)s Teams.")

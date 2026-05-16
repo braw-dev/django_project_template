@@ -1420,6 +1420,15 @@ wheels = [
 ]
 
 [[package]]
+name = "polib"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/10/9a/79b1067d27e38ddf84fe7da6ec516f1743f31f752c6122193e7bce38bdbf/polib-1.2.0.tar.gz", hash = "sha256:f3ef94aefed6e183e342a8a269ae1fc4742ba193186ad76f175938621dbfc26b", size = 161658, upload-time = "2023-02-23T17:53:56.873Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6b/99/45bb1f9926efe370c6dbe324741c749658e44cb060124f28dad201202274/polib-1.2.0-py2.py3-none-any.whl", hash = "sha256:1c77ee1b81feb31df9bca258cbc58db1bbb32d10214b173882452c73af06d62d", size = 20634, upload-time = "2023-02-23T17:53:59.919Z" },
+]
+
+[[package]]
 name = "project-name"
 version = "0.1.0"
 source = { virtual = "." }
@@ -1470,6 +1479,7 @@ dev = [
     { name = "factory-boy" },
     { name = "lefthook" },
     { name = "playwright" },
+    { name = "polib" },
     { name = "pyopenssl" },
     { name = "pytest" },
     { name = "pytest-django" },
@@ -1528,6 +1538,7 @@ dev = [
     { name = "factory-boy" },
     { name = "lefthook", specifier = ">=1.11.8" },
     { name = "playwright" },
+    { name = "polib", specifier = ">=1.2.0" },
     { name = "pyopenssl", specifier = ">=25.3.0" },
     { name = "pytest" },
     { name = "pytest-django" },

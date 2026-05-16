@@ -59,7 +59,7 @@ Marketing pages are intended to live in the same project as the app by default. 
 ### Business
 
 - **Payments**: Polar.sh integration with subscription management, webhook handling, and entitlement checks.
-- **i18n**: Django i18n with Google Gemini auto-translation.
+- **i18n**: Django i18n with AI-assisted `.po` translation workflow.
 - **Deployment**: VPS ready (Podman + Ansible), multi-site support.
 
 ## Creating apps
@@ -112,6 +112,68 @@ Use middleware for request-wide context such as active team resolution. Use deco
   - Plain `pytest` is supported and excludes browser-marked tests by default.
   - Browser tests are separate and require Playwright browser installation via `just playwright-install`.
 - **Debugging**: `django-debug-toolbar` included for SQL analysis.
+
+## Internationalisation workflow
+
+This template supports Django's built-in gettext workflow for Python and template strings, plus an AI-assisted helper for filling untranslated `.po` entries.
+
+### What it covers
+
+- Python strings marked with `gettext_lazy` / `_()`
+- Template strings marked with `{% templatetag openblock %} trans {% templatetag closeblock %}` / `{% templatetag openblock %} blocktrans {% templatetag closeblock %}`
+- Locale-aware URLs via `i18n_patterns`
+
+### What it does not cover
+
+- Translated database content stored with `django-parler` such as `Page` model content. That content needs a separate export/import workflow.
+
+### Prerequisites
+
+- GNU gettext installed locally so Django can run `makemessages` / `compilemessages`
+- `AI_TRANSLATION_API_KEY` set if you want the AI helper to write translations for you
+
+### Extract strings
+
+Create or update locale catalogs with Django:
+
+```bash
+just makemessages -l de -l fr -l es -l pt
+```
+
+This writes `.po` files under `locale/<lang>/LC_MESSAGES/django.po`.
+
+### Fill untranslated entries with AI
+
+Use the built-in management command through `just`:
+
+```bash
+export AI_TRANSLATION_API_KEY=your-api-key
+just translate-locale de
+```
+
+Optional flags are passed through to the management command:
+
+```bash
+just translate-locale de --model gpt-4.1-mini --base-url https://api.openai.com/v1 --batch-size 10
+```
+
+The helper uses an OpenAI-compatible chat completions API and only updates untranslated entries in `locale/<lang>/LC_MESSAGES/django.po`.
+
+### Compile translations
+
+After reviewing the generated `.po` changes, compile them:
+
+```bash
+just compilemessages
+```
+
+### Recommended flow
+
+```bash
+just makemessages -l de
+just translate-locale de
+just compilemessages
+```
 
 ## Developing on the template
 
