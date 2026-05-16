@@ -75,4 +75,7 @@ class AuthTestCase(TestCase):
     def test_dashboard_view_requires_login(self):
         response = self.client.get(reverse("account:dashboard"))
 
-        self.assertRedirects(response, f"{reverse('account_login')}?next={reverse('account:dashboard')}")
+        self.assertRedirects(
+            response,
+            f"{reverse('account_login')}?next={reverse('account:dashboard')}",
+        )

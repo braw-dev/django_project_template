@@ -54,7 +54,12 @@ def generate_token_id() -> str:
 class ApiToken(TenantScopedModel, BaseModel):
     """Team-scoped API token with a hashed secret."""
 
-    token_id = models.CharField(max_length=64, unique=True, default=generate_token_id, editable=False)
+    token_id = models.CharField(
+        max_length=64,
+        unique=True,
+        default=generate_token_id,
+        editable=False,
+    )
     name = models.CharField(max_length=120)
     lookup_id = models.CharField(max_length=TOKEN_LOOKUP_LENGTH, unique=True, db_index=True)
     secret_hash = models.CharField(max_length=128)
