@@ -18,12 +18,6 @@ Perspectives - take these into account when making changes:
 
 ## P0 — fix first
 
-### 5. Sanitize rendered markdown
-
-**Problem:** Marketing page markdown is rendered with `mark_safe` but is not visibly sanitized first, despite `nh3` being in the project dependencies.
-
-**Potential fix:** Sanitize markdown output with `nh3` at the rendering boundary. Keep the solution small and explicit rather than introducing a CMS abstraction.
-
 ### 6. Finish the Polar billing foundation
 
 **Problem:** Billing is structurally present, but parts of the integration are still stubs or SDK-shape placeholders.
