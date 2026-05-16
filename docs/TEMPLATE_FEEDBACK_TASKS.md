@@ -18,12 +18,6 @@ Perspectives - take these into account when making changes:
 
 ## P0 — fix first
 
-### 4. Fix `<html lang>` and locale-aware rendering
-
-**Problem:** `base.html` hardcodes `lang="en"`, which undermines localisation.
-
-**Potential fix:** Set the HTML lang attribute from the active language and use Django localisation tools consistently for dates, numbers, and text direction assumptions.
-
 ### 5. Sanitize rendered markdown
 
 **Problem:** Marketing page markdown is rendered with `mark_safe` but is not visibly sanitized first, despite `nh3` being in the project dependencies.
