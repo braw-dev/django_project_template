@@ -1,82 +1,103 @@
 # Production Architecture & Deployment
 
-Deployment is opinionated and is expected to be deployed to a VPS/Dedicated server running Ubuntu 24 LTS behind a CDN. Multiple sites can be hosted on the same server.
+This template provides a production-oriented starting point, not a finished platform. It includes application settings, container files, and runtime integrations, but you still need to choose and document your own hosting, reverse proxy, backups, and operational processes for each generated product.
 
-## App Configuration
+## What is scaffolded today
 
-[`pydantic-settings`](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) is used to manage configuration in the `settings.py` file. To use, copy the `.env.dist` file to `.env` and update the values as needed. If local overrides are required, put them into `.env.local`. Required settings fail fast during Django startup if they are missing or blank.
+- Django application configuration via `.env` and `.env.local` using [`pydantic-settings`](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
+- `docker/Dockerfile.dev` and `docker/Dockerfile.prod`
+- `compose.dev.yaml` and `compose.yaml` as starting points
+- Gunicorn app runtime in the production Dockerfile
+- Optional Celery worker support
+- PostgreSQL/PostGIS via `DB_DEFAULT_URL`
+- Redis-compatible cache/broker via `CACHE_DEFAULT_URL` and `CELERY_BROKER_URL`
+- WhiteNoise static file serving
+- Optional S3-compatible media storage via `django-storages`
+- Structured logging via `django-structlog`
+- Optional error reporting via `SENTRY_DSN`
 
-## Production Architecture
+## What is not scaffolded yet
 
-### Server Configuration Management
+- no Ansible or Podman deployment automation
+- no complete reverse-proxy config in this repo
+- no built-in search service such as Meilisearch
+- no backup system configuration
+- no metrics/tracing/dashboard stack
+- no container registry or CI/CD pipeline
+- no finished legal/trust or subprocessor documentation set
 
-To make it easy to setup a server (e.g. for disaster recovery, fail-overs, future scaling etc.), we use [Ansible](https://docs.ansible.com/ansible/latest/index.html) to install OS dependencies and manage our configuration as code.
+Treat the Compose files as examples, not as a one-command production deployment.
 
-### Backend
+## App configuration
 
-{{ project_name }} is a Python + [Django](https://www.djangoproject.com/) application.
+[`pydantic-settings`](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) is used to manage configuration in `settings.py`. Copy `.env.dist` to `.env` and update the values as needed. If local overrides are required, put them into `.env.local`. Required settings fail fast during Django startup if they are missing or blank.
+
+## Runtime components
+
+### Web application
+
+`{{ project_name }}` is a Django application served by Gunicorn in the production Dockerfile.
+
+### Database
+
+The template parses `DB_DEFAULT_URL` and supports:
+
+- PostgreSQL / PostGIS
+- SQLite
+- MySQL
+
+The default `.env.dist` uses PostGIS. Test runs switch to in-memory SQLite automatically.
 
 #### Migrations
 
-Migrations are run as part of the automated CI/CD pipeline and thus must never be "breaking" migrations to minimize service disruption.
+The template includes standard Django migrations. It does **not** scaffold CI/CD migration orchestration. If you adopt zero-downtime migration rules for a product, document and enforce them in that product's delivery process.
 
-By this we mean we prefer to make two migrations (and releases) which may affect running code.
+### Cache and async work
 
-For example, given that we must rename a column in our database. If we simply rename the column the old code will break. If there is a delay in deploying the newer version, or we need to roll back then the old code will not be compatible with the new column name. In this case we would add a second column with the new name (copying the values from the original column). Then, in a second release we would delete the old column. Should we have to roll back our code would still function (although may be out of date - this could be rectified by copying the values from the new column to the old).
+Caching uses Django's cache framework with a Redis-compatible backend when `CACHE_DEFAULT_URL` points at Redis/Dragonfly. Celery is configured to use `CELERY_BROKER_URL` and stores task results in the database via `django-celery-results`.
 
-Database migrations should be repeatable (e.g. use `IF NOT EXISTS` etc.)
+The included production Compose file uses Dragonfly as the cache service, but the Django settings only require a Redis-compatible URL.
 
-### Search
+### Static and media files
 
-Search is provided by [Meilisearch](https://github.com/meilisearch/meilisearch).
+- Static files are served by WhiteNoise.
+- User-uploaded media defaults to local filesystem storage.
+- In production you can switch media storage to an S3-compatible backend via the existing `AWS_*` settings.
 
-### Caching
+### Logging and error reporting
 
-Due to the read-heavy nature of the product we heavily use caching throughout the stack.
+The template currently supports:
 
-[Dragonfly](https://www.dragonflydb.io/) is the default Redis-compatible cache for database calls and template renders.
+- console logging
+- rotating JSON log files under `logs/`
+- optional Sentry error reporting via `SENTRY_DSN`
 
-[Bunny](https://bunnycdn.com/) is used as a CDN for compressed & versioned static assets as well as image optimisation.
+It does **not** currently scaffold metrics, tracing, Grafana, or New Relic.
 
-### Backups
-
-[`borg`](https://github.com/borgbackup/borg) and [borgmatic](https://torsion.org/borgmatic/) are used for backups to [BorgBase](https://www.borgbase.com/).
-
-### Monitoring
-
-To catch application errors and monitor system usage we use [NewRelic](https://newrelic.com/) and their alerting capabilities.
-
-### Containers
-
-[Docker Hub](https://hub.docker.com/) hosts our containers and scans them for vulnerabilities.
-
-### Password hashing
-
-Passwords are stored and hashed using Argon2id.
-
-### Vulnerabilities
-
-If you discover a security vulnerability we encourage you to please disclose this responsibly to [security@{{ project_name }}](mailto:security@{{ project_name }}). We will endeavour to act quickly and reward if we can.
-
-## Security Details
-
-### Object level permissions
-
-[`django-guardian`](https://github.com/django-guardian/django-guardian) is used for granular permissions. This includes permissions to access certain features as part of the subscribed plan. e.g. a `Premium` plan will have more permissions than a `Basic` plan.
+## Security-related deployment notes
 
 ### Authentication
 
-[`django-allauth`](https://docs.allauth.org/en/latest/introduction/index.html) is configured for regular accounts with the following setup:
+[`django-allauth`](https://docs.allauth.org/en/latest/introduction/index.html) is configured for local accounts with:
 
-- Local accounts (no external social accounts). Chosen for speed and don't have to register any additional social accounts.
-- Email addresses as username
-- Login via code is enabled
-- Multi-factor authentication via TOTP or Passkey
+- email as the login identifier
+- mandatory email verification
+- MFA via TOTP or passkeys
+
+`ACCOUNT_LOGIN_BY_CODE_ENABLED` is currently `False`, so login-by-code is not enabled by default.
+
+### Authorization
+
+Team-scoped authorization is handled by the template's own tenancy and permission helpers built on top of `rules`. `django-guardian` is not part of the current implementation.
+
+### Password hashing
+
+Passwords are hashed with Argon2id by default.
 
 ### Subresource Integrity
 
-[SRI](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) SHA512 hashes are added to static JS and CSS resources thanks to [`django-sri`](https://github.com/RealOrangeOne/django-sri).
+[SRI](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) SHA-512 hashes are added to static JS and CSS resources via [`django-sri`](https://github.com/RealOrangeOne/django-sri).
 
-## Monitoring and Alerting
+## Security contact
 
-Both server & application monitoring and alerting are handled by [Grafana Cloud](https://grafana.com/).
+The template does not provision a real disclosure process or mailbox. Replace any placeholder security contact details in a generated product with your own support/security contact information and incident process.

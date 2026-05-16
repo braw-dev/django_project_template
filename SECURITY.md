@@ -61,7 +61,7 @@ Examples:
 Role defaults:
 
 - `owner`: all team permissions
-- `admin`: standard CRUD permissions plus team member/settings management
+- `admin`: standard CRUD permissions plus team member/settings/API token management
 - `member`: read/view permissions only
 
 ### 4. Explicit service-layer enforcement
@@ -171,6 +171,12 @@ Pay attention to:
 - PgBouncer transaction pooling
 
 If using PgBouncer transaction pooling, prefer explicit transaction scoping with `SET LOCAL` or do not assume session state survives across statements.
+
+## Support access
+
+`django-hijack` is enabled in the template and currently uses `hijack.permissions.superusers_and_staff`.
+
+That means staff users and superusers can impersonate other users if you keep the feature enabled in a generated project. The template does not yet scaffold a dedicated audit trail for impersonation events.
 
 ## Billing security
 

@@ -1,6 +1,6 @@
 # {{ project_name }}
 
-Opinionated Django template for SaaS MVPs. Start writing business logic immediately with a production-ready, cost-effective setup. Includes tools for support, payments, marketing, translations, and monitoring.
+Opinionated Django template for SaaS MVPs. Start from a production-oriented baseline with auth, tenancy, billing, marketing pages, and frontend scaffolding.
 
 To get started, make sure you have Django installed (5.1+) and run:
 
@@ -31,43 +31,44 @@ uv run django-admin startproject \
 - [ ] Review `settings.py` settings
 - [ ] Collect staticfiles `just collectstatic`
 - [ ] Run backend tests: `just test-unit`
-- [ ] Run browser tests separately: `just playwright-install` then `just test-e2e`
+- [ ] Run Django browser tests if needed: `just test-browser`
+- [ ] Run Playwright E2E tests separately: `just playwright-install` then `just test-e2e`
 
 ## What's included?
 
 ### Development
 
-- **Security**: Custom User with MFA, Argon2id hashing, SRI, `nh3` sanitization, team-scoped API tokens.
+- **Security**: Custom User with MFA, Argon2id hashing, SRI, and team-scoped API tokens.
 - **Configuration**: Typed `pydantic-settings` setup with fast failure on missing required config.
 - **Structure**: Team-first multi-tenancy with memberships, invitations, and tenant-scoped models.
-- **Stack**: PostgreSQL (production), SQLite (test), Dragonfly (Redis-compatible cache), Django Ninja API.
-- **Testing**: `pytest` + `pytest-django` for backend tests, Playwright for browser/e2e tests.
+- **Stack**: Django + Django Ninja API, PostgreSQL/PostGIS via `DB_DEFAULT_URL`, SQLite in tests, and a Redis-compatible cache via `CACHE_DEFAULT_URL`.
+- **Testing**: `pytest` + `pytest-django` for backend tests, Django browser tests, and Playwright for frontend E2E tests.
 - **Typing**: `ty` static analysis.
-- **Frontend**: Whitenoise serving, Vite + React (optional), Tailwind CSS + Daisy UI, `django-cotton` components.
+- **Frontend**: WhiteNoise static file serving, Vite + React, Tailwind CSS + Daisy UI, and `django-cotton` components.
 - **Tooling**: `Justfile` command runner, Ruff linting/formatting via `lefthook`.
 
 ### Marketing
 
-- **Content**: Markdown `Page` model for FAQs/Landing pages.
+- **Content**: Markdown `Page` model for FAQs and landing pages.
 - **SEO**: `django-meta` integration.
-- **Legal**: Privacy policy and Terms & Conditions pages.
-- **Analytics**: Plausible analytics.
-- **Growth**: Newsletter sign-up, embedded Chatwoot support.
+- **Legal**: Footer legal links are placeholders; privacy/terms/security pages are not scaffolded yet.
+- **Analytics**: Optional Plausible analytics include.
+- **Growth**: Newsletter sign-up and optional Chatwoot widget.
 
 Marketing pages are intended to live in the same project as the app by default. Public pages stay public; app routes opt into protection explicitly with decorators such as `login_required` and `mfa_required`.
 
 ### Business
 
-- **Payments**: Polar.sh integration with subscription management, webhook handling, and entitlement checks.
-- **i18n**: Django i18n with AI-assisted `.po` translation workflow.
-- **Deployment**: VPS ready (Podman + Ansible), multi-site support.
+- **Payments**: Polar.sh billing foundation with subscription models, webhook handling, and entitlement checks.
+- **i18n**: Django gettext workflow plus an AI-assisted helper for filling untranslated `.po` entries.
+- **Deployment**: Production-oriented container scaffolding via Dockerfiles and Compose manifests; final deployment wiring is still project-specific.
 
 ## Creating apps
 
 A `startapp` template is available under `/app_name` to bootstrap new apps with consistent structure:
 
 ```bash
-just startapp {{ app_name }}
+just startapp my_app
 ```
 
 ## Built-in Features
@@ -95,8 +96,10 @@ Use middleware for request-wide context such as active team resolution. Use deco
 ### Prerequisites
 
 - [`uv`](https://docs.astral.sh/uv/) (Python) & [`pnpm`](https://github.com/pnpm/pnpm) (Frontend)
-- [`entr`](https://github.com/eradman/entr) & [`rg`](https://github.com/BurntSushi/ripgrep) (Hot reloading)
-- [Playwright](https://playwright.dev/) (browser/E2E tests)
+- [`mkcert`](https://github.com/FiloSottile/mkcert) for `just runserver`
+- [`entr`](https://github.com/eradman/entr) & [`rg`](https://github.com/BurntSushi/ripgrep) for watch-mode commands
+- [Playwright](https://playwright.dev/) for browser/E2E tests
+- [`stow`](https://www.gnu.org/software/stow/) if you want to use `just ai-link`
 
 ### Installation
 
@@ -110,8 +113,9 @@ Use middleware for request-wide context such as active team resolution. Use deco
 - **Testing**:
   - Use `just test-unit` for backend/unit tests.
   - Plain `pytest` is supported and excludes browser-marked tests by default.
-  - Browser tests are separate and require Playwright browser installation via `just playwright-install`.
-- **Debugging**: `django-debug-toolbar` included for SQL analysis.
+  - Use `just test-browser` for Django tests marked `browser`.
+  - Use `just playwright-install` then `just test-e2e` for frontend Playwright tests.
+- **Debugging**: `django-debug-toolbar` is included outside test runs.
 
 ## Internationalisation workflow
 
@@ -121,11 +125,12 @@ This template supports Django's built-in gettext workflow for Python and templat
 
 - Python strings marked with `gettext_lazy` / `_()`
 - Template strings marked with `{% templatetag openblock %} trans {% templatetag closeblock %}` / `{% templatetag openblock %} blocktrans {% templatetag closeblock %}`
-- Locale-aware URLs via `i18n_patterns`
+- Locale-prefixed URLs for the `pages` catch-all routes via `i18n_patterns`
 
 ### What it does not cover
 
 - Translated database content stored with `django-parler` such as `Page` model content. That content needs a separate export/import workflow.
+- Django's `set_language` view is not wired yet, so the included language switcher partial is not fully functional yet.
 
 ### Prerequisites
 
