@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+node_modules
+**/node_modules
+.ruff_cache
+.rumdl_cache
+.pytest_cache
+coverage
+htmlcov
+__pycache__
+*.py[cod]
+db.sqlite3
+tmp

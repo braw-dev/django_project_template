@@ -4,6 +4,7 @@ ARG PYTHON_VERSION=3.13
 ARG NODE_VERSION=24
 
 FROM node:${NODE_VERSION}-alpine AS frontend-builder
+ENV CI=true
 WORKDIR /app
 RUN corepack enable
 COPY frontend ./frontend
