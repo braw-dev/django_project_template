@@ -94,6 +94,14 @@ Always use `just` commands to ensure environment consistency.
 - `templates/`: Django HTML templates (mostly for auth/accounts).
 - `static/`: Static assets.
 
+### Public vs Protected Routes
+
+This template includes both public marketing pages and protected app pages in the same Django project.
+
+- Public pages should remain public by default.
+- Protected app routes should opt into `login_required`, `mfa_required`, or similar decorators/mixins explicitly.
+- Use middleware for request context such as active team resolution, not for blanket access enforcement with exception lists.
+
 ### Frontend Integration
 
 - The frontend is a separate Vite app served by Django in development/production.
@@ -110,6 +118,7 @@ Always use `just` commands to ensure environment consistency.
   - Node: Edit `package.json`, then run `pnpm install`.
 - **Code Style**: Run `just format` before finishing tasks.
 - **Documentation**: Update `README.md` or `MOTIVATION.md` if architectural changes are made.
+- **Route protection**: When adding a new app route, decide explicitly whether it is public or protected. Do not extend global middleware allowlists for public-page exceptions.
 
 ---
 

@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from {{ project_name }}.tenancy import services as tenancy_services
+
 User = get_user_model()
 
 
@@ -24,7 +26,7 @@ class PasskeySignupTest(TestCase):
         self.assertTemplateUsed(response, "account/signup_by_passkey.html")
 
 
-class EnforceMFAMiddlewareTest(TestCase):
+class MFARequiredDecoratorTest(TestCase):
     email = "jane@example.com"
     password = "iKDt6EFwyQEjkgqSzCdvFdC7imS5JN0H"
 
@@ -36,6 +38,7 @@ class EnforceMFAMiddlewareTest(TestCase):
             primary=True,
             verified=True,
         )
+        self.team = tenancy_services.create_team(name="Acme", slug="acme", owner=self.user)
 
     def test_verified_user_without_mfa_is_redirected_to_mfa_setup(self):
         self.client.force_login(self.user)
@@ -67,3 +70,10 @@ class EnforceMFAMiddlewareTest(TestCase):
         response = self.client.get(reverse("account:dashboard"))
 
         self.assertTemplateUsed(response, "core/pages/dashboard.html")
+
+    def test_verified_user_without_mfa_is_redirected_to_mfa_setup_for_team_dashboard(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("team_dashboard", kwargs={"team_slug": self.team.slug}))
+
+        self.assertRedirects(response, reverse("mfa_index"))

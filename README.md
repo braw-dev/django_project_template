@@ -54,6 +54,8 @@ uv run django-admin startproject \
 - **Analytics**: Plausible analytics.
 - **Growth**: Newsletter sign-up, embedded Chatwoot support.
 
+Marketing pages are intended to live in the same project as the app by default. Public pages stay public; app routes opt into protection explicitly with decorators such as `login_required` and `mfa_required`.
+
 ### Business
 
 - **Payments**: Polar.sh integration with subscription management, webhook handling, and entitlement checks.
@@ -83,6 +85,10 @@ This project includes a built-in multi-tenancy foundation for B2B SaaS products:
 - **Optional Postgres RLS**: Defence-in-depth row-level isolation for production Postgres deployments
 
 See `{{ project_name }}/tenancy/README.md`, `{{ project_name }}/tokens/README.md`, and `SECURITY.md` for the security model.
+
+### Route Protection Policy
+
+Use middleware for request-wide context such as active team resolution. Use decorators or mixins for access policy such as login, MFA, or onboarding requirements. Avoid global middleware with growing exception lists for public marketing pages.
 
 ## Development Setup
 

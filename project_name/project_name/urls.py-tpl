@@ -14,6 +14,7 @@ else:
 from {{ project_name }}.core import views as core_views
 from {{ project_name }}.core.api import api_v1, webhooks_api
 from {{ project_name }}.tenancy import views as tenancy_views
+from {{ project_name }}.users.decorators import mfa_required
 
 from . import views
 
@@ -22,37 +23,49 @@ newsletter_urls = [
     path("success/", core_views.newsletter_success, name="signup_success"),
 ]
 
-urlpatterns = (
-    [
-        path("api/v1/", api_v1.urls),  # Django Ninja API
-        path("api/webhooks/", webhooks_api.urls),  # Webhook endpoints (CSRF exempt)
-        path("admin/", admin.site.urls),  # Django admin
-        path("accounts/", include("allauth.urls")),  # Django allauth
-        path("pricing/", views.pricing, name="pricing"),  # Pricing page
-        path("newsletter/", include((newsletter_urls, "newsletter"))),
-        path(
-            "teams/invitations/accept/<str:token>/",
-            tenancy_views.accept_team_invitation,
-            name="accept_team_invitation",
+protected_account_urls = [
+    path(
+        "dashboard",
+        view=login_required(mfa_required(views.dashboard)),
+        name="dashboard",
+    )
+]
+
+protected_team_urls = [
+    path(
+        "t/<slug:team_slug>/dashboard",
+        login_required(mfa_required(views.dashboard)),
+        name="team_dashboard",
+    ),
+]
+
+public_urls = [
+    path("pricing/", views.pricing, name="pricing"),  # Pricing page
+    path("newsletter/", include((newsletter_urls, "newsletter"))),
+    path(
+        "teams/invitations/accept/<str:token>/",
+        tenancy_views.accept_team_invitation,
+        name="accept_team_invitation",
+    ),
+    path("", views.homepage, name="homepage"),
+]
+
+urlpatterns = [
+    path("api/v1/", api_v1.urls),  # Django Ninja API
+    path("api/webhooks/", webhooks_api.urls),  # Webhook endpoints (CSRF exempt)
+    path("admin/", admin.site.urls),  # Django admin
+    path("accounts/", include("allauth.urls")),  # Django allauth
+    path(
+        "",
+        include(
+            (protected_account_urls, "account"),
+            namespace="account",
         ),
-        path(
-            "t/<slug:team_slug>/dashboard",
-            login_required(views.dashboard),
-            name="team_dashboard",
-        ),
-        path(
-            "",
-            include(
-                ([path("dashboard", view=views.dashboard, name="dashboard")], "account"),
-                namespace="account",
-            ),
-        ),
-    ]
-    + debug_toolbar_urls()
-    + [
-        path("", views.homepage, name="homepage"),
-    ]
-)
+    ),
+    *protected_team_urls,
+    *public_urls,
+    *debug_toolbar_urls(),
+]
 
 urlpatterns += i18n_patterns(
     # Pages app catch-all - must be last to avoid catching other URLs

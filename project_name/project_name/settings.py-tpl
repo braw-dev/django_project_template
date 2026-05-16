@@ -284,7 +284,6 @@ MIDDLEWARE = [
     "axes.middleware.AxesMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "{{ project_name }}.tenancy.middleware.ActiveTeamMiddleware",
-    "{{ project_name }}.users.middleware.EnforceMFAMiddleware",
     "hijack.middleware.HijackUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
