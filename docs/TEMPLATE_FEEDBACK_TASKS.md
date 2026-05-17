@@ -30,12 +30,6 @@ None.
 
 ## P3 — useful later
 
-### 22. Add customer-facing security/performance FAQ starters
-
-**Problem:** Prospective B2B customers often ask the same trust and performance questions, but there is no standard answer scaffold.
-
-**Potential fix:** Add editable FAQ starter content for hosting, encryption, backups, MFA, support access, and uptime expectations.
-
 ### 23. Add a simple billing/accounting export stance
 
 **Problem:** A solo operator running several SaaS products will need consistent exports for bookkeeping and support.
