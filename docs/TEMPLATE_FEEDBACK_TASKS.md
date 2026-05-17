@@ -22,12 +22,6 @@ None.
 
 ## P1 — important for EU B2B readiness
 
-### 10. Clarify tax and billing display strategy for Europe
-
-**Problem:** The template says Polar is preferred for tax handling, but the user-facing tax display and plan presentation strategy is not yet defined.
-
-**Potential fix:** Document the default stance for VAT, reverse charge, invoicing expectations, and tax-inclusive versus tax-exclusive display. Keep the template opinionated and simple.
-
 ### 11. Add newsletter consent and double opt-in
 
 **Problem:** Newsletter signup currently captures email addresses but does not show consent language or a double opt-in flow.
