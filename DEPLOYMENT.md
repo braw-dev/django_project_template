@@ -2,6 +2,32 @@
 
 This template provides a production-oriented starting point, not a finished platform. It includes application settings, container files, and runtime integrations, but you still need to choose and document your own hosting, reverse proxy, backups, and operational processes for each generated product.
 
+## Opinionated default deployment path
+
+If you want one boring sovereignty-friendly default for a generated project, prefer this stack:
+
+- **Application host**: a Hetzner VPS in the EU
+- **App runtime**: rootless Podman containers managed by per-project `systemd --user` units
+- **Edge proxy + TLS**: one root-managed Caddy on the VPS, configured outside this repo
+- **CDN**: Bunny.net in front of Caddy for static/media and edge caching
+- **Database**: PostgreSQL managed somewhere you trust in-region; provider intentionally undecided here
+- **Cache / broker**: Dragonfly on the same VPS or on a small sister instance in the same private network
+
+This is the default direction the docs assume. It is intentionally optimized for running many small B2B SaaS products cheaply on a small number of machines.
+
+### Why this default
+
+This path keeps the moving parts boring and cheap:
+
+- Podman keeps the runtime close to container workflows you already know from Docker/Compose
+- rootless containers reduce blast radius compared with running every app as root
+- `systemd` gives simple restart policy, startup ordering, logs, and boot persistence without introducing Kubernetes yet
+- separate Unix users per project give a clean boundary between apps on the same VPS
+- Caddy centralizes certificates and reverse proxying once, instead of per-project TLS config
+- Bunny.net gives a simple CDN layer without changing the Django app architecture
+
+It also leaves a future path open to k3s later because you are still building and shipping container images, not bespoke VM-only processes
+
 ## What is scaffolded today
 
 - Django application configuration via `.env` and `.env.local` using [`pydantic-settings`](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
@@ -19,14 +45,47 @@ This template provides a production-oriented starting point, not a finished plat
 ## What is not scaffolded yet
 
 - no Ansible or Podman deployment automation
+- no generated `systemd` unit files for Podman services
 - no complete reverse-proxy config in this repo
 - no built-in search service such as Meilisearch
 - no backup system configuration
 - no metrics/tracing/dashboard stack
 - no container registry or CI/CD pipeline
 - no finished legal/trust or subprocessor documentation set
+- no opinionated managed PostgreSQL provider choice yet
 
 Treat the Compose files as examples, not as a one-command production deployment.
+
+## Host layout for many apps on one VPS
+
+If you are running several small products on one Hetzner VPS, prefer a layout like this:
+
+- one Unix user per product, for example `app_acme`, `app_widget`, `app_docs`
+- each app user owns only that project's checkout, env files, volumes, and rootless Podman services
+- root owns the shared reverse proxy, firewall, SSH, and system-level hardening
+- root Caddy proxies public traffic to high localhost ports or private container ports for each app
+- Dragonfly may be shared, but document database numbers, credentials, and failure domains clearly if you do that
+
+This template does **not** generate the Unix users or host-level config for you. The point here is to recommend a repeatable shape, not pretend the repo already automates it.
+
+### Suggested responsibility split
+
+#### Root-managed, outside this repo
+
+- Caddy config
+- TLS certificates
+- firewall rules
+- SSH hardening
+- Fail2ban or equivalent host protections
+- host monitoring and backups
+
+#### Per-project, inside each generated repo
+
+- app container image build
+- Django config and env files
+- static collection
+- migration process
+- app-specific Podman service definition and deployment commands
 
 ## App configuration
 
@@ -37,6 +96,8 @@ Treat the Compose files as examples, not as a one-command production deployment.
 ### Web application
 
 `{{ project_name }}` is a Django application served by Gunicorn in the production Dockerfile.
+
+For the default Hetzner path, treat that production image as the thing your rootless Podman service runs under `systemd --user`.
 
 ### Database
 
@@ -58,11 +119,24 @@ Caching uses Django's cache framework with a Redis-compatible backend when `CACH
 
 The included production Compose file uses Dragonfly as the cache service, but the Django settings only require a Redis-compatible URL.
 
+For the default deployment path, prefer either:
+
+- Dragonfly on the same VPS for the cheapest setup, or
+- Dragonfly on a small sister instance in the same private network if you want cleaner isolation or independent scaling
+
+If multiple apps share one Dragonfly instance, treat that as an explicit operational choice and document the blast radius.
+
 ### Static and media files
 
 - Static files are served by WhiteNoise.
 - User-uploaded media defaults to local filesystem storage.
 - In production you can switch media storage to an S3-compatible backend via the existing `AWS_*` settings.
+
+For the default Hetzner + Bunny.net path:
+
+- keep WhiteNoise as the application origin for static files unless you have a reason to move away from it
+- let Bunny.net cache public static assets at the edge
+- decide explicitly whether media should stay on local disk, move to object storage, or be fronted by Bunny Storage/CDN in a generated project
 
 ### Logging and error reporting
 
@@ -73,6 +147,17 @@ The template currently supports:
 - optional Sentry error reporting via `SENTRY_DSN`
 
 It does **not** currently scaffold metrics, tracing, Grafana, or New Relic.
+
+## Reverse proxy and edge
+
+This repo does not include the final reverse-proxy config. For the default path, assume:
+
+- Caddy terminates TLS and proxies requests to the app containers
+- Caddy is managed once at the host level, outside any single product repo
+- Bunny.net sits in front of Caddy where CDN or edge caching is useful
+- app containers do not bind directly to the public internet unless you have a specific reason
+
+That split keeps product repos focused on application concerns while the host handles ingress and certificates centrally.
 
 ## Security-related deployment notes
 
@@ -97,6 +182,20 @@ Passwords are hashed with Argon2id by default.
 ### Subresource Integrity
 
 [SRI](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) SHA-512 hashes are added to static JS and CSS resources via [`django-sri`](https://github.com/RealOrangeOne/django-sri).
+
+## Practical rollout order for a new generated project
+
+If you are deploying a new product with this default path, the boring order is:
+
+1. provision a Hetzner VPS in your target EU region
+2. harden the host and install root-managed Caddy
+3. create a dedicated Unix user for the product
+4. install rootless Podman for that user
+5. build and run the app container under a user `systemd` unit
+6. point Caddy at the app service
+7. optionally place Bunny.net in front once the origin is stable
+8. wire PostgreSQL and Dragonfly over private networking where possible
+9. document backups, restore steps, and where customer data actually lives
 
 ## Security contact
 

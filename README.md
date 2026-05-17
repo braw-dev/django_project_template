@@ -89,7 +89,7 @@ When adding new authenticated product UI, prefer extending `app_base.html` unles
 
 - **Payments**: Polar-first billing foundation behind a lightweight provider interface, with hosted checkout/portal flows, local customer/product/subscription/entitlement models, verified idempotent webhooks, a thin provider-backed pricing-page helper, locale-aware pricing display for EUR/CHF/GBP/USD, and a default European stance of showing prices excluding VAT with final tax calculated at checkout.
 - **i18n**: Django gettext workflow plus an AI-assisted helper for filling untranslated `.po` entries.
-- **Deployment**: Production-oriented container scaffolding via Dockerfiles and Compose manifests; final deployment wiring is still project-specific.
+- **Deployment**: Production-oriented container scaffolding via Dockerfiles and Compose manifests, with an opinionated docs default of Hetzner VPS + rootless Podman + `systemd --user` + root-managed Caddy + Bunny.net; final deployment wiring is still project-specific.
 
 ## Creating apps
 
@@ -149,6 +149,20 @@ Default events wired by the template:
 - `privacy.user_data_delete_blocked`
 
 The audit log is stored in the database, visible in Django admin, and intentionally read-only there. Extend it for other sensitive actions such as billing changes, token lifecycle events, or team membership changes as your product needs them.
+
+## Deployment default
+
+If you want one boring default for a generated project, the docs now recommend:
+
+- Hetzner VPS in the EU
+- one Unix user per app
+- rootless Podman managed by `systemd --user`
+- one root-managed Caddy on the host for TLS and reverse proxying
+- Bunny.net as the CDN in front of Caddy
+- PostgreSQL managed separately in-region
+- Dragonfly on the same VPS or a small sister instance on the same private network
+
+This repo does not generate the host-level Caddy, Podman unit, or PostgreSQL setup for you. See `DEPLOYMENT.md` for the intended shape and tradeoffs.
 
 ## Development Setup
 
