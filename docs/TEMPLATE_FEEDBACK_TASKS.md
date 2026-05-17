@@ -30,31 +30,7 @@ None.
 
 ## P3 — useful later
 
-### 24. Add a template review checklist for future releases
-
-**Problem:** Some of the current gaps are consistency problems rather than architecture problems.
-
-**Potential fix:** Add a short pre-release checklist covering docs accuracy, i18n checks, billing flow, legal links, and generated-project smoke tests.
-
-## Suggested order of attack
-
-If you want to address these one at a time, this is the cleanest sequence:
-
-1. Make docs match reality
-2. Wire language switching properly
-3. Make generated templates actually i18n-first
-4. Fix `<html lang>` and locale-aware rendering
-5. Sanitize rendered markdown
-6. Finish the Polar billing foundation
-7. Add webhook idempotency for billing events
-8. Replace hardcoded pricing page content with real provider-backed data
-9. Add locale-aware currency formatting
-10. Add newsletter consent and double opt-in
-11. Seed legal and trust pages
-12. Add privacy operations hooks
-13. Audit support access and impersonation
-14. Separate marketing and app layouts
-15. Tighten sovereign deployment guidance
+None.
 
 ## Definition of done for each task
 
