@@ -30,12 +30,6 @@ None.
 
 ## P3 — useful later
 
-### 21. Add a small docs/help-center pattern
-
-**Problem:** The template covers marketing pages, but not a clear documentation or help-center structure.
-
-**Potential fix:** Reuse the pages app with a constrained convention for docs content before introducing a separate docs stack.
-
 ### 22. Add customer-facing security/performance FAQ starters
 
 **Problem:** Prospective B2B customers often ask the same trust and performance questions, but there is no standard answer scaffold.
