@@ -426,33 +426,6 @@ Components live in `components/` directory.
     └── users/
 ```
 
-## Creating New Apps
-
-Use the provided template:
-
-```bash
-just startapp my_app
-```
-
-This creates:
-
-```text
-my_app/
-├── __init__.py
-├── models.py
-├── services.py
-├── selectors.py
-├── views.py
-├── api.py
-├── admin.py
-├── urls.py
-└── tests/
-    ├── __init__.py
-    ├── test_models.py
-    ├── test_services.py
-    └── test_views.py
-```
-
 ## Database Migrations
 
 **Workflow:**

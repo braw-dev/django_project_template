@@ -20,11 +20,13 @@ mkcert:
 
 # Link the AI folders
 ai-link:
-    @mkdir -p .cursor/{commands,rules} .claude/{commands,rules}
-    @stow --dir=ai --target=.cursor/commands commands
-    @stow --dir=ai --target=.cursor/rules rules
-    @stow --dir=ai --target=.claude/commands commands
-    @stow --dir=ai --target=.claude/rules rules
+    @mkdir -p .cursor .claude
+    @rm -rf .cursor/commands .cursor/rules .claude/commands .claude/rules
+    @stow --dir=ai --target=.cursor commands
+    @stow --dir=ai --target=.cursor rules
+    @stow --dir=ai --target=.claude commands
+    @stow --dir=ai --target=.claude rules
+
 ###############################################
 ## Testing related targets
 ###############################################
@@ -109,13 +111,6 @@ compilemessages:
 translate-locale LOCALE *FLAGS:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} translate_locale --locale {% templatetag openvariable %} LOCALE {% templatetag closevariable %} {% templatetag openvariable %} FLAGS {% templatetag closevariable %}
 
-# Create a new Django app in the correct directory
-[working-directory('{{ project_name }}')]
-startapp APP_NAME:
-    @mkdir -p {{ project_name }}/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}
-    @{% templatetag openvariable %} manage {% templatetag closevariable %} startapp --template ../app_name {% templatetag openvariable %} APP_NAME {% templatetag closevariable %} {{ project_name }}/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}
-    @sed -i '' 's/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/{{ project_name }}\.{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/g' {{ project_name }}/{% templatetag openvariable %} APP_NAME {% templatetag closevariable %}/apps.py
-
 ###############################################
 ## Development
 ###############################################
@@ -124,10 +119,6 @@ startapp APP_NAME:
 install-python-dev:
     @uv sync
     {% templatetag openvariable %} UV_RUN {% templatetag closevariable %} lefthook install
-
-# Use Ansible to setup the development environment and install dependencies
-setup-dev-environment: install-dev
-    {% templatetag openvariable %} UV_RUN {% templatetag closevariable %} ansible-playbook ansible/00-dev-env-setup.yaml
 
 # Install Playwright dependencies
 playwright-install:

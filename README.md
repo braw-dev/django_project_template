@@ -93,14 +93,6 @@ When adding new authenticated product UI, prefer extending `app_base.html` unles
 - **Deployment**: Production-oriented container scaffolding via Dockerfiles and Compose manifests, with an opinionated docs default of Hetzner VPS + rootless Podman + `systemd --user` + root-managed Caddy + Bunny.net; final deployment wiring is still project-specific.
 - **Observability**: Sentry for exceptions, health checks, and structured request-performance logs that work well with Grafana Alloy + Grafana Cloud.
 
-## Creating apps
-
-A `startapp` template is available under `/app_name` to bootstrap new apps with consistent structure:
-
-```bash
-just startapp my_app
-```
-
 ## Built-in Features
 
 ### Team-First Multi-Tenancy
@@ -225,7 +217,7 @@ This template supports Django's built-in gettext workflow for Python and templat
 Create or update locale catalogs with Django:
 
 ```bash
-just makemessages -l de -l fr -l es -l pt
+just makemessages -l de -l fr -l es -l pt -l it
 ```
 
 This writes `.po` files under `locale/<lang>/LC_MESSAGES/django.po`.
