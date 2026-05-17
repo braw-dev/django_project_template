@@ -22,12 +22,6 @@ None.
 
 ## P1 — important for EU B2B readiness
 
-### 9. Add locale-aware currency formatting
-
-**Problem:** Price formatting currently assumes dollars and simple string interpolation.
-
-**Potential fix:** Add a small currency formatting helper that takes amount, currency, and locale. Support EUR-first by default and avoid inventing a full billing engine.
-
 ### 10. Clarify tax and billing display strategy for Europe
 
 **Problem:** The template says Polar is preferred for tax handling, but the user-facing tax display and plan presentation strategy is not yet defined.
