@@ -22,12 +22,6 @@ None.
 
 ## P1 — important for EU B2B readiness
 
-### 11. Add newsletter consent and double opt-in
-
-**Problem:** Newsletter signup currently captures email addresses but does not show consent language or a double opt-in flow.
-
-**Potential fix:** Extend the newsletter model and flow with explicit consent capture and confirmation email. Use Django forms and email, not a marketing automation system.
-
 ### 12. Seed legal and trust pages that B2B buyers expect
 
 **Problem:** The footer references legal links, but the template does not yet provide a strong default set of trust-facing pages.
