@@ -1,6 +1,10 @@
+from unittest.mock import MagicMock, patch
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+
+from . import selectors
 
 User = get_user_model()
 
@@ -79,3 +83,75 @@ class AuthTestCase(TestCase):
             response,
             f"{reverse('account_login')}?next={reverse('account:dashboard')}",
         )
+
+
+class PricingHelperTestCase(TestCase):
+    def test_product_list_maps_provider_products_for_pricing_page(self):
+        billing_provider = MagicMock()
+        billing_provider.get_products.return_value = [
+            {
+                "id": "prod_starter",
+                "name": "Starter",
+                "description": "For smaller teams",
+                "is_recurring": True,
+                "recurring_interval": "month",
+                "recurring_interval_count": 1,
+                "prices": [
+                    {
+                        "amount_type": "fixed",
+                        "price_amount": 1900,
+                        "price_currency": "eur",
+                        "is_archived": False,
+                    }
+                ],
+                "benefits": [
+                    {"id": "analytics", "name": "Analytics"},
+                    {"id": "support", "name": "Priority support"},
+                ],
+            }
+        ]
+
+        with patch(
+            "{{ project_name }}.billing.services.get_billing_provider",
+            return_value=billing_provider,
+        ):
+            products = selectors.product_list()
+
+        self.assertEqual(len(products), 1)
+        self.assertEqual(products[0]["name"], "Starter")
+        self.assertEqual(products[0]["description"], "For smaller teams")
+        self.assertEqual(products[0]["price_display"], "19")
+        self.assertEqual(products[0]["price_currency"], "EUR")
+        self.assertEqual(str(products[0]["billing_interval_display"]), "month")
+        self.assertEqual(products[0]["features"], ["Analytics", "Priority support"])
+
+    def test_pricing_page_renders_provider_backed_products(self):
+        products = [
+            {
+                "id": "prod_starter",
+                "name": "Starter",
+                "description": "For smaller teams",
+                "price_display": "19",
+                "price_currency": "EUR",
+                "price_label": "",
+                "has_numeric_price": True,
+                "billing_interval_display": "month",
+                "features": ["Analytics"],
+            }
+        ]
+
+        with patch("{{ project_name }}.views.selectors.product_list", return_value=products):
+            response = self.client.get(reverse("pricing"))
+
+        self.assertContains(response, "Starter")
+        self.assertContains(response, "For smaller teams")
+        self.assertContains(response, "19")
+        self.assertContains(response, "EUR")
+        self.assertContains(response, "Analytics")
+
+    def test_pricing_page_renders_empty_state_without_products(self):
+        with patch("{{ project_name }}.views.selectors.product_list", return_value=[]):
+            response = self.client.get(reverse("pricing"))
+
+        self.assertContains(response, "Pricing details coming soon")
+        self.assertContains(response, "No public plans are configured yet.")

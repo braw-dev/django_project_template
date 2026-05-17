@@ -153,11 +153,13 @@ class PolarBillingProvider(BillingProvider):
             logger.warning("Billing webhook missing team identifier")
             return None
 
+        # fmt: off
         try:
             return TeamModel.objects.get(id=team_id)
         except (TeamModel.DoesNotExist, ValueError):
             logger.error("Billing webhook referenced unknown team", extra={"team_id": team_id})
             return None
+        # fmt: on
 
     def _sync_customer(
         self,

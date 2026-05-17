@@ -147,6 +147,20 @@ portal_url = billing_provider.get_customer_portal_url(
 )
 ```
 
+### Pricing page helper
+
+The public pricing page uses `{{ project_name }}.selectors.product_list()` as a thin mapping layer from provider products to template cards.
+
+That helper is the intended override point for generated projects when you want to:
+
+- change plan ordering
+- hide internal products
+- tune marketing copy per plan
+- choose which product benefits to surface publicly
+- replace the default price display in task-specific ways
+
+It is intentionally smaller than a full pricing abstraction.
+
 ## Webhooks
 
 The template exposes a Polar webhook endpoint at:

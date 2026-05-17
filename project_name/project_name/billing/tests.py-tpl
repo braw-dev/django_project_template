@@ -114,8 +114,9 @@ class TestPolarBillingProvider:
         mock_client.__enter__.return_value = mock_polar
         mock_client.__exit__.return_value = False
 
-        with patch.object(provider, "_get_client", return_value=mock_client), patch.object(
-            provider, "_require_organization_id", return_value="org_123"
+        with (
+            patch.object(provider, "_get_client", return_value=mock_client),
+            patch.object(provider, "_require_organization_id", return_value="org_123"),
         ):
             products = provider.get_products(use_cache=False)
 

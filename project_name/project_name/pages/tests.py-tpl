@@ -28,9 +28,7 @@ class PageMarkdownSanitizationTestCase(TestCase):
         self.assertNotIn("javascript:alert", content)
 
     def test_markdown_template_filter_sanitizes_rendered_html(self):
-        rendered = Template(
-            "{" + "% load markdown_tags %}" + "{" + "{ content|markdown }}"
-        ).render(
+        rendered = Template("{" + "% load markdown_tags %}" + "{" + "{ content|markdown }}").render(
             Context(
                 {
                     "content": (

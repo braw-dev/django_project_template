@@ -1,3 +1,9 @@
+from decimal import Decimal
+from typing import Any
+
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
+
 from {{ project_name }}.users import models as user_models
 
 
@@ -14,62 +20,147 @@ def user_has_permission(*, user: user_models.User, permission: str) -> bool:
     return user.has_perm(permission)
 
 
-def product_list() -> list[dict]:
-    """Return a list of products from the configured billing provider.
+def product_list() -> list[dict[str, Any]]:
+    """Return provider-backed pricing plans for the public pricing page.
 
-    Returns:
-        List of product dictionaries with name, price, features, etc.
-
-    Note:
-        This function fetches products from the configured billing provider API.
-        Override this function to add project-specific formatting,
-        feature mapping, or fallback to hardcoded products.
+    This is intentionally a thin mapping layer between provider product data and
+    the pricing template. Generated projects can replace or extend this helper
+    without changing the billing provider integration itself.
     """
     from {{ project_name }}.billing import services
 
     try:
-        billing_service = services.get_billing_service()
-        products = billing_service.get_products(use_cache=True)
-
-        # Transform Polar products to template format
-        # Override this function to customize the format
-        return [
-            {
-                "id": product.get("id"),
-                "name": product.get("name", "Unknown"),
-                "price": _format_price(product),
-                "features": product.get("benefits", []),
-                "cta": "Get Started",
-                "popular": False,
-            }
-            for product in products
-        ]
-
+        billing_provider = services.get_billing_provider()
+        products = billing_provider.get_products(use_cache=True)
+        plans = [_map_product_to_pricing_plan(product) for product in products]
+        return sorted(plans, key=_pricing_sort_key)
     except Exception:
-        # Fallback to empty list if Polar API unavailable
-        # Override this function to provide fallback products
         return []
 
 
-def _format_price(product: dict) -> str:
-    """Format product price for display.
+def _map_product_to_pricing_plan(product: dict[str, Any]) -> dict[str, Any]:
+    primary_price = _get_primary_price(product)
+    amount_minor = _get_price_amount_minor(primary_price)
+    currency = _get_price_currency(primary_price)
+    interval = product.get("recurring_interval") or ""
+    interval_count = product.get("recurring_interval_count") or 1
 
-    Args:
-        product: Product dictionary from Polar
+    has_numeric_price = amount_minor is not None and currency != ""
+    return {
+        "id": product.get("id"),
+        "name": product.get("name") or _("Unnamed plan"),
+        "description": product.get("description") or _("Details available during checkout."),
+        "features": _extract_feature_list(product),
+        "price_amount_minor": amount_minor,
+        "price_currency": currency,
+        "price_display": _format_amount_minor(amount_minor) if has_numeric_price else "",
+        "price_label": _get_price_label(primary_price),
+        "has_numeric_price": has_numeric_price,
+        "billing_interval": interval,
+        "billing_interval_count": interval_count,
+        "billing_interval_display": _format_billing_interval(interval, interval_count),
+        "is_recurring": bool(product.get("is_recurring", False)),
+    }
 
-    Returns:
-        Formatted price string
-    """
-    # Override this function to customize price formatting
-    prices = product.get("prices", [])
-    if not prices:
-        return "Custom"
 
-    # Get first recurring price
+def _get_primary_price(product: dict[str, Any]) -> dict[str, Any] | None:
+    prices = product.get("prices")
+    if not isinstance(prices, list):
+        return None
+
+    for amount_type in ["fixed", "free", "custom"]:
+        for price in prices:
+            if not isinstance(price, dict):
+                continue
+            if price.get("is_archived"):
+                continue
+            if price.get("amount_type") == amount_type:
+                return price
+
     for price in prices:
-        if price.get("type") == "recurring":
-            amount = price.get("amount", 0) / 100  # Convert cents to dollars
-            interval = price.get("recurring_interval", "month")
-            return f"${amount:.0f}/{interval}"
+        if isinstance(price, dict) and not price.get("is_archived"):
+            return price
+    return None
 
-    return "Custom"
+
+def _get_price_amount_minor(price: dict[str, Any] | None) -> int | None:
+    if not isinstance(price, dict):
+        return None
+
+    amount = price.get("price_amount")
+    if isinstance(amount, int):
+        return amount
+    return None
+
+
+def _get_price_currency(price: dict[str, Any] | None) -> str:
+    if not isinstance(price, dict):
+        return ""
+
+    currency = price.get("price_currency")
+    if isinstance(currency, str):
+        return currency.upper()
+    return ""
+
+
+def _get_price_label(price: dict[str, Any] | None):
+    if not isinstance(price, dict):
+        return _("Contact sales")
+
+    amount_type = price.get("amount_type")
+    if amount_type == "free":
+        return _("Free")
+    if amount_type == "custom":
+        return _("Custom")
+    return _("Contact sales")
+
+
+def _format_amount_minor(amount_minor: int | None) -> str:
+    if amount_minor is None:
+        return ""
+
+    amount_major = Decimal(amount_minor) / Decimal("100")
+    if amount_major == amount_major.to_integral():
+        return str(amount_major.quantize(Decimal("1")))
+    return str(amount_major.quantize(Decimal("0.01")))
+
+
+def _format_billing_interval(interval: str, count: int):
+    if interval == "day":
+        if count == 1:
+            return _("day")
+        return ngettext("%(count)s day", "%(count)s days", count) % {"count": count}
+    if interval == "week":
+        if count == 1:
+            return _("week")
+        return ngettext("%(count)s week", "%(count)s weeks", count) % {"count": count}
+    if interval == "month":
+        if count == 1:
+            return _("month")
+        return ngettext("%(count)s month", "%(count)s months", count) % {"count": count}
+    if interval == "year":
+        if count == 1:
+            return _("year")
+        return ngettext("%(count)s year", "%(count)s years", count) % {"count": count}
+    return interval
+
+
+def _extract_feature_list(product: dict[str, Any]) -> list[str]:
+    benefits = product.get("benefits")
+    if not isinstance(benefits, list):
+        return []
+
+    features: list[str] = []
+    for benefit in benefits:
+        if isinstance(benefit, dict):
+            feature_name = benefit.get("name") or benefit.get("description") or benefit.get("id")
+            if isinstance(feature_name, str) and feature_name:
+                features.append(feature_name)
+    return features
+
+
+def _pricing_sort_key(plan: dict[str, Any]) -> tuple[int, int, str]:
+    amount_minor = plan.get("price_amount_minor")
+    if not isinstance(amount_minor, int):
+        amount_minor = 10**12
+    return (0 if plan.get("has_numeric_price") else 1, amount_minor, str(plan.get("name", "")))
