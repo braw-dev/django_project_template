@@ -90,6 +90,23 @@ Use local selectors such as `has_active_subscription(...)`, `get_active_subscrip
 
 Avoid making live provider API calls during normal feature checks.
 
+## European tax and billing display default
+
+The template takes a conservative default stance for EU-friendly B2B billing:
+
+- public pricing pages show prices **excluding VAT**
+- final tax is calculated at checkout by the billing provider
+- VAT number collection, reverse-charge handling, and tax calculation should stay with the billing provider where possible
+- invoices, receipts, and tax documents should be issued by the billing provider, not from Django admin
+- the default happy path is provider-hosted checkout and provider-managed billing records
+
+### What this means in practice
+
+- if a business buyer is VAT-exempt or reverse charge applies, rely on Polar to handle that during checkout
+- do not try to hardcode country-specific VAT rules into templates or selectors
+- do not scaffold manual invoice issuance or local invoice reconciliation by default
+- if a generated project later needs offline invoicing or purchase-order workflows, add that as an explicit project-level extension rather than changing the default template flow
+
 ## Usage
 
 ### Check if a team has active billing access

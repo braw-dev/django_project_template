@@ -19,6 +19,10 @@
                 Choose the plan that fits your team today and upgrade as your needs grow.
             {% endblocktrans %}
         </p>
+        <p class="mx-auto mt-4 max-w-2xl text-center text-sm leading-6 text-gray-500"
+           data-testid="pricing-tax-note">
+            {% trans "Prices shown exclude VAT. Final tax is calculated at checkout." %}
+        </p>
         {% if products %}
             <div class="mx-auto mt-16 grid max-w-7xl grid-cols-1 gap-6 sm:mt-20 lg:grid-cols-3"
                  data-testid="pricing-table">
@@ -76,6 +80,9 @@
                     </div>
                 {% endfor %}
             </div>
+            <p class="mx-auto mt-8 max-w-2xl text-center text-sm leading-6 text-gray-500">
+                {% trans "Invoices and tax documents are handled by the billing provider during checkout and after payment." %}
+            </p>
         {% else %}
             <div class="mx-auto mt-16 max-w-2xl rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-gray-900/10"
                  data-testid="pricing-empty-state">

@@ -47,6 +47,7 @@ If you plan to use the built-in billing foundation in a new project, do this bef
 - [ ] Trigger a test checkout and confirm a local `Customer`, `Product`, `Subscription`, and `WebhookEvent` are created
 - [ ] Trigger the customer portal flow and confirm it redirects back to your dashboard
 - [ ] Keep billing-gated feature checks on local subscription/entitlement state, not direct provider API calls
+- [ ] Confirm your public pricing copy states that prices exclude VAT and final tax is calculated at checkout (the template default)
 
 For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 
@@ -75,7 +76,7 @@ Marketing pages are intended to live in the same project as the app by default. 
 
 ### Business
 
-- **Payments**: Polar-first billing foundation behind a lightweight provider interface, with hosted checkout/portal flows, local customer/product/subscription/entitlement models, verified idempotent webhooks, a thin provider-backed pricing-page helper, and locale-aware pricing display for EUR/CHF/GBP/USD.
+- **Payments**: Polar-first billing foundation behind a lightweight provider interface, with hosted checkout/portal flows, local customer/product/subscription/entitlement models, verified idempotent webhooks, a thin provider-backed pricing-page helper, locale-aware pricing display for EUR/CHF/GBP/USD, and a default European stance of showing prices excluding VAT with final tax calculated at checkout.
 - **i18n**: Django gettext workflow plus an AI-assisted helper for filling untranslated `.po` entries.
 - **Deployment**: Production-oriented container scaffolding via Dockerfiles and Compose manifests; final deployment wiring is still project-specific.
 
