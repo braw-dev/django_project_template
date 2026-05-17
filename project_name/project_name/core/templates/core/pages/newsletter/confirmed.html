@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block body %}
+    {% if confirmation_error %}
+        <p>{% trans "We could not confirm your newsletter subscription." %}</p>
+        <p>{{ confirmation_error }}</p>
+    {% else %}
+        <p>{% trans "Your newsletter subscription has been confirmed." %}</p>
+    {% endif %}
+{% endblock body %}

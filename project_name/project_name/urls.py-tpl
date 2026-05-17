@@ -23,6 +23,7 @@ from . import views
 newsletter_urls = [
     path("signup/", core_views.newsletter_signup, name="signup"),
     path("success/", core_views.newsletter_success, name="signup_success"),
+    path("confirm/<str:token>/", core_views.newsletter_confirm, name="confirm"),
 ]
 
 protected_account_urls = [

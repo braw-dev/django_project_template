@@ -3,6 +3,11 @@ from django.utils.translation import gettext_lazy as _
 from meta.views import Meta
 
 from .forms import NewsletterSignupForm
+from .newsletter import (
+    confirm_newsletter_signup,
+    create_pending_newsletter_signup,
+    send_newsletter_confirmation_email,
+)
 
 
 def newsletter_signup(request):
@@ -12,14 +17,38 @@ def newsletter_signup(request):
     if request.method == "POST":
         form = NewsletterSignupForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect("newsletter:signup_success")
+            try:
+                signup = create_pending_newsletter_signup(email=form.cleaned_data["email"])
+            except ValueError as exc:
+                form.add_error("email", str(exc))
+            else:
+                send_newsletter_confirmation_email(signup, request)
+                return redirect("newsletter:signup_success")
     return render(request, "core/pages/newsletter/signup.html", {"form": form, "meta": meta})
 
 
 def newsletter_success(request):
-    meta = Meta(title=_("Thank you"))
+    meta = Meta(title=_("Check your email"))
     return render(request, "core/pages/newsletter/success.html", {"meta": meta})
+
+
+def newsletter_confirm(request, token: str):
+    confirmation_error = None
+    try:
+        confirm_newsletter_signup(token=token)
+    except ValueError as exc:
+        confirmation_error = str(exc)
+
+    meta = Meta(
+        title=_("Newsletter subscription confirmed")
+        if confirmation_error is None
+        else _("Newsletter confirmation failed")
+    )
+    return render(
+        request,
+        "core/pages/newsletter/confirmed.html",
+        {"meta": meta, "confirmation_error": confirmation_error},
+    )
 
 
 def coming_soon(request):

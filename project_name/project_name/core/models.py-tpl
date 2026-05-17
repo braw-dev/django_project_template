@@ -70,10 +70,13 @@ def validate_not_in_future(value: Any) -> Any:
 
 
 class NewsletterSignup(models.Model):
-    """NewsletterSignup is used to capture email addresses of users who want to
-    receive the newsletter."""
+    """NewsletterSignup stores newsletter consent and double opt-in state."""
 
     email = models.EmailField(unique=True)
+    consented_at = models.DateTimeField(null=True, blank=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    unsubscribed_at = models.DateTimeField(null=True, blank=True)
+    unsubscribe_reason = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

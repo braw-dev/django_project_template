@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% block body %}
+    <h1>{% trans "Subscribe to our newsletter" %}</h1>
+    <p>
+        {% blocktrans %}
+            We will only send occasional product updates and marketing emails. Please confirm your email address before we add you to the list.
+        {% endblocktrans %}
+    </p>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

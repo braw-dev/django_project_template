@@ -1,19 +1,17 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from . import models
 
-
-class NewsletterSignupForm(forms.ModelForm):
+class NewsletterSignupForm(forms.Form):
     ALREADY_SUBSCRIBED_ERROR = _("You are already subscribed.")
+    CONSENT_REQUIRED_ERROR = _("You must agree to receive newsletter emails.")
+    CONSENT_LABEL = _("I agree to receive occasional product updates and marketing emails.")
 
-    class Meta:
-        model = models.NewsletterSignup
-        fields = ("email",)
-        widgets = {"email": forms.EmailInput(attrs={"data-testid": "newsletter-signup-form"})}
-
-    def validate_unique(self) -> None:
-        try:
-            self.instance.validate_unique()
-        except forms.ValidationError:
-            self.add_error("email", self.ALREADY_SUBSCRIBED_ERROR)
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={"data-testid": "newsletter-signup-form"})
+    )
+    consent = forms.BooleanField(
+        label=CONSENT_LABEL,
+        required=True,
+        error_messages={"required": CONSENT_REQUIRED_ERROR},
+    )

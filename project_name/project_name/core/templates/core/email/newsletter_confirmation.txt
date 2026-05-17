@@ -1,0 +1,5 @@
+{% load i18n %}{% blocktrans %}Please confirm your newsletter subscription by visiting the link below:{% endblocktrans %}
+
+{{ confirmation_url }}
+
+{% blocktrans %}If you did not request this, you can ignore this email.{% endblocktrans %}

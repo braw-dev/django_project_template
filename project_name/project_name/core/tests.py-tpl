@@ -6,14 +6,17 @@ from unittest.mock import patch
 
 import polib
 from django.conf import settings
+from django.core import mail
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import Promise
 from django.utils.html import escape
 
 from . import models as core_models
 from .forms import NewsletterSignupForm
+from .newsletter import get_newsletter_confirmation_token
 
 
 class NewsletterTestCase(TestCase):
@@ -29,36 +32,95 @@ class NewsletterTestCase(TestCase):
         self.assertIsInstance(response.context["form"], NewsletterSignupForm)
 
     def test_newsletter_signup_redirects_on_success(self):
-        response = self.client.post(reverse("newsletter:signup"), {"email": self.email})
+        response = self.client.post(
+            reverse("newsletter:signup"),
+            {"email": self.email, "consent": "on"},
+        )
         self.assertRedirects(response, reverse("newsletter:signup_success"))
 
-    def test_newsletter_signup_creates_signup(self):
-        self.client.post(reverse("newsletter:signup"), {"email": self.email})
-        self.assertTrue(core_models.NewsletterSignup.objects.filter(email=self.email).exists())
+    def test_newsletter_signup_creates_pending_signup_and_sends_confirmation_email(self):
+        self.client.post(reverse("newsletter:signup"), {"email": self.email, "consent": "on"})
 
-    def test_newsletter_signup_does_not_create_duplicate_signup(self):
-        different_email = f"{uuid.uuid4()}@example.com"
-        core_models.NewsletterSignup.objects.create(email=different_email)
-        self.client.post(reverse("newsletter:signup"), {"email": different_email})
-        self.assertEqual(
-            core_models.NewsletterSignup.objects.filter(email=different_email).count(),
-            1,
+        signup = core_models.NewsletterSignup.objects.get(email=self.email)
+        self.assertIsNotNone(signup.consented_at)
+        self.assertIsNone(signup.confirmed_at)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.email])
+        self.assertIn("Confirm your newsletter subscription", mail.outbox[0].subject)
+
+    def test_newsletter_signup_requires_consent(self):
+        response = self.client.post(reverse("newsletter:signup"), {"email": self.email})
+        self.assertContains(response, escape(NewsletterSignupForm.CONSENT_REQUIRED_ERROR))
+        self.assertFalse(core_models.NewsletterSignup.objects.filter(email=self.email).exists())
+
+    def test_newsletter_signup_does_not_create_duplicate_active_signup(self):
+        signup = core_models.NewsletterSignup.objects.create(
+            email=self.email,
+            consented_at=timezone.now(),
+            confirmed_at=timezone.now(),
         )
+        self.client.post(reverse("newsletter:signup"), {"email": signup.email, "consent": "on"})
+        self.assertEqual(core_models.NewsletterSignup.objects.filter(email=signup.email).count(), 1)
+
+    def test_newsletter_signup_shows_info_message_on_duplicate_active_email(self):
+        core_models.NewsletterSignup.objects.create(
+            email=self.email,
+            consented_at=timezone.now(),
+            confirmed_at=timezone.now(),
+        )
+        response = self.client.post(
+            reverse("newsletter:signup"),
+            {"email": self.email, "consent": "on"},
+        )
+        self.assertContains(response, escape(NewsletterSignupForm.ALREADY_SUBSCRIBED_ERROR))
+
+    def test_newsletter_signup_resends_confirmation_for_unconfirmed_signup(self):
+        core_models.NewsletterSignup.objects.create(email=self.email)
+
+        self.client.post(reverse("newsletter:signup"), {"email": self.email, "consent": "on"})
+
+        signup = core_models.NewsletterSignup.objects.get(email=self.email)
+        self.assertIsNotNone(signup.consented_at)
+        self.assertIsNone(signup.confirmed_at)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_newsletter_confirmation_marks_signup_confirmed(self):
+        signup = core_models.NewsletterSignup.objects.create(
+            email=self.email,
+            consented_at=timezone.now(),
+        )
+        token = get_newsletter_confirmation_token(signup)
+
+        response = self.client.get(reverse("newsletter:confirm", kwargs={"token": token}))
+
+        signup.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(signup.confirmed_at)
+        self.assertContains(response, "Your newsletter subscription has been confirmed.")
+
+    def test_newsletter_confirmation_handles_invalid_token(self):
+        response = self.client.get(reverse("newsletter:confirm", kwargs={"token": "invalid"}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "We could not confirm your newsletter subscription.")
 
     def test_newsletter_signup_shows_client_error_on_invalid_email(self):
-        response = self.client.post(reverse("newsletter:signup"), {"email": "invalid-email"})
+        response = self.client.post(
+            reverse("newsletter:signup"),
+            {"email": "invalid-email", "consent": "on"},
+        )
         self.assertContains(response, 'aria-invalid="true"')
-
-    def test_newsletter_signup_shows_info_message_on_duplicate_email(self):
-        email = f"{uuid.uuid4()}@example.com"
-        core_models.NewsletterSignup.objects.create(email=email)
-        response = self.client.post(reverse("newsletter:signup"), {"email": email})
-        self.assertContains(response, escape(NewsletterSignupForm.ALREADY_SUBSCRIBED_ERROR))
 
     def test_newsletter_signup_shown_on_homepage(self):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "core/partials/newsletter/signup.html")
+
+    def test_newsletter_model_tracks_optional_unsubscribe_fields(self):
+        signup = core_models.NewsletterSignup.objects.create(email=self.email)
+
+        self.assertIsNone(signup.unsubscribed_at)
+        self.assertEqual(signup.unsubscribe_reason, "")
 
 
 class LanguageSwitchingTestCase(TestCase):
@@ -107,6 +169,7 @@ class InternationalizationTestCase(TestCase):
             template_dir / "pages" / "homepage.html",
             template_dir / "pages" / "newsletter" / "signup.html",
             template_dir / "pages" / "newsletter" / "success.html",
+            template_dir / "pages" / "newsletter" / "confirmed.html",
             template_dir / "pages" / "pricing.html",
             template_dir / "partials" / "footer.html",
             template_dir / "partials" / "newsletter" / "signup.html",
