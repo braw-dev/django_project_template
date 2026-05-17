@@ -90,13 +90,25 @@ REPLACE_ME: Add a security contact address and your reporting expectations.
 
 > REPLACE_ME: Keep this list current for customers and procurement reviews.
 
-| Service | Purpose | Region | Notes |
-| --- | --- | --- | --- |
-| REPLACE_ME | REPLACE_ME | REPLACE_ME | REPLACE_ME |
+## Subprocessors
+
+| Service | Purpose | Region | Customer data involved | Optional replacement |
+| --- | --- | --- | --- | --- |
+| REPLACE_ME | REPLACE_ME | REPLACE_ME | REPLACE_ME | REPLACE_ME |
+
+## Hosting inventory
+
+| Component | Provider | Region | What it stores or processes | Notes |
+| --- | --- | --- | --- | --- |
+| Application hosting | REPLACE_ME | REPLACE_ME | REPLACE_ME | REPLACE_ME |
+| Database hosting | REPLACE_ME | REPLACE_ME | REPLACE_ME | REPLACE_ME |
+| Cache / queue | REPLACE_ME | REPLACE_ME | REPLACE_ME | REPLACE_ME |
+| CDN / edge | REPLACE_ME | REPLACE_ME | REPLACE_ME | REPLACE_ME |
+| File / object storage | REPLACE_ME | REPLACE_ME | REPLACE_ME | REPLACE_ME |
 
 ## Updates
 
-REPLACE_ME: Explain how customers are informed when subprocessors change.
+REPLACE_ME: Explain how customers are informed when subprocessors or hosting locations change.
 """,
     },
 ]

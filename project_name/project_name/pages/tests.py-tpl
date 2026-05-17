@@ -23,6 +23,14 @@ class SeededTrustPagesTestCase(TestCase):
                 self.assertContains(response, title)
                 self.assertContains(response, "REPLACE_ME")
 
+    def test_subprocessors_page_includes_hosting_inventory_starter_sections(self):
+        response = self.client.get(reverse("pages:page_detail", kwargs={"slug": "subprocessors"}))
+
+        self.assertContains(response, "Subprocessors")
+        self.assertContains(response, "Hosting inventory")
+        self.assertContains(response, "Customer data involved")
+        self.assertContains(response, "Application hosting")
+
     def test_homepage_footer_links_to_seeded_trust_pages(self):
         response = self.client.get("/")
 
