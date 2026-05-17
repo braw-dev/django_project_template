@@ -111,23 +111,6 @@
         - search: "DB_DEFAULT_URL="
           replacement: "DB_DEFAULT_URL=sqlite:///db.sqlite3"
 
-    - name: Run some formatting checks
-      block:
-        - name: ty typecheck
-          ansible.builtin.command:
-            cmd: just typecheck
-            chdir: "{{ project_dir }}"
-
-        - name: Lint
-          ansible.builtin.command:
-            cmd: uv run ruff check
-            chdir: "{{ project_dir }}"
-
-        - name: Format
-          ansible.builtin.command:
-            cmd: uv run ruff format --check
-            chdir: "{{ project_dir }}"
-
     - name: Install dependencies
       when: install_project_dependencies
       block:
@@ -144,6 +127,23 @@
         - name: Install project dependencies
           ansible.builtin.command:
             cmd: just install-dev
+            chdir: "{{ project_dir }}"
+
+    - name: Run some formatting checks
+      block:
+        - name: ty typecheck
+          ansible.builtin.command:
+            cmd: just typecheck
+            chdir: "{{ project_dir }}"
+
+        - name: Lint
+          ansible.builtin.command:
+            cmd: uv run ruff check
+            chdir: "{{ project_dir }}"
+
+        - name: Format
+          ansible.builtin.command:
+            cmd: uv run ruff format --check
             chdir: "{{ project_dir }}"
 
     - name: Setup project
