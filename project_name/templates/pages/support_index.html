@@ -26,10 +26,21 @@
                 <button type="submit" class="btn btn-primary">{% trans "Search" %}</button>
             </div>
         </form>
-        {% if faqs %}
-            {% include "partials/faq-list.html" with faqs=faqs %}
-        {% else
-            %}
+        {% if faq_categories %}
+            <div class="space-y-10">
+                {% for category in faq_categories %}
+                    <section>
+                        <h2 class="text-2xl font-semibold text-base-content">{{ category.title }}</h2>
+                        <dl class="mt-5 space-y-5">
+                            {% for faq in category.faqs %}
+                                {% include
+                                "partials/faq-item.html" with faq=faq %}
+                            {% endfor %}
+                        </dl>
+                    </section>
+                {% endfor %}
+            </div>
+        {% else %}
             <div class="rounded-2xl border border-base-300 bg-base-100 p-6">
                 <h2 class="text-xl font-semibold text-base-content">{% trans "No matching help articles found" %}</h2>
                 <p class="mt-3 text-base text-base-content/70">{% trans "Try a different search term or contact us directly." %}</p>

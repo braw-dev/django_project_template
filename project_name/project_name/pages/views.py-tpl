@@ -1,8 +1,8 @@
-from django.db import models
 from django.http import Http404
 from django.utils.translation import gettext as _
 from django.views.generic import DetailView, TemplateView
 
+from .faq import get_categorized_faqs
 from .markdown_utils import render_markdown_html
 from .models import Page
 
@@ -13,23 +13,8 @@ class SupportIndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         search_query = self.request.GET.get("q", "").strip()
-        faq_pages = Page.objects.published().filter(slug__startswith="faq-")
-
-        if search_query:
-            faq_pages = faq_pages.filter(
-                models.Q(translations__title__icontains=search_query)
-                | models.Q(translations__content__icontains=search_query)
-            ).distinct()
-
         context["search_query"] = search_query
-        context["faqs"] = [
-            {
-                "question": page.title,
-                "rendered_answer": render_markdown_html(page.content),
-                "slug": page.slug,
-            }
-            for page in faq_pages.order_by("slug")
-        ]
+        context["faq_categories"] = get_categorized_faqs(search_query=search_query)
         return context
 
 

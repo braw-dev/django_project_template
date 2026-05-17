@@ -43,4 +43,5 @@
     </div>
     <a href="{% url 'account_login' %}">{% trans "Login" %}</a>
     <a href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a>
+    {% include "partials/featured_faqs.html" with faqs=featured_faqs %}
 {% endblock body %}

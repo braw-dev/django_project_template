@@ -1,0 +1,21 @@
+{% load i18n %}
+{% if faqs %}
+    <section class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+        <div class="mx-auto max-w-4xl text-center">
+            <h2 class="text-3xl font-bold tracking-tight text-base-content">{% trans "Featured questions" %}</h2>
+            <p class="mt-4 text-lg text-base-content/70">
+                {% trans "Quick answers to the trust, support, and reliability questions customers usually ask first." %}
+            </p>
+        </div>
+        <div class="mt-10">
+            <dl class="space-y-5">
+                {% for faq in faqs %}
+                    {% include "partials/faq-item.html" with faq=faq %}
+                {% endfor %}
+            </dl>
+        </div>
+        <div class="mt-8 text-center">
+            <a href="{% url 'pages:support_index' %}" class="btn btn-outline">{% trans "Browse all FAQs" %}</a>
+        </div>
+    </section>
+{% endif %}

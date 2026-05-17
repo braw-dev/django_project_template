@@ -2,10 +2,15 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from . import selectors
+from .pages.faq import get_featured_faqs
 
 
 def homepage(request):
-    return render(request, "core/pages/homepage.html")
+    return render(
+        request,
+        "core/pages/homepage.html",
+        {"featured_faqs": get_featured_faqs()},
+    )
 
 
 def register(request):
