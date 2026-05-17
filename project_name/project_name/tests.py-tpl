@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from . import selectors
+from .billing.formatting import format_currency_amount
 
 User = get_user_model()
 
@@ -86,6 +87,24 @@ class AuthTestCase(TestCase):
 
 
 class PricingHelperTestCase(TestCase):
+    def test_format_currency_amount_supports_supported_currencies(self):
+        self.assertEqual(
+            format_currency_amount(amount_minor=1900, currency="EUR", locale="de"),
+            "19,00\xa0€",
+        )
+        self.assertEqual(
+            format_currency_amount(amount_minor=1900, currency="CHF", locale="de"),
+            "19,00\xa0CHF",
+        )
+        self.assertEqual(
+            format_currency_amount(amount_minor=1900, currency="GBP", locale="en"),
+            "£19.00",
+        )
+        self.assertEqual(
+            format_currency_amount(amount_minor=1900, currency="USD", locale="en"),
+            "$19.00",
+        )
+
     def test_product_list_maps_provider_products_for_pricing_page(self):
         billing_provider = MagicMock()
         billing_provider.get_products.return_value = [
@@ -115,12 +134,12 @@ class PricingHelperTestCase(TestCase):
             "{{ project_name }}.billing.services.get_billing_provider",
             return_value=billing_provider,
         ):
-            products = selectors.product_list()
+            products = selectors.product_list(locale="de")
 
         self.assertEqual(len(products), 1)
         self.assertEqual(products[0]["name"], "Starter")
         self.assertEqual(products[0]["description"], "For smaller teams")
-        self.assertEqual(products[0]["price_display"], "19")
+        self.assertEqual(products[0]["price_display"], "19,00\xa0€")
         self.assertEqual(products[0]["price_currency"], "EUR")
         self.assertEqual(str(products[0]["billing_interval_display"]), "month")
         self.assertEqual(products[0]["features"], ["Analytics", "Priority support"])
@@ -131,7 +150,7 @@ class PricingHelperTestCase(TestCase):
                 "id": "prod_starter",
                 "name": "Starter",
                 "description": "For smaller teams",
-                "price_display": "19",
+                "price_display": "19,00\xa0€",
                 "price_currency": "EUR",
                 "price_label": "",
                 "has_numeric_price": True,
@@ -145,8 +164,8 @@ class PricingHelperTestCase(TestCase):
 
         self.assertContains(response, "Starter")
         self.assertContains(response, "For smaller teams")
-        self.assertContains(response, "19")
-        self.assertContains(response, "EUR")
+        self.assertContains(response, "19,00")
+        self.assertContains(response, "€")
         self.assertContains(response, "Analytics")
 
     def test_pricing_page_renders_empty_state_without_products(self):

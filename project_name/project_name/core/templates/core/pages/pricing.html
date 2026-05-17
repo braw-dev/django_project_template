@@ -32,7 +32,6 @@
                                   data-testid="plan-price">
                                 {% if product.has_numeric_price %}
                                     {{ product.price_display }}
-                                    <span class="text-base font-medium text-gray-500">{{ product.price_currency }}</span>
                                 {% else %}
                                     {{ product.price_label }}
                                 {% endif %}

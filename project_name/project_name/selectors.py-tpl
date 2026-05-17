@@ -1,9 +1,9 @@
-from decimal import Decimal
 from typing import Any
 
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
 
+from {{ project_name }}.billing.formatting import format_currency_amount
 from {{ project_name }}.users import models as user_models
 
 
@@ -20,7 +20,7 @@ def user_has_permission(*, user: user_models.User, permission: str) -> bool:
     return user.has_perm(permission)
 
 
-def product_list() -> list[dict[str, Any]]:
+def product_list(*, locale: str | None = None) -> list[dict[str, Any]]:
     """Return provider-backed pricing plans for the public pricing page.
 
     This is intentionally a thin mapping layer between provider product data and
@@ -32,13 +32,17 @@ def product_list() -> list[dict[str, Any]]:
     try:
         billing_provider = services.get_billing_provider()
         products = billing_provider.get_products(use_cache=True)
-        plans = [_map_product_to_pricing_plan(product) for product in products]
+        plans = [_map_product_to_pricing_plan(product, locale=locale) for product in products]
         return sorted(plans, key=_pricing_sort_key)
     except Exception:
         return []
 
 
-def _map_product_to_pricing_plan(product: dict[str, Any]) -> dict[str, Any]:
+def _map_product_to_pricing_plan(
+    product: dict[str, Any],
+    *,
+    locale: str | None = None,
+) -> dict[str, Any]:
     primary_price = _get_primary_price(product)
     amount_minor = _get_price_amount_minor(primary_price)
     currency = _get_price_currency(primary_price)
@@ -53,7 +57,15 @@ def _map_product_to_pricing_plan(product: dict[str, Any]) -> dict[str, Any]:
         "features": _extract_feature_list(product),
         "price_amount_minor": amount_minor,
         "price_currency": currency,
-        "price_display": _format_amount_minor(amount_minor) if has_numeric_price else "",
+        "price_display": (
+            format_currency_amount(
+                amount_minor=amount_minor,
+                currency=currency,
+                locale=locale,
+            )
+            if has_numeric_price
+            else ""
+        ),
         "price_label": _get_price_label(primary_price),
         "has_numeric_price": has_numeric_price,
         "billing_interval": interval,
@@ -113,16 +125,6 @@ def _get_price_label(price: dict[str, Any] | None):
     if amount_type == "custom":
         return _("Custom")
     return _("Contact sales")
-
-
-def _format_amount_minor(amount_minor: int | None) -> str:
-    if amount_minor is None:
-        return ""
-
-    amount_major = Decimal(amount_minor) / Decimal("100")
-    if amount_major == amount_major.to_integral():
-        return str(amount_major.quantize(Decimal("1")))
-    return str(amount_major.quantize(Decimal("0.01")))
 
 
 def _format_billing_interval(interval: str, count: int):

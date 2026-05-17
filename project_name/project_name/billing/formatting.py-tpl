@@ -1,0 +1,46 @@
+from decimal import Decimal
+
+from babel.core import UnknownLocaleError
+from babel.numbers import format_currency as babel_format_currency
+
+SUPPORTED_CURRENCIES = {"EUR", "CHF", "GBP", "USD"}
+DEFAULT_CURRENCY_LOCALE = "de"
+
+
+def format_currency_amount(
+    *,
+    amount_minor: int | None,
+    currency: str,
+    locale: str | None = None,
+) -> str:
+    """Format a minor-unit amount for display using the active locale."""
+    if amount_minor is None:
+        return ""
+
+    normalized_currency = currency.upper()
+    normalized_locale = _normalize_locale(locale)
+    amount_major = Decimal(amount_minor) / Decimal("100")
+
+    if normalized_currency not in SUPPORTED_CURRENCIES:
+        return f"{amount_major.quantize(Decimal('0.01'))} {normalized_currency}"
+
+    # fmt: off
+    try:
+        return babel_format_currency(
+            amount_major,
+            normalized_currency,
+            locale=normalized_locale,
+        )
+    except (UnknownLocaleError, ValueError):
+        return babel_format_currency(
+            amount_major,
+            normalized_currency,
+            locale=DEFAULT_CURRENCY_LOCALE,
+        )
+    # fmt: on
+
+
+def _normalize_locale(locale: str | None) -> str:
+    if not locale:
+        return DEFAULT_CURRENCY_LOCALE
+    return locale.replace("-", "_")

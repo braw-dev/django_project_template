@@ -1433,6 +1433,7 @@ name = "project-name"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "babel" },
     { name = "celery", extra = ["redis"] },
     { name = "django", extra = ["argon2"] },
     { name = "django-allauth", extra = ["mfa", "socialaccount"] },
@@ -1493,6 +1494,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "babel" },
     { name = "celery", extras = ["redis"], specifier = ">=5.6.0" },
     { name = "django", extras = ["argon2"] },
     { name = "django-allauth", extras = ["mfa", "socialaccount"] },

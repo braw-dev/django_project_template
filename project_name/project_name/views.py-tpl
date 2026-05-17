@@ -20,5 +20,5 @@ def dashboard(request):
 
 
 def pricing(request):
-    products = selectors.product_list()
+    products = selectors.product_list(locale=getattr(request, "LANGUAGE_CODE", None))
     return render(request, "core/pages/pricing.html", {"products": products})

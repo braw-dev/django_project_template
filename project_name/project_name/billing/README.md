@@ -151,6 +151,8 @@ portal_url = billing_provider.get_customer_portal_url(
 
 The public pricing page uses `{{ project_name }}.selectors.product_list()` as a thin mapping layer from provider products to template cards.
 
+It includes a small locale-aware currency formatter for EUR, CHF, GBP, and USD using the active request locale.
+
 That helper is the intended override point for generated projects when you want to:
 
 - change plan ordering

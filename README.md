@@ -75,7 +75,7 @@ Marketing pages are intended to live in the same project as the app by default. 
 
 ### Business
 
-- **Payments**: Polar-first billing foundation behind a lightweight provider interface, with hosted checkout/portal flows, local customer/product/subscription/entitlement models, verified idempotent webhooks, and a thin provider-backed pricing-page helper.
+- **Payments**: Polar-first billing foundation behind a lightweight provider interface, with hosted checkout/portal flows, local customer/product/subscription/entitlement models, verified idempotent webhooks, a thin provider-backed pricing-page helper, and locale-aware pricing display for EUR/CHF/GBP/USD.
 - **i18n**: Django gettext workflow plus an AI-assisted helper for filling untranslated `.po` entries.
 - **Deployment**: Production-oriented container scaffolding via Dockerfiles and Compose manifests; final deployment wiring is still project-specific.
 
