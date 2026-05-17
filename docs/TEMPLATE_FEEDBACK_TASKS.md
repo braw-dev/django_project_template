@@ -16,20 +16,6 @@ Perspectives - take these into account when making changes:
 2. A technical expert performing a Technical Due Diligence for a VC/investor or potential acquirer;
 3. A customer of one of the micro-SaaS products built with this template focused on data privacy, security, performance, end-user experience and customer satisfaction.
 
-## P0 — fix first
-
-### 6. Finish the Polar billing foundation
-
-**Problem:** Billing is structurally present, but parts of the integration are still stubs or SDK-shape placeholders.
-
-**Potential fix:** Tighten the Polar service and webhook flow against the current SDK, remove speculative comments, and provide one boring happy path for checkout, subscription sync, and entitlement checks.
-
-### 7. Add webhook idempotency for billing events
-
-**Problem:** Subscription webhook handlers do not appear to persist processed event IDs or otherwise guard against duplicate delivery.
-
-**Potential fix:** Store webhook event IDs in a simple model and short-circuit duplicates. Keep it local and explicit rather than relying on undocumented provider behaviour.
-
 ## P1 — important for EU B2B readiness
 
 ### 8. Replace hardcoded pricing page content with real provider-backed data
