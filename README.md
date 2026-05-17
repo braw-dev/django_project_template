@@ -23,12 +23,14 @@ uv run django-admin startproject \
 
 - [ ] Init a new git repository `git init .`
 - [ ] Install dev dependencies & lefthook git hooks `just install-dev`
-- [ ] Configure environment variables by copying `.env.dist` to `.env` and customizing
+- [ ] Configure environment variables by copying `{{ project_name }}/.env.dist` to `{{ project_name }}/.env` and customizing
 - [ ] Search for `REPLACE_ME:` and update accordingly.
 - [ ] Delete `specs` directory and `.specify/memory`.
 - [ ] Establish the [SpecKit project principals](https://github.com/github/spec-kit?tab=readme-ov-file#2-establish-project-principles) in AI agent of choice (Cursor and Claude support included).
 - [ ] Run `just ai-link` to link `ai/` directory to claude and cursor.
 - [ ] Review `settings.py` settings
+- [ ] Run database migrations `just migrate`
+- [ ] Create a superuser with `just createsuperuser` if you want admin access straight away
 - [ ] Collect staticfiles `just collectstatic`
 - [ ] Run backend tests: `just test-unit`
 - [ ] Run Django browser tests if needed: `just test-browser`
@@ -242,9 +244,20 @@ This repo does not generate the host-level Caddy, Podman unit, or PostgreSQL set
 
 ### Installation
 
-1. `just install-dev` (Creates venv, installs dependencies, sets up hooks)
-2. `cp .env.dist .env` (Setup environment)
-3. `just runserver` (Start dev server)
+1. `git init .` from the generated project root if you have not already done so
+2. `just install-dev` (Creates the Python virtualenv, installs Python and frontend dependencies, and sets up hooks)
+3. `cp {{ project_name }}/.env.dist {{ project_name }}/.env`
+4. For a zero-friction local setup, edit `{{ project_name }}/.env` and change these defaults:
+   - `DEBUG=True`
+   - `ENVIRONMENT=development`
+   - `SEND_EMAILS=False`
+   - `LOG_LEVEL=INFO`
+   - `DB_DEFAULT_URL=sqlite:///db.sqlite3`
+   - `CACHE_DEFAULT_URL=locmemcache://`
+5. `just migrate`
+6. `just runserver` (Start dev server)
+
+Most commands are run from the generated project root through `just`, but the Django app, `manage.py`, and `.env` live under `{{ project_name }}/`.
 
 ### Workflow
 
@@ -255,6 +268,24 @@ This repo does not generate the host-level Caddy, Podman unit, or PostgreSQL set
   - Use `just test-browser` for Django tests marked `browser`.
   - Use `just playwright-install` then `just test-e2e` for frontend Playwright tests.
 - **Debugging**: `django-debug-toolbar` is included outside test runs.
+- **Expected first-run warning**: `manage.py check` may warn that `frontend/{{ project_name }}/dist` does not exist yet. That is expected before your first frontend build and does not block local development with the Vite dev server.
+
+## Template release review checklist
+
+Before calling a template change "done", sanity-check it against a freshly generated project.
+
+Recommended review loop:
+
+1. generate a fresh project using the README command
+2. confirm the README paths still match the generated layout, especially `{{ project_name }}/.env.dist`, `manage.py`, and root-level `just` commands
+3. initialize git in the generated project root and run `just install-dev`
+4. copy `{{ project_name }}/.env.dist` to `{{ project_name }}/.env` and switch to the documented local SQLite + locmem settings
+5. run `just manage check`, `just migrate`, and `just test-unit`
+6. if helper commands are documented, verify them in the generated project rather than only in the template repo
+7. spot-check seeded pages, support/help links, pricing page behaviour, and footer links in the generated project
+8. update the README if any manual step, path, or prerequisite changed
+
+Treat the generated project as the source of truth. If the README and generated output disagree, fix the docs or the template before release.
 
 ## Internationalisation workflow
 
