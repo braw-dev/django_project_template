@@ -1,0 +1,48 @@
+{% extends "pages/base_page.html" %}
+{% load i18n %}
+{% block head_title %}
+    {%
+    trans "Support" %}
+{% endblock head_title %}
+{% block page_content %}
+    <section class="mx-auto max-w-4xl px-4 py-12">
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold tracking-tight text-base-content">{% trans "Support" %}</h1>
+            <p class="mt-4 text-lg text-base-content/70">
+                {% trans "Search the help articles below or contact us directly if
+                you need more help." %}
+            </p>
+        </header>
+        <form method="get" class="mb-10" role="search">
+            <label for="support-search"
+                   class="mb-2 block text-sm font-medium text-base-content">{% trans "Search help" %}</label>
+            <div class="flex gap-3">
+                <input id="support-search"
+                       type="search"
+                       name="q"
+                       value="{{ search_query }}"
+                       class="input input-bordered w-full"
+                       placeholder='{% trans "Billing, login, security…" %}' />
+                <button type="submit" class="btn btn-primary">{% trans "Search" %}</button>
+            </div>
+        </form>
+        {% if faqs %}
+            {% include "partials/faq-list.html" with faqs=faqs %}
+        {% else
+            %}
+            <div class="rounded-2xl border border-base-300 bg-base-100 p-6">
+                <h2 class="text-xl font-semibold text-base-content">{% trans "No matching help articles found" %}</h2>
+                <p class="mt-3 text-base text-base-content/70">{% trans "Try a different search term or contact us directly." %}</p>
+            </div>
+        {% endif %}
+        <div class="mt-10 rounded-2xl border border-base-300 bg-base-100 p-6">
+            <h2 class="text-xl font-semibold text-base-content">{% trans "Still need help?" %}</h2>
+            <p class="mt-3 text-base text-base-content/70">
+                {% trans "If the help articles do not answer your question, use the
+                contact page for direct support." %}
+            </p>
+            <a href="{% url 'pages:page_detail' slug='contact' %}"
+               class="btn btn-outline mt-4">{% trans "Contact support" %}</a>
+        </div>
+    </section>
+{% endblock page_content %}

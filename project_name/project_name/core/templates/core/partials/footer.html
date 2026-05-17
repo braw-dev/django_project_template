@@ -26,16 +26,16 @@
                         <h3 class="text-sm font-semibold leading-6 text-white">{% trans "Support" %}</h3>
                         <ul role="list" class="mt-6 space-y-4">
                             <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Pricing" %}</a>
+                                <a href="{% url 'pricing' %}"
+                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Pricing" %}</a>
                             </li>
                             <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Documentation" %}</a>
+                                <a href="{% url 'pages:support_index' %}"
+                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Help center" %}</a>
                             </li>
                             <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Guides" %}</a>
-                            </li>
-                            <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "API status" %}</a>
+                                <a href="{% url 'pages:page_detail' slug='contact' %}"
+                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Contact" %}</a>
                             </li>
                         </ul>
                     </div>

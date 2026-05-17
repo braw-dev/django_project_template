@@ -12,6 +12,10 @@ class SeededTrustPagesTestCase(TestCase):
             "terms": "Terms",
             "security": "Security",
             "subprocessors": "Subprocessors",
+            "contact": "Contact",
+            "faq-account-access": "How do I regain access to my account?",
+            "faq-billing": "How does billing and cancellation work?",
+            "faq-security": "How is customer data protected?",
         }
 
         for slug, title in expected_pages.items():
@@ -41,6 +45,29 @@ class SeededTrustPagesTestCase(TestCase):
             response,
             reverse("pages:page_detail", kwargs={"slug": "subprocessors"}),
         )
+
+    def test_homepage_footer_links_to_support_pages(self):
+        response = self.client.get("/")
+
+        self.assertContains(response, reverse("pages:support_index"))
+        self.assertContains(response, reverse("pages:page_detail", kwargs={"slug": "contact"}))
+
+
+class SupportIndexTestCase(TestCase):
+    def test_support_index_lists_seeded_faqs_and_contact_link(self):
+        response = self.client.get(reverse("pages:support_index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Support")
+        self.assertContains(response, "How do I regain access to my account?")
+        self.assertContains(response, "How does billing and cancellation work?")
+        self.assertContains(response, reverse("pages:page_detail", kwargs={"slug": "contact"}))
+
+    def test_support_index_filters_faqs_by_search_query(self):
+        response = self.client.get(reverse("pages:support_index"), {"q": "billing"})
+
+        self.assertContains(response, "How does billing and cancellation work?")
+        self.assertNotContains(response, "How do I regain access to my account?")
 
 
 class PageMarkdownSanitizationTestCase(TestCase):

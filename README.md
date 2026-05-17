@@ -49,7 +49,7 @@ If you plan to use the built-in billing foundation in a new project, do this bef
 - [ ] Keep billing-gated feature checks on local subscription/entitlement state, not direct provider API calls
 - [ ] Confirm your public pricing copy states that prices exclude VAT and final tax is calculated at checkout (the template default)
 - [ ] If using the newsletter, verify the double opt-in email flow, consent wording, and resend cooldown before sending marketing emails
-- [ ] Review and replace the seeded Privacy, Terms, Security, and Subprocessors placeholder pages before launch
+- [ ] Review and replace the seeded Privacy, Terms, Security, Subprocessors, Contact, and FAQ placeholder pages before launch
 - [ ] Fill in the Subprocessors page with your real providers, hosting regions, data locations, and customer-notification process before customer review or launch
 - [ ] Review the built-in privacy export/delete hooks and decide what billing, finance, and statutory-retention data must be kept or deleted for your product before using delete workflows in production
 
@@ -72,6 +72,7 @@ For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 ### Marketing
 
 - **Content**: Markdown `Page` model for FAQs and landing pages, sanitised with `nh3` at render time.
+- **Support**: Public help-center pattern with a `/support/` index, simple FAQ search, seeded FAQ starter pages, and a seeded contact page.
 - **SEO**: `django-meta` integration.
 - **Legal**: Editable placeholder Privacy, Terms, Security, and Subprocessors pages are seeded via the pages app; the Subprocessors page includes starter tables for subprocessors and hosting inventory, and all of them should be replaced with project-specific content before launch.
 - **Analytics**: Optional Plausible analytics include.
