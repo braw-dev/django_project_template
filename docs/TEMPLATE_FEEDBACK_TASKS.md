@@ -22,11 +22,7 @@ None.
 
 ## P1 — important for EU B2B readiness
 
-### 14. Audit support access and impersonation
-
-**Problem:** `django-hijack` is enabled, but there is no obvious customer-facing audit trail or internal audit log around support access.
-
-**Potential fix:** Log impersonation start/stop events with actor, target, and timestamp. Keep the trail append-only and simple.
+None.
 
 ## P2 — important for product quality and repeatability
 
