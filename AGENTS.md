@@ -62,6 +62,92 @@ To verify that the template generates a valid project:
    - Plain `pytest` is also supported and excludes browser-marked tests by default.
    - Browser/Playwright tests are separate from unit tests.
 
+### Generated-project verification workflow
+
+When changing the template, do not stop after editing template files. Always verify a freshly generated project.
+
+#### Preferred verification order
+
+1. Generate a fresh project from the template
+2. Install the generated project's dependencies
+3. Run generated-project linting
+4. Run generated-project formatting checks
+5. Run generated-project backend tests
+
+Use this exact sequence whenever practical:
+
+```bash
+tmpdir=$(mktemp -d /tmp/django-template-XXXXXX)
+uv run django-admin startproject \
+    --template=. \
+    --extension 'py,yaml,md,template,dist,toml,json,css,js,dev,prod' \
+    --name Justfile \
+    --exclude '.env' \
+    --exclude '.env.local' \
+    --exclude '.ruff_cache' \
+    --exclude '.rumdl_cache' \
+    --exclude '.venv' \
+    --exclude 'dev' \
+    --exclude 'db.sqlite3' \
+    --exclude 'node_modules' \
+    --exclude 'tmp' \
+    TEST_PROJECT_NAME "$tmpdir"
+cp "$tmpdir/TEST_PROJECT_NAME/.env.dist" "$tmpdir/TEST_PROJECT_NAME/.env"
+python3 - <<'PY' "$tmpdir/TEST_PROJECT_NAME/.env"
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+text = path.read_text()
+replacements = {
+    'DEBUG=False': 'DEBUG=True',
+    'ENVIRONMENT=production': 'ENVIRONMENT=development',
+    'SEND_EMAILS=True': 'SEND_EMAILS=False',
+    'LOG_LEVEL=ERROR': 'LOG_LEVEL=DEBUG',
+    'DB_DEFAULT_URL=postgis://{{ project_name }}:{{ project_name }}@localhost:5432/{{ project_name }}?pool=True&server_side_binding=True': 'DB_DEFAULT_URL=sqlite:///db.sqlite3',
+}
+for old, new in replacements.items():
+    text = text.replace(old, new)
+path.write_text(text)
+PY
+cd "$tmpdir"
+git init
+just install-dev
+uv run ruff check
+uv run ruff format --check
+just test-unit
+```
+
+#### Why verify this way
+
+- The template repository itself is not the generated project.
+- `.py-tpl` and template-tag syntax can hide problems that only appear after generation.
+- Ruff and pytest results on the generated project are the source of truth for whether template output is actually usable.
+
+#### If the Ansible smoke test is broken
+
+If `uv run ansible-playbook ./dev/01-test-project-template.yaml` fails for unrelated reasons, do not stop there. Generate a project manually with the workflow above and verify the generated project directly.
+
+### Backporting generated-project lint/format fixes
+
+If `uv run ruff check` or `uv run ruff format --check` fails in the generated project:
+
+1. **Treat the generated project output as the truth**.
+2. Identify the generated file that Ruff is complaining about.
+3. Map that file back to the template source file (usually the matching `*.py-tpl`, template, or migration file in this repo).
+4. Apply the smallest equivalent edit to the template file, not the generated project.
+5. Generate a fresh project again and rerun:
+   - `uv run ruff check`
+   - `uv run ruff format --check`
+   - `just test-unit`
+
+#### Practical tips
+
+- Use `uv run ruff format --diff /path/to/generated/file.py` to see Ruff's exact desired rewrite.
+- Mirror that diff back into the template file as literally as possible.
+- If Ruff's formatter produces invalid Python for generated code, prefer a tiny local `# fmt: off` / `# fmt: on` block around the affected code instead of broad formatting suppression.
+- Do not assume a template file is correct just because the repository copy looks formatted. Only the generated file matters.
+- After every fix, regenerate from scratch. Do not keep patching an old generated directory and assume the template is now correct.
+
 ---
 
 ## 3. Working in a Generated Project

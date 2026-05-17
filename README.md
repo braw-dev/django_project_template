@@ -49,6 +49,7 @@ If you plan to use the built-in billing foundation in a new project, do this bef
 - [ ] Keep billing-gated feature checks on local subscription/entitlement state, not direct provider API calls
 - [ ] Confirm your public pricing copy states that prices exclude VAT and final tax is calculated at checkout (the template default)
 - [ ] If using the newsletter, verify the double opt-in email flow, consent wording, and resend cooldown before sending marketing emails
+- [ ] Review and replace the seeded Privacy, Terms, Security, and Subprocessors placeholder pages before launch
 
 For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 
@@ -69,7 +70,7 @@ For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 
 - **Content**: Markdown `Page` model for FAQs and landing pages, sanitised with `nh3` at render time.
 - **SEO**: `django-meta` integration.
-- **Legal**: Footer legal links are placeholders; privacy/terms/security pages are not scaffolded yet.
+- **Legal**: Editable placeholder Privacy, Terms, Security, and Subprocessors pages are seeded via the pages app and should be replaced with project-specific content before launch.
 - **Analytics**: Optional Plausible analytics include.
 - **Growth**: Newsletter sign-up with explicit consent, double opt-in email confirmation, resend cooldown protection, and optional Chatwoot widget.
 
