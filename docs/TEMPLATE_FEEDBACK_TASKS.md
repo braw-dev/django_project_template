@@ -26,12 +26,6 @@ None.
 
 ## P2 — important for product quality and repeatability
 
-### 19. Finish observability story or reduce the claim
-
-**Problem:** The docs talk about monitoring and metrics more strongly than the implementation supports.
-
-**Potential fix:** Either implement one small supported path for logs/errors/metrics or reduce the docs to what is actually included today.
-
 ### 20. Ensure the template’s helper commands and scaffolds are complete
 
 **Problem:** Some scaffolding references appear incomplete or inconsistent, such as `startapp` expectations and container/deployment files.
