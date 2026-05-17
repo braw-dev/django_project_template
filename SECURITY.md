@@ -188,6 +188,8 @@ Billing in the template is team-owned. Billing API endpoints require:
 
 By default that permission is owner-only.
 
+Billing webhooks use provider signature verification and persist provider event IDs so duplicate deliveries are ignored safely.
+
 ## When adding new tenant-owned code
 
 Checklist:

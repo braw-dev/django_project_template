@@ -3,21 +3,64 @@ from django.contrib import admin
 from . import models
 
 
+@admin.register(models.Customer)
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = ("team", "provider", "external_customer_id", "email", "name", "created_at")
+    list_filter = ("provider", "created_at")
+    search_fields = ("external_customer_id", "email", "name", "team__name")
+    readonly_fields = ("created_at", "updated_at")
+    raw_id_fields = ("team",)
+
+
+@admin.register(models.Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "provider",
+        "external_product_id",
+        "is_recurring",
+        "is_archived",
+        "created_at",
+    )
+    list_filter = ("provider", "is_recurring", "is_archived", "created_at")
+    search_fields = ("external_product_id", "name")
+    readonly_fields = ("created_at", "updated_at")
+
+
 @admin.register(models.Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = (
         "team",
-        "polar_subscription_id",
+        "provider",
+        "external_subscription_id",
         "status",
         "current_period_end",
         "cancel_at_period_end",
         "created_at",
     )
-    list_filter = ("status", "cancel_at_period_end", "created_at")
+    list_filter = ("provider", "status", "cancel_at_period_end", "created_at")
     search_fields = (
-        "polar_subscription_id",
-        "polar_customer_id",
+        "external_subscription_id",
+        "external_customer_id",
+        "external_product_id",
         "team__name",
     )
     readonly_fields = ("created_at", "updated_at")
-    raw_id_fields = ("team",)
+    raw_id_fields = ("team", "customer", "product")
+
+
+@admin.register(models.Entitlement)
+class EntitlementAdmin(admin.ModelAdmin):
+    list_display = ("team", "provider", "key", "display_name", "is_active", "expires_at")
+    list_filter = ("provider", "is_active", "created_at")
+    search_fields = ("key", "display_name", "external_entitlement_id", "team__name")
+    readonly_fields = ("created_at", "updated_at")
+    raw_id_fields = ("team", "customer", "product", "subscription")
+
+
+@admin.register(models.WebhookEvent)
+class WebhookEventAdmin(admin.ModelAdmin):
+    list_display = ("provider", "external_event_id", "event_type", "status", "processed_at")
+    list_filter = ("provider", "status", "created_at")
+    search_fields = ("external_event_id", "event_type")
+    readonly_fields = ("created_at", "updated_at", "processed_at")

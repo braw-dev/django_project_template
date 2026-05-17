@@ -34,6 +34,22 @@ uv run django-admin startproject \
 - [ ] Run Django browser tests if needed: `just test-browser`
 - [ ] Run Playwright E2E tests separately: `just playwright-install` then `just test-e2e`
 
+## Billing bootstrap checklist
+
+If you plan to use the built-in billing foundation in a new project, do this before exposing pricing or paid features:
+
+- [ ] Set `BILLING_PROVIDER=polar` in `.env`
+- [ ] Create a Polar access token and set `POLAR_ACCESS_TOKEN`
+- [ ] Copy your Polar organization ID into `POLAR_ORGANIZATION_ID`
+- [ ] Create at least one recurring product in Polar for your app
+- [ ] Create a webhook endpoint in Polar pointing to `https://your-domain.com/api/webhooks/polar`
+- [ ] Copy the Polar webhook secret into `POLAR_WEBHOOK_SECRET`
+- [ ] Trigger a test checkout and confirm a local `Customer`, `Product`, `Subscription`, and `WebhookEvent` are created
+- [ ] Trigger the customer portal flow and confirm it redirects back to your dashboard
+- [ ] Keep billing-gated feature checks on local subscription/entitlement state, not direct provider API calls
+
+For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
+
 ## What's included?
 
 ### Development
@@ -59,7 +75,7 @@ Marketing pages are intended to live in the same project as the app by default. 
 
 ### Business
 
-- **Payments**: Polar.sh billing foundation with subscription models, webhook handling, and entitlement checks.
+- **Payments**: Polar-first billing foundation behind a lightweight provider interface, with hosted checkout/portal flows, local customer/product/subscription/entitlement models, and verified idempotent webhooks.
 - **i18n**: Django gettext workflow plus an AI-assisted helper for filling untranslated `.po` entries.
 - **Deployment**: Production-oriented container scaffolding via Dockerfiles and Compose manifests; final deployment wiring is still project-specific.
 

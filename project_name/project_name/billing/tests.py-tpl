@@ -1,209 +1,412 @@
 """Tests for billing app."""
 
-import uuid
+import json
 from datetime import timedelta
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from standardwebhooks.webhooks import WebhookVerificationError
 
-from {{ project_name }}.tenancy import models as tenancy_models
+from {{ project_name }}.tenancy import services as tenancy_services
 
-from . import models, webhooks
+from . import models, selectors, services, webhooks
+
+User = get_user_model()
 
 
 @pytest.fixture
-def team():
-    """Create a test team."""
-    return tenancy_models.Team.objects.create(
-        name="Test Team",
-        slug="test-team",
-    )
+def owner(db):
+    return User.objects.create_user(email="owner@example.com", password="testpass123")
+
+
+@pytest.fixture
+def team(owner):
+    return tenancy_services.create_team(name="Acme", slug="acme", owner=owner)
 
 
 @pytest.fixture
 def subscription(team):
-    """Create a test subscription."""
     return models.Subscription.all_objects.create(
         team=team,
-        polar_subscription_id="sub_test123",
-        polar_customer_id="cust_test123",
-        polar_product_id="prod_test123",
-        status=models.Subscription.SubscriptionStatus.ACTIVE,
+        provider=models.BillingProviderChoices.POLAR,
+        external_subscription_id="sub_test123",
+        external_customer_id="cust_test123",
+        external_product_id="prod_test123",
+        status=models.SubscriptionStatus.ACTIVE,
         current_period_end=timezone.now() + timedelta(days=30),
     )
 
 
 @pytest.mark.django_db
-class TestWebhookVerification:
-    """Test webhook signature verification."""
+class TestPolarBillingProvider:
+    def test_create_checkout_url_returns_polar_checkout_url(self, team):
+        provider = services.PolarBillingProvider()
+        mock_checkout = SimpleNamespace(url="https://polar.sh/checkout/test")
+        mock_polar = MagicMock()
+        mock_polar.checkouts.create.return_value = mock_checkout
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_polar
+        mock_client.__exit__.return_value = False
+
+        with patch.object(provider, "_get_client", return_value=mock_client):
+            checkout_url = provider.create_checkout_url(
+                product_id="prod_123",
+                team=team,
+                success_url="https://example.com/dashboard",
+                return_url="https://example.com/dashboard",
+                user_email="owner@example.com",
+                locale="de",
+            )
+
+        assert checkout_url == "https://polar.sh/checkout/test"
+        request = mock_polar.checkouts.create.call_args.kwargs["request"]
+        assert request["products"] == ["prod_123"]
+        assert request["external_customer_id"] == str(team.id)
+        assert request["metadata"] == {"team_id": str(team.id)}
+        assert request["locale"] == "de"
+
+    def test_get_customer_portal_url_returns_hosted_portal_url(self, team):
+        provider = services.PolarBillingProvider()
+        mock_session = SimpleNamespace(customer_portal_url="https://polar.sh/portal/test")
+        mock_polar = MagicMock()
+        mock_polar.customer_sessions.create.return_value = mock_session
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_polar
+        mock_client.__exit__.return_value = False
+
+        with patch.object(provider, "_get_client", return_value=mock_client):
+            portal_url = provider.get_customer_portal_url(
+                team=team,
+                return_url="https://example.com/dashboard",
+            )
+
+        assert portal_url == "https://polar.sh/portal/test"
+        request = mock_polar.customer_sessions.create.call_args.kwargs["request"]
+        assert request["external_customer_id"] == str(team.id)
+        assert request["return_url"] == "https://example.com/dashboard"
+
+    def test_get_products_syncs_local_products(self, team):
+        provider = services.PolarBillingProvider()
+        mock_response = SimpleNamespace(
+            result=SimpleNamespace(
+                items=[
+                    {
+                        "id": "prod_123",
+                        "name": "Starter",
+                        "description": "Starter plan",
+                        "is_recurring": True,
+                        "recurring_interval": "month",
+                        "recurring_interval_count": 1,
+                        "is_archived": False,
+                        "prices": [{"amount": 1900, "price_currency": "EUR"}],
+                        "benefits": [{"id": "analytics", "name": "Analytics"}],
+                        "metadata": {},
+                    }
+                ]
+            )
+        )
+        mock_polar = MagicMock()
+        mock_polar.products.list.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_polar
+        mock_client.__exit__.return_value = False
+
+        with patch.object(provider, "_get_client", return_value=mock_client), patch.object(
+            provider, "_require_organization_id", return_value="org_123"
+        ):
+            products = provider.get_products(use_cache=False)
+
+        assert products[0]["id"] == "prod_123"
+        product = models.Product.objects.get(provider=models.BillingProviderChoices.POLAR)
+        assert product.external_product_id == "prod_123"
+        assert product.name == "Starter"
 
     def test_verify_webhook_signature_success(self, settings):
-        """Test successful webhook verification."""
         settings.POLAR_WEBHOOK_SECRET = "test_secret"
-
+        provider = services.PolarBillingProvider()
         mock_webhook = MagicMock()
-        mock_webhook.verify.return_value = {"type": "subscription.created", "data": {}}
+        mock_webhook.verify.return_value = {
+            "type": "subscription.created",
+            "data": {"id": "sub_123"},
+        }
 
-        with patch("{{ project_name }}.billing.webhooks.Webhook", return_value=mock_webhook):
-            result = webhooks.verify_webhook_signature(b"body", {"header": "value"})
-            assert result == {"type": "subscription.created", "data": {}}
+        with patch("{{ project_name }}.billing.services.Webhook", return_value=mock_webhook):
+            event = provider.verify_webhook_signature(
+                body=b"body",
+                headers={"webhook-id": "evt_123", "webhook-signature": "sig"},
+            )
+
+        assert event.event_id == "evt_123"
+        assert event.event_type == "subscription.created"
+        assert event.data == {"id": "sub_123"}
 
     def test_verify_webhook_signature_missing_secret(self, settings):
-        """Test verification fails when secret not configured."""
         settings.POLAR_WEBHOOK_SECRET = ""
+        provider = services.PolarBillingProvider()
 
         with pytest.raises(WebhookVerificationError):
-            webhooks.verify_webhook_signature(b"body", {"header": "value"})
+            provider.verify_webhook_signature(body=b"body", headers={})
 
-    def test_verify_webhook_signature_failure(self, settings):
-        """Test verification failure raises exception."""
-        settings.POLAR_WEBHOOK_SECRET = "test_secret"
 
-        mock_webhook = MagicMock()
-        mock_webhook.verify.side_effect = WebhookVerificationError("Invalid signature")
+@pytest.mark.django_db
+class TestPolarWebhookSync:
+    def test_subscription_created_syncs_customer_product_subscription_and_entitlements(self, team):
+        provider = services.PolarBillingProvider()
+        event = services.VerifiedWebhookEvent(
+            provider=models.BillingProviderChoices.POLAR,
+            event_id="evt_123",
+            event_type="subscription.created",
+            payload={},
+            data={
+                "id": "sub_123",
+                "customer_id": "cust_123",
+                "product_id": "prod_123",
+                "status": "active",
+                "amount": 1900,
+                "currency": "EUR",
+                "current_period_start": "2026-01-01T00:00:00Z",
+                "current_period_end": "2026-02-01T00:00:00Z",
+                "cancel_at_period_end": False,
+                "metadata": {"team_id": str(team.id)},
+                "customer": {
+                    "id": "cust_123",
+                    "email": "billing@example.com",
+                    "name": "Acme Billing",
+                    "external_id": str(team.id),
+                    "metadata": {"team_id": str(team.id)},
+                },
+                "product": {
+                    "id": "prod_123",
+                    "name": "Starter",
+                    "description": "Starter plan",
+                    "is_recurring": True,
+                    "recurring_interval": "month",
+                    "recurring_interval_count": 1,
+                    "is_archived": False,
+                    "prices": [{"amount": 1900, "price_currency": "EUR"}],
+                    "benefits": [
+                        {"id": "analytics", "name": "Analytics"},
+                        {"id": "priority-support", "name": "Priority support"},
+                    ],
+                    "metadata": {},
+                },
+            },
+        )
+
+        status = provider.handle_webhook_event(event=event)
+
+        assert status == models.WebhookEvent.ProcessingStatus.PROCESSED
+        customer = models.Customer.all_objects.get(team=team)
+        product = models.Product.objects.get(provider=models.BillingProviderChoices.POLAR)
+        subscription = models.Subscription.all_objects.get(team=team)
+        entitlements = list(models.Entitlement.all_objects.filter(team=team).order_by("key"))
+
+        assert customer.external_customer_id == "cust_123"
+        assert product.external_product_id == "prod_123"
+        assert subscription.customer == customer
+        assert subscription.product == product
+        assert subscription.status == models.SubscriptionStatus.ACTIVE
+        assert [entitlement.key for entitlement in entitlements] == [
+            "analytics",
+            "priority-support",
+        ]
+        assert all(entitlement.is_active for entitlement in entitlements)
+
+    def test_subscription_canceled_deactivates_existing_entitlements(self, team):
+        provider = services.PolarBillingProvider()
+        created_event = services.VerifiedWebhookEvent(
+            provider=models.BillingProviderChoices.POLAR,
+            event_id="evt_created",
+            event_type="subscription.created",
+            payload={},
+            data={
+                "id": "sub_123",
+                "customer_id": "cust_123",
+                "product_id": "prod_123",
+                "status": "active",
+                "current_period_start": "2026-01-01T00:00:00Z",
+                "current_period_end": "2026-02-01T00:00:00Z",
+                "metadata": {"team_id": str(team.id)},
+                "customer": {
+                    "id": "cust_123",
+                    "external_id": str(team.id),
+                    "metadata": {"team_id": str(team.id)},
+                },
+                "product": {
+                    "id": "prod_123",
+                    "name": "Starter",
+                    "is_recurring": True,
+                    "benefits": [{"id": "analytics", "name": "Analytics"}],
+                    "metadata": {},
+                },
+            },
+        )
+        canceled_event = services.VerifiedWebhookEvent(
+            provider=models.BillingProviderChoices.POLAR,
+            event_id="evt_canceled",
+            event_type="subscription.canceled",
+            payload={},
+            data={
+                "id": "sub_123",
+                "customer_id": "cust_123",
+                "product_id": "prod_123",
+                "canceled_at": "2026-01-15T00:00:00Z",
+                "current_period_end": "2026-02-01T00:00:00Z",
+                "metadata": {"team_id": str(team.id)},
+                "customer": {
+                    "id": "cust_123",
+                    "external_id": str(team.id),
+                    "metadata": {"team_id": str(team.id)},
+                },
+                "product": {
+                    "id": "prod_123",
+                    "name": "Starter",
+                    "is_recurring": True,
+                    "benefits": [{"id": "analytics", "name": "Analytics"}],
+                    "metadata": {},
+                },
+            },
+        )
+
+        provider.handle_webhook_event(event=created_event)
+        provider.handle_webhook_event(event=canceled_event)
+
+        subscription = models.Subscription.all_objects.get(team=team)
+        entitlement = models.Entitlement.all_objects.get(team=team, key="analytics")
+        assert subscription.status == models.SubscriptionStatus.CANCELED
+        assert entitlement.is_active is False
+        assert entitlement.expires_at is not None
+
+
+@pytest.mark.django_db
+class TestWebhookProcessing:
+    def test_process_webhook_persists_processed_event_and_ignores_duplicates(self):
+        provider = MagicMock()
+        provider.verify_webhook_signature.return_value = services.VerifiedWebhookEvent(
+            provider=models.BillingProviderChoices.POLAR,
+            event_id="evt_123",
+            event_type="subscription.created",
+            payload={"type": "subscription.created"},
+            data={"id": "sub_123"},
+        )
+        provider.handle_webhook_event.return_value = models.WebhookEvent.ProcessingStatus.PROCESSED
+
+        with patch(
+            "{{ project_name }}.billing.webhooks.services.get_billing_provider",
+            return_value=provider,
+        ):
+            first_result = webhooks.process_webhook(b"body", {"webhook-id": "evt_123"})
+            second_result = webhooks.process_webhook(b"body", {"webhook-id": "evt_123"})
+
+        assert first_result == "ok"
+        assert second_result == "ignored"
+        provider.handle_webhook_event.assert_called_once()
+        event = models.WebhookEvent.objects.get(external_event_id="evt_123")
+        assert event.status == models.WebhookEvent.ProcessingStatus.PROCESSED
+        assert event.processed_at is not None
+
+    def test_process_webhook_marks_failed_events(self):
+        provider = MagicMock()
+        provider.verify_webhook_signature.return_value = services.VerifiedWebhookEvent(
+            provider=models.BillingProviderChoices.POLAR,
+            event_id="evt_123",
+            event_type="subscription.created",
+            payload={"type": "subscription.created"},
+            data={"id": "sub_123"},
+        )
+        provider.handle_webhook_event.side_effect = RuntimeError("boom")
 
         with (
-            patch("{{ project_name }}.billing.webhooks.Webhook", return_value=mock_webhook),
-            pytest.raises(WebhookVerificationError),
+            patch(
+                "{{ project_name }}.billing.webhooks.services.get_billing_provider",
+                return_value=provider,
+            ),
+            pytest.raises(RuntimeError, match="boom"),
         ):
-            webhooks.verify_webhook_signature(b"body", {"header": "value"})
+            webhooks.process_webhook(b"body", {"webhook-id": "evt_123"})
+
+        event = models.WebhookEvent.objects.get(external_event_id="evt_123")
+        assert event.status == models.WebhookEvent.ProcessingStatus.FAILED
+        assert "boom" in event.error_message
 
 
 @pytest.mark.django_db
-class TestSubscriptionHandlers:
-    """Test subscription webhook handlers."""
-
-    def test_handle_subscription_created(self, team):
-        """Test creating a subscription from webhook."""
-        data = {
-            "id": "sub_new123",
-            "customer_id": "cust_new123",
-            "product_id": "prod_new123",
-            "status": "active",
-            "current_period_start": "2026-01-01T00:00:00Z",
-            "current_period_end": "2026-02-01T00:00:00Z",
-            "cancel_at_period_end": False,
-            "metadata": {"team_id": str(team.id)},
-        }
-
-        with patch("{{ project_name }}.billing.webhooks.on_subscription_created"):
-            subscription = webhooks.handle_subscription_created(data)
-
-        assert subscription is not None
-        assert subscription.polar_subscription_id == "sub_new123"
-        assert subscription.team == team
-        assert subscription.status == "active"
-
-    def test_handle_subscription_created_missing_team(self):
-        """Test creating subscription with missing team."""
-        data = {
-            "id": "sub_new123",
-            "customer_id": "cust_new123",
-            "product_id": "prod_new123",
-            "status": "active",
-            "metadata": {"team_id": str(uuid.uuid4())},
-        }
-
-        subscription = webhooks.handle_subscription_created(data)
-        assert subscription is None
-
-    def test_handle_subscription_updated(self, subscription):
-        """Test updating a subscription from webhook."""
-        data = {
-            "id": subscription.polar_subscription_id,
-            "status": "past_due",
-            "current_period_end": "2026-03-01T00:00:00Z",
-            "cancel_at_period_end": True,
-        }
-
-        with patch("{{ project_name }}.billing.webhooks.on_subscription_updated"):
-            updated = webhooks.handle_subscription_updated(data)
-
-        assert updated is not None
-        assert updated.status == "past_due"
-        assert updated.cancel_at_period_end is True
-
-    def test_handle_subscription_revoked(self, subscription):
-        """Test revoking a subscription."""
-        data = {"id": subscription.polar_subscription_id}
-
-        with patch("{{ project_name }}.billing.webhooks.on_subscription_revoked"):
-            revoked = webhooks.handle_subscription_revoked(data)
-
-        assert revoked is not None
-        assert revoked.status == models.Subscription.SubscriptionStatus.REVOKED
-
-    def test_handle_subscription_canceled(self, subscription):
-        """Test canceling a subscription."""
-        data = {
-            "id": subscription.polar_subscription_id,
-            "canceled_at": "2026-01-15T00:00:00Z",
-        }
-
-        with patch("{{ project_name }}.billing.webhooks.on_subscription_canceled"):
-            canceled = webhooks.handle_subscription_canceled(data)
-
-        assert canceled is not None
-        assert canceled.status == models.Subscription.SubscriptionStatus.CANCELED
-        assert canceled.canceled_at is not None
-
-
-@pytest.mark.django_db
-class TestSelectors:
-    """Test billing selectors."""
-
+class TestBillingSelectors:
     def test_has_active_subscription_true(self, subscription):
-        """Test has_active_subscription returns True for active subscription."""
-        from {{ project_name }}.billing import selectors
-
         assert selectors.has_active_subscription(subscription.team) is True
 
     def test_has_active_subscription_false_revoked(self, team):
-        """Test has_active_subscription returns False for revoked subscription."""
-        from {{ project_name }}.billing import selectors
-
         models.Subscription.all_objects.create(
             team=team,
-            polar_subscription_id="sub_revoked",
-            polar_customer_id="cust_revoked",
-            polar_product_id="prod_revoked",
-            status=models.Subscription.SubscriptionStatus.REVOKED,
+            provider=models.BillingProviderChoices.POLAR,
+            external_subscription_id="sub_revoked",
+            external_customer_id="cust_revoked",
+            external_product_id="prod_revoked",
+            status=models.SubscriptionStatus.REVOKED,
         )
 
         assert selectors.has_active_subscription(team) is False
 
-    def test_has_active_subscription_false_no_subscription(self, team):
-        """Test has_active_subscription returns False when no subscription exists."""
-        from {{ project_name }}.billing import selectors
-
-        assert selectors.has_active_subscription(team) is False
-
     def test_get_active_subscription(self, subscription):
-        """Test get_active_subscription returns subscription."""
-        from {{ project_name }}.billing import selectors
-
         result = selectors.get_active_subscription(subscription.team)
         assert result == subscription
 
-    def test_get_active_subscription_none(self, team):
-        """Test get_active_subscription returns None when no active subscription."""
-        from {{ project_name }}.billing import selectors
-
-        result = selectors.get_active_subscription(team)
-        assert result is None
-
-    def test_get_subscription_by_polar_id(self, subscription):
-        """Test get_subscription_by_polar_id returns subscription."""
-        from {{ project_name }}.billing import selectors
-
-        result = selectors.get_subscription_by_polar_id(subscription.polar_subscription_id)
+    def test_get_subscription_by_external_id(self, subscription):
+        result = selectors.get_subscription_by_external_id(
+            provider=models.BillingProviderChoices.POLAR,
+            external_subscription_id=subscription.external_subscription_id,
+        )
         assert result == subscription
 
-    def test_get_subscription_by_polar_id_none(self):
-        """Test get_subscription_by_polar_id returns None for non-existent ID."""
-        from {{ project_name }}.billing import selectors
+    def test_has_entitlement(self, team):
+        models.Entitlement.all_objects.create(
+            team=team,
+            provider=models.BillingProviderChoices.POLAR,
+            key="analytics",
+            display_name="Analytics",
+            is_active=True,
+        )
 
-        result = selectors.get_subscription_by_polar_id("sub_nonexistent")
-        assert result is None
+        assert selectors.has_entitlement(team, "analytics") is True
+
+
+@pytest.mark.django_db
+class TestBillingApi:
+    def test_checkout_endpoint_returns_checkout_url_for_team_owner(self, client, owner, team):
+        client.force_login(owner)
+        provider = MagicMock()
+        provider.create_checkout_url.return_value = "https://polar.sh/checkout/test"
+
+        with patch(
+            "{{ project_name }}.core.api.views_v1.services.get_billing_provider",
+            return_value=provider,
+        ):
+            response = client.post(
+                "/api/v1/billing/checkout/",
+                data=json.dumps({"team_id": str(team.id), "product_id": "prod_123"}),
+                content_type="application/json",
+            )
+
+        assert response.status_code == 200
+        assert response.json() == {"checkout_url": "https://polar.sh/checkout/test"}
+
+    def test_portal_endpoint_returns_portal_url_for_team_owner(self, client, owner, team):
+        client.force_login(owner)
+        provider = MagicMock()
+        provider.get_customer_portal_url.return_value = "https://polar.sh/portal/test"
+
+        with patch(
+            "{{ project_name }}.core.api.views_v1.services.get_billing_provider",
+            return_value=provider,
+        ):
+            response = client.post(
+                "/api/v1/billing/portal/",
+                data=json.dumps({"team_id": str(team.id)}),
+                content_type="application/json",
+            )
+
+        assert response.status_code == 200
+        assert response.json() == {"portal_url": "https://polar.sh/portal/test"}

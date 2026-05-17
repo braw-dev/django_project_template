@@ -1,4 +1,4 @@
-"""Billing models for Polar.sh subscription management."""
+"""Billing models for provider-backed subscription management."""
 
 import uuid
 
@@ -6,48 +6,242 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from {{ project_name }}.tenancy.models import TenantScopedModel
+from {{ project_name }}.utils.models import BaseModel
 
 
-class Subscription(TenantScopedModel):
-    """Links a Polar subscription to a local Team."""
+class BillingProviderChoices(models.TextChoices):
+    POLAR = "polar", _("Polar")
 
-    class SubscriptionStatus(models.TextChoices):
-        INCOMPLETE = "incomplete", _("Incomplete")
-        INCOMPLETE_EXPIRED = "incomplete_expired", _("Incomplete Expired")
-        TRIALING = "trialing", _("Trialing")
-        ACTIVE = "active", _("Active")
-        PAST_DUE = "past_due", _("Past Due")
-        CANCELED = "canceled", _("Canceled")
-        UNPAID = "unpaid", _("Unpaid")
-        REVOKED = "revoked", _("Revoked")
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    polar_subscription_id = models.CharField(
-        max_length=255,
-        unique=True,
+class Customer(TenantScopedModel, BaseModel):
+    """Local billing customer record for a team."""
+
+    provider = models.CharField(
+        max_length=50,
+        choices=BillingProviderChoices.choices,
+        default=BillingProviderChoices.POLAR,
         db_index=True,
     )
-    polar_customer_id = models.CharField(max_length=255)
-    polar_product_id = models.CharField(max_length=255)
+    external_customer_id = models.CharField(max_length=255, db_index=True)
+    email = models.EmailField(blank=True)
+    name = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        verbose_name = _("Customer")
+        verbose_name_plural = _("Customers")
+        ordering = ["team__name", "provider"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["team", "provider"],
+                name="billing_unique_customer_per_team_provider",
+            ),
+            models.UniqueConstraint(
+                fields=["provider", "external_customer_id"],
+                name="billing_unique_customer_per_provider",
+            ),
+        ]
+
+    def __str__(self):
+        return self.name or self.email or self.external_customer_id
+
+
+class Product(BaseModel):
+    """Local copy of a provider product."""
+
+    provider = models.CharField(
+        max_length=50,
+        choices=BillingProviderChoices.choices,
+        default=BillingProviderChoices.POLAR,
+        db_index=True,
+    )
+    external_product_id = models.CharField(max_length=255, db_index=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    is_recurring = models.BooleanField(default=False)
+    recurring_interval = models.CharField(max_length=50, blank=True)
+    recurring_interval_count = models.PositiveIntegerField(null=True, blank=True)
+    is_archived = models.BooleanField(default=False)
+    prices = models.JSONField(default=list, blank=True)
+    benefits = models.JSONField(default=list, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        verbose_name = _("Product")
+        verbose_name_plural = _("Products")
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["provider", "external_product_id"],
+                name="billing_unique_product_per_provider",
+            ),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class SubscriptionStatus(models.TextChoices):
+    INCOMPLETE = "incomplete", _("Incomplete")
+    INCOMPLETE_EXPIRED = "incomplete_expired", _("Incomplete Expired")
+    TRIALING = "trialing", _("Trialing")
+    ACTIVE = "active", _("Active")
+    PAST_DUE = "past_due", _("Past Due")
+    CANCELED = "canceled", _("Canceled")
+    UNPAID = "unpaid", _("Unpaid")
+    REVOKED = "revoked", _("Revoked")
+
+
+class Subscription(TenantScopedModel, BaseModel):
+    """Links a provider subscription to a local team."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    provider = models.CharField(
+        max_length=50,
+        choices=BillingProviderChoices.choices,
+        default=BillingProviderChoices.POLAR,
+        db_index=True,
+    )
+    external_subscription_id = models.CharField(max_length=255, db_index=True)
+    external_customer_id = models.CharField(max_length=255, blank=True)
+    external_product_id = models.CharField(max_length=255, blank=True)
+    customer = models.ForeignKey(
+        "billing.Customer",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="subscriptions",
+    )
+    product = models.ForeignKey(
+        "billing.Product",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="subscriptions",
+    )
     status = models.CharField(
         max_length=50,
         choices=SubscriptionStatus.choices,
         default=SubscriptionStatus.INCOMPLETE,
     )
+    amount = models.PositiveIntegerField(null=True, blank=True)
+    currency = models.CharField(max_length=10, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
     cancel_at_period_end = models.BooleanField(default=False)
     canceled_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = _("Subscription")
         verbose_name_plural = _("Subscriptions")
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["team", "status"]),
+            models.Index(fields=["team", "provider", "status"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["provider", "external_subscription_id"],
+                name="billing_unique_subscription_per_provider",
+            ),
         ]
 
     def __str__(self):
         return f"{self.team.name} - {self.status}"
+
+
+class Entitlement(TenantScopedModel, BaseModel):
+    """Locally materialized entitlement for a team."""
+
+    provider = models.CharField(
+        max_length=50,
+        choices=BillingProviderChoices.choices,
+        default=BillingProviderChoices.POLAR,
+        db_index=True,
+    )
+    external_entitlement_id = models.CharField(max_length=255, blank=True)
+    customer = models.ForeignKey(
+        "billing.Customer",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="entitlements",
+    )
+    product = models.ForeignKey(
+        "billing.Product",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="entitlements",
+    )
+    subscription = models.ForeignKey(
+        "billing.Subscription",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="entitlements",
+    )
+    key = models.CharField(max_length=255)
+    display_name = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+    granted_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        verbose_name = _("Entitlement")
+        verbose_name_plural = _("Entitlements")
+        ordering = ["team__name", "key"]
+        indexes = [
+            models.Index(fields=["team", "key", "is_active"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["team", "provider", "key"],
+                name="billing_unique_entitlement_key_per_team_provider",
+            ),
+        ]
+
+    def __str__(self):
+        return self.display_name or self.key
+
+
+class WebhookEvent(BaseModel):
+    """Persisted webhook event for idempotency and debugging."""
+
+    class ProcessingStatus(models.TextChoices):
+        RECEIVED = "received", _("Received")
+        PROCESSED = "processed", _("Processed")
+        IGNORED = "ignored", _("Ignored")
+        FAILED = "failed", _("Failed")
+
+    provider = models.CharField(
+        max_length=50,
+        choices=BillingProviderChoices.choices,
+        default=BillingProviderChoices.POLAR,
+        db_index=True,
+    )
+    external_event_id = models.CharField(max_length=255, db_index=True)
+    event_type = models.CharField(max_length=255)
+    payload = models.JSONField(default=dict, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=ProcessingStatus.choices,
+        default=ProcessingStatus.RECEIVED,
+    )
+    processed_at = models.DateTimeField(null=True, blank=True)
+    error_message = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("Webhook Event")
+        verbose_name_plural = _("Webhook Events")
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["provider", "external_event_id"],
+                name="billing_unique_webhook_event_per_provider",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.provider}:{self.external_event_id}"

@@ -15,13 +15,13 @@ def user_has_permission(*, user: user_models.User, permission: str) -> bool:
 
 
 def product_list() -> list[dict]:
-    """Return a list of products from Polar.sh.
+    """Return a list of products from the configured billing provider.
 
     Returns:
         List of product dictionaries with name, price, features, etc.
 
     Note:
-        This function fetches products from Polar.sh API.
+        This function fetches products from the configured billing provider API.
         Override this function to add project-specific formatting,
         feature mapping, or fallback to hardcoded products.
     """

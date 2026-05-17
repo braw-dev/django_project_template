@@ -176,24 +176,28 @@ class TestTenantScopedManager:
         now = timezone.now() + timedelta(days=30)
         billing_models.Subscription.all_objects.create(
             team=team_a,
-            polar_subscription_id="sub_team_a",
-            polar_customer_id="cust_team_a",
-            polar_product_id="prod_team_a",
-            status=billing_models.Subscription.SubscriptionStatus.ACTIVE,
+            provider=billing_models.BillingProviderChoices.POLAR,
+            external_subscription_id="sub_team_a",
+            external_customer_id="cust_team_a",
+            external_product_id="prod_team_a",
+            status=billing_models.SubscriptionStatus.ACTIVE,
             current_period_end=now,
         )
         billing_models.Subscription.all_objects.create(
             team=team_b,
-            polar_subscription_id="sub_team_b",
-            polar_customer_id="cust_team_b",
-            polar_product_id="prod_team_b",
-            status=billing_models.Subscription.SubscriptionStatus.ACTIVE,
+            provider=billing_models.BillingProviderChoices.POLAR,
+            external_subscription_id="sub_team_b",
+            external_customer_id="cust_team_b",
+            external_product_id="prod_team_b",
+            status=billing_models.SubscriptionStatus.ACTIVE,
             current_period_end=now,
         )
 
         with context.team_context(team_a.id):
             assert list(
-                billing_models.Subscription.objects.values_list("polar_subscription_id", flat=True)
+                billing_models.Subscription.objects.values_list(
+                    "external_subscription_id", flat=True
+                )
             ) == ["sub_team_a"]
 
         assert billing_models.Subscription.all_objects.count() == 2

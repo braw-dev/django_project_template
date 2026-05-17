@@ -3,6 +3,7 @@ from typing import Any, cast
 from uuid import UUID
 
 from django.http import HttpRequest
+from django.urls import reverse
 from ninja import NinjaAPI, Schema
 
 from {{ project_name }}.billing import selectors, services
@@ -75,7 +76,7 @@ def get_subscription(
         subscription=SubscriptionResponse(
             id=cast(UUID, subscription.id),
             status=cast(str, subscription.status),
-            product_id=cast(str, subscription.polar_product_id),
+            product_id=cast(str, subscription.external_product_id),
             current_period_end=cast(datetime | None, subscription.current_period_end),
             cancel_at_period_end=cast(bool, subscription.cancel_at_period_end),
         )
@@ -104,7 +105,7 @@ def create_checkout(
     request: HttpRequest,
     body: CheckoutRequest,
 ) -> CheckoutResponse | tuple[ErrorResponse, int]:
-    """Generate a Polar checkout URL for a product.
+    """Generate a hosted checkout URL for a product.
 
     Args:
         request: HTTP request
@@ -125,16 +126,16 @@ def create_checkout(
         return ErrorResponse(error="Permission denied"), 403
 
     try:
-        billing_service = services.get_billing_service()
+        billing_provider = services.get_billing_provider()
+        dashboard_url = request.build_absolute_uri(reverse("account:dashboard"))
 
-        # Get success URL from request or use default
-        success_url = request.build_absolute_uri("/billing/success/")
-
-        checkout_url = billing_service.create_checkout_url(
+        checkout_url = billing_provider.create_checkout_url(
             product_id=body.product_id,
             team=team,
-            success_url=success_url,
+            success_url=dashboard_url,
+            return_url=dashboard_url,
             user_email=request_user.email,
+            locale=getattr(request, "LANGUAGE_CODE", None),
         )
 
         return CheckoutResponse(checkout_url=checkout_url)
@@ -147,6 +148,60 @@ def create_checkout(
 
         logger = logging.getLogger(__name__)
         logger.error("Failed to create checkout", exc_info=True)
+        return ErrorResponse(error="Payment service temporarily unavailable"), 503
+
+
+class CustomerPortalRequest(Schema):
+    """Request to create a hosted customer portal session."""
+
+    team_id: UUID
+
+
+class CustomerPortalResponse(Schema):
+    """Response with customer portal URL."""
+
+    portal_url: str
+
+
+@api.post(
+    "/billing/portal/",
+    response={200: CustomerPortalResponse, 403: ErrorResponse, 503: ErrorResponse},
+    auth=None,  # Will use session auth
+)
+def create_customer_portal(
+    request: HttpRequest,
+    body: CustomerPortalRequest,
+) -> CustomerPortalResponse | tuple[ErrorResponse, int]:
+    """Generate a hosted billing portal URL for a team."""
+    try:
+        team = TeamModel.objects.get(id=body.team_id)
+    except TeamModel.DoesNotExist:
+        return ErrorResponse(error="Team not found"), 403
+
+    request_user = cast(Any, request).user
+    if not request_user.is_authenticated:
+        return ErrorResponse(error="Authentication required"), 403
+    if not user_has_team_perm(request_user, "tenancy.manage_team_billing", team):
+        return ErrorResponse(error="Permission denied"), 403
+
+    try:
+        billing_provider = services.get_billing_provider()
+        dashboard_url = request.build_absolute_uri(reverse("account:dashboard"))
+        portal_url = billing_provider.get_customer_portal_url(
+            team=team,
+            return_url=dashboard_url,
+        )
+
+        return CustomerPortalResponse(portal_url=portal_url)
+
+    except ValueError as e:
+        return ErrorResponse(error=str(e)), 403
+    except Exception:
+        # Log error but return generic message
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.error("Failed to create customer portal session", exc_info=True)
         return ErrorResponse(error="Payment service temporarily unavailable"), 503
 
 

@@ -1,4 +1,4 @@
-"""Billing API endpoints for Polar.sh integration."""
+"""Billing webhook API endpoints."""
 
 import logging
 from datetime import datetime
@@ -23,62 +23,33 @@ class WebhookResponse(Schema):
     status: str
 
 
-@webhooks_api.post("/polar", response={200: WebhookResponse, 400: WebhookResponse})
+@webhooks_api.post(
+    "/polar",
+    response={200: WebhookResponse, 400: WebhookResponse, 500: WebhookResponse},
+)
 def polar_webhook(request: HttpRequest) -> WebhookResponse | tuple[WebhookResponse, int]:
-    """Handle Polar.sh webhook events.
+    """Handle the configured billing provider webhook events.
 
     Verifies webhook signature and dispatches to appropriate handler.
 
     Returns:
-        200 OK with {"status": "ok"} on success
+        200 OK with {"status": "ok"} or {"status": "ignored"}
         400 Bad Request with {"status": "error"} on verification failure
+        500 Internal Server Error with {"status": "error"} on processing failure
     """
     try:
-        # Get raw body and headers
-        body = request.body
-        headers = dict(request.headers)
-
-        # Verify signature
-        payload = webhooks.verify_webhook_signature(body, headers)
-
-        # Extract event type
-        event_type = payload.get("type")
-        data = payload.get("data", {})
-
-        logger.info(
-            "Received Polar webhook",
-            extra={"event_type": event_type, "subscription_id": data.get("id")},
-        )
-
-        # Dispatch to handler
-        if event_type == "subscription.created":
-            webhooks.handle_subscription_created(data)
-        elif event_type == "subscription.updated":
-            webhooks.handle_subscription_updated(data)
-        elif event_type == "subscription.revoked":
-            webhooks.handle_subscription_revoked(data)
-        elif event_type == "subscription.canceled":
-            webhooks.handle_subscription_canceled(data)
-        else:
-            logger.info(
-                "Ignoring unknown webhook event type",
-                extra={"event_type": event_type},
-            )
-            return WebhookResponse(status="ignored")
-
-        return WebhookResponse(status="ok")
-
+        status = webhooks.process_webhook(request.body, request.headers)
+        return WebhookResponse(status=status)
     except webhooks.WebhookVerificationError as e:
         logger.error("Webhook signature verification failed", extra={"error": str(e)})
         return WebhookResponse(status="error"), 400
     except Exception as e:
-        # Log but return 200 to prevent Polar retries
         logger.error(
             "Error processing webhook",
             extra={"error": str(e)},
             exc_info=True,
         )
-        return WebhookResponse(status="ok")  # Return 200 to prevent retries
+        return WebhookResponse(status="error"), 500
 
 
 # Pydantic schemas for billing endpoints

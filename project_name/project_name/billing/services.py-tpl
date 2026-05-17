@@ -1,39 +1,95 @@
-"""Business logic for billing and Polar.sh integration."""
+"""Business logic for billing providers and local billing sync."""
 
 import logging
-from typing import Any
+from abc import ABC, abstractmethod
+from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Any, cast
 
 from django.conf import settings
 from django.core.cache import cache
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.utils.translation import gettext_lazy as _
 from polar_sdk import Polar
+from standardwebhooks import Webhook
+from standardwebhooks.webhooks import WebhookVerificationError
 
 from {{ project_name }}.tenancy import models as tenancy_models
 
+from . import models
+
 logger = logging.getLogger(__name__)
 
+# TODO: Remove these workarounds when ty supports Django's dynamic model attributes.
+CustomerModel = cast(Any, models.Customer)
+EntitlementModel = cast(Any, models.Entitlement)
+ProductModel = cast(Any, models.Product)
+SubscriptionModel = cast(Any, models.Subscription)
+TeamModel = cast(Any, tenancy_models.Team)
 
-class BillingService:
-    """Service for interacting with Polar.sh API."""
+
+@dataclass(frozen=True)
+class VerifiedWebhookEvent:
+    provider: str
+    event_id: str
+    event_type: str
+    payload: dict[str, Any]
+    data: dict[str, Any]
+
+
+class BillingProvider(ABC):
+    """Small app-facing billing provider interface."""
+
+    code: str
+
+    @abstractmethod
+    def create_checkout_url(
+        self,
+        *,
+        product_id: str,
+        team: tenancy_models.Team,
+        success_url: str,
+        user_email: str,
+        return_url: str | None = None,
+        locale: str | None = None,
+    ) -> str: ...
+
+    @abstractmethod
+    def get_customer_portal_url(
+        self,
+        *,
+        team: tenancy_models.Team,
+        return_url: str,
+    ) -> str: ...
+
+    @abstractmethod
+    def get_products(self, *, use_cache: bool = True) -> list[dict[str, Any]]: ...
+
+    @abstractmethod
+    def verify_webhook_signature(
+        self,
+        *,
+        body: bytes,
+        headers: Mapping[str, str],
+    ) -> VerifiedWebhookEvent: ...
+
+    @abstractmethod
+    def handle_webhook_event(self, *, event: VerifiedWebhookEvent) -> str: ...
+
+
+class PolarBillingProvider(BillingProvider):
+    """Default Polar.sh billing provider."""
+
+    code = models.BillingProviderChoices.POLAR
 
     def __init__(self):
-        """Initialize Polar SDK client."""
         self.access_token = settings.POLAR_ACCESS_TOKEN
         self.organization_id = settings.POLAR_ORGANIZATION_ID
         self.api_base_url = settings.POLAR_API_BASE_URL
-
-        if not self.access_token:
-            logger.warning("POLAR_ACCESS_TOKEN not configured")
+        self.webhook_secret = settings.POLAR_WEBHOOK_SECRET
 
     def _get_client(self) -> Polar:
-        """Get Polar SDK client instance.
-
-        Returns:
-            Polar client instance
-
-        Raises:
-            ValueError: If access token not configured
-        """
         if not self.access_token:
             raise ValueError(_("POLAR_ACCESS_TOKEN not configured"))
 
@@ -42,54 +98,263 @@ class BillingService:
             server_url=self.api_base_url,
         )
 
+    def _require_organization_id(self) -> str:
+        if not self.organization_id:
+            raise ValueError(_("POLAR_ORGANIZATION_ID not configured"))
+        return self.organization_id
+
+    def _dump_model(self, value: Any) -> dict[str, Any]:
+        if isinstance(value, dict):
+            return value
+        if hasattr(value, "model_dump"):
+            return cast(dict[str, Any], value.model_dump(mode="json"))
+        raise TypeError(f"Unsupported Polar response object: {type(value)!r}")
+
+    def _get_header(self, headers: Mapping[str, str], name: str) -> str:
+        target = name.lower()
+        for key, value in headers.items():
+            if key.lower() == target:
+                return value
+        return ""
+
+    def _parse_datetime(self, value: Any):
+        if not value:
+            return None
+        if isinstance(value, str):
+            return parse_datetime(value)
+        return value
+
+    def _normalize_status(self, value: Any) -> str:
+        if value in models.SubscriptionStatus.values:
+            return cast(str, value)
+        return models.SubscriptionStatus.INCOMPLETE
+
+    def _extract_team_id(self, data: dict[str, Any]) -> str:
+        metadata = data.get("metadata")
+        if isinstance(metadata, dict) and metadata.get("team_id"):
+            return str(metadata["team_id"])
+
+        customer = data.get("customer")
+        if isinstance(customer, dict):
+            if customer.get("external_id"):
+                return str(customer["external_id"])
+            customer_metadata = customer.get("metadata")
+            if isinstance(customer_metadata, dict) and customer_metadata.get("team_id"):
+                return str(customer_metadata["team_id"])
+
+        if data.get("external_customer_id"):
+            return str(data["external_customer_id"])
+
+        return ""
+
+    def _resolve_team(self, data: dict[str, Any]) -> tenancy_models.Team | None:
+        team_id = self._extract_team_id(data)
+        if not team_id:
+            logger.warning("Billing webhook missing team identifier")
+            return None
+
+        try:
+            return TeamModel.objects.get(id=team_id)
+        except (TeamModel.DoesNotExist, ValueError):
+            logger.error("Billing webhook referenced unknown team", extra={"team_id": team_id})
+            return None
+
+    def _sync_customer(
+        self,
+        *,
+        team: tenancy_models.Team,
+        customer_data: dict[str, Any],
+        fallback_customer_id: str = "",
+    ) -> models.Customer | None:
+        external_customer_id = str(customer_data.get("id") or fallback_customer_id or "")
+        if not external_customer_id:
+            return None
+
+        customer, _ = CustomerModel.all_objects.update_or_create(
+            team=team,
+            provider=self.code,
+            defaults={
+                "external_customer_id": external_customer_id,
+                "email": customer_data.get("email") or "",
+                "name": customer_data.get("name") or "",
+                "metadata": customer_data.get("metadata") or {},
+            },
+        )
+        return cast(models.Customer, customer)
+
+    def _sync_product(self, product_data: dict[str, Any]) -> models.Product | None:
+        external_product_id = str(product_data.get("id") or "")
+        if not external_product_id:
+            return None
+
+        product, _ = ProductModel.objects.update_or_create(
+            provider=self.code,
+            external_product_id=external_product_id,
+            defaults={
+                "name": product_data.get("name") or external_product_id,
+                "description": product_data.get("description") or "",
+                "is_recurring": bool(product_data.get("is_recurring", False)),
+                "recurring_interval": product_data.get("recurring_interval") or "",
+                "recurring_interval_count": product_data.get("recurring_interval_count"),
+                "is_archived": bool(product_data.get("is_archived", False)),
+                "prices": product_data.get("prices") or [],
+                "benefits": product_data.get("benefits") or [],
+                "metadata": product_data.get("metadata") or {},
+            },
+        )
+        return cast(models.Product, product)
+
+    def _sync_entitlements(
+        self,
+        *,
+        team: tenancy_models.Team,
+        customer: models.Customer | None,
+        product: models.Product | None,
+        subscription: models.Subscription,
+        benefit_data: list[dict[str, Any]],
+    ) -> None:
+        active = subscription.status in {
+            models.SubscriptionStatus.ACTIVE,
+            models.SubscriptionStatus.TRIALING,
+        }
+        expiry = subscription.current_period_end or subscription.canceled_at or timezone.now()
+        existing_qs = EntitlementModel.all_objects.filter(
+            team=team,
+            provider=self.code,
+            subscription=subscription,
+        )
+
+        if not active:
+            existing_qs.update(is_active=False, expires_at=expiry)
+            return
+
+        seen_keys: list[str] = []
+        for benefit in benefit_data:
+            if not isinstance(benefit, dict):
+                continue
+
+            key = str(
+                benefit.get("slug")
+                or benefit.get("code")
+                or benefit.get("id")
+                or benefit.get("name")
+                or ""
+            ).strip()
+            if not key:
+                continue
+
+            seen_keys.append(key)
+            entitlement, _ = EntitlementModel.all_objects.update_or_create(
+                team=team,
+                provider=self.code,
+                key=key,
+                defaults={
+                    "external_entitlement_id": str(benefit.get("id") or ""),
+                    "customer": customer,
+                    "product": product,
+                    "subscription": subscription,
+                    "display_name": benefit.get("name") or benefit.get("description") or key,
+                    "is_active": True,
+                    "granted_at": subscription.current_period_start or timezone.now(),
+                    "expires_at": None,
+                    "metadata": benefit,
+                },
+            )
+            cast(models.Entitlement, entitlement)
+
+        existing_qs.exclude(key__in=seen_keys).update(is_active=False, expires_at=expiry)
+
+    def _sync_subscription(self, data: dict[str, Any]) -> models.Subscription | None:
+        external_subscription_id = str(data.get("id") or "")
+        if not external_subscription_id:
+            logger.error("Billing webhook missing subscription id")
+            return None
+
+        team = self._resolve_team(data)
+        if team is None:
+            return None
+
+        customer_data = data.get("customer") if isinstance(data.get("customer"), dict) else {}
+        customer = self._sync_customer(
+            team=team,
+            customer_data=cast(dict[str, Any], customer_data),
+            fallback_customer_id=str(data.get("customer_id") or ""),
+        )
+
+        product_data = data.get("product") if isinstance(data.get("product"), dict) else {}
+        product = self._sync_product(cast(dict[str, Any], product_data))
+        if product is None and data.get("product_id"):
+            product = ProductModel.objects.filter(
+                provider=self.code,
+                external_product_id=str(data["product_id"]),
+            ).first()
+
+        subscription, _ = SubscriptionModel.all_objects.update_or_create(
+            provider=self.code,
+            external_subscription_id=external_subscription_id,
+            defaults={
+                "team": team,
+                "customer": customer,
+                "product": product,
+                "external_customer_id": str(
+                    data.get("customer_id") or getattr(customer, "external_customer_id", "")
+                ),
+                "external_product_id": str(
+                    data.get("product_id") or getattr(product, "external_product_id", "")
+                ),
+                "status": self._normalize_status(data.get("status")),
+                "amount": data.get("amount"),
+                "currency": data.get("currency") or "",
+                "metadata": data.get("metadata") or {},
+                "current_period_start": self._parse_datetime(data.get("current_period_start")),
+                "current_period_end": self._parse_datetime(data.get("current_period_end")),
+                "cancel_at_period_end": bool(data.get("cancel_at_period_end", False)),
+                "canceled_at": self._parse_datetime(data.get("canceled_at")),
+            },
+        )
+        subscription = cast(models.Subscription, subscription)
+
+        benefit_data = []
+        if product is not None and isinstance(product.benefits, list):
+            benefit_data = cast(list[dict[str, Any]], product.benefits)
+        if isinstance(product_data, dict) and product_data.get("benefits"):
+            benefit_data = cast(list[dict[str, Any]], product_data.get("benefits") or [])
+
+        self._sync_entitlements(
+            team=team,
+            customer=customer,
+            product=product,
+            subscription=subscription,
+            benefit_data=benefit_data,
+        )
+        return subscription
+
     def create_checkout_url(
         self,
+        *,
         product_id: str,
         team: tenancy_models.Team,
         success_url: str,
         user_email: str,
+        return_url: str | None = None,
+        locale: str | None = None,
     ) -> str:
-        """Create a Polar checkout URL for a product.
-
-        Args:
-            product_id: Polar product ID
-            team: Team subscribing
-            success_url: URL to redirect after successful checkout
-            user_email: Email of the user initiating checkout
-
-        Returns:
-            Checkout URL from Polar
-
-        Raises:
-            ValueError: If Polar client not configured
-            Exception: If Polar API call fails
-
-        Note:
-            This function raises NotImplementedError for project-specific logic.
-            Override to add custom metadata, customer creation, etc.
-        """
-        # Project-specific logic hook
-        checkout_metadata = self._get_checkout_metadata(team)
+        request_data: dict[str, Any] = {
+            "products": [product_id],
+            "success_url": success_url,
+            "return_url": return_url or success_url,
+            "customer_email": user_email,
+            "customer_name": team.name,
+            "external_customer_id": str(team.id),
+            "metadata": {"team_id": str(team.id)},
+            "customer_metadata": {"team_id": str(team.id)},
+        }
+        if locale:
+            request_data["locale"] = locale
 
         try:
             with self._get_client() as polar:
-                # Create checkout session
-                # Note: Actual Polar SDK method may vary - check latest SDK docs
-                checkout = polar.checkouts.custom_create(
-                    product_id=product_id,
-                    success_url=success_url,
-                    customer_email=user_email,
-                    metadata=checkout_metadata,
-                )
-
-                # Extract checkout URL from response
-                # Response structure depends on Polar SDK version
-                checkout_url = checkout.get("url") or checkout.get("checkout_url")
-                if not checkout_url:
-                    raise ValueError(_("Polar checkout response missing URL"))
-
-                return checkout_url
-
+                checkout = polar.checkouts.create(request=request_data)
         except Exception:
             logger.error(
                 "Failed to create Polar checkout",
@@ -98,96 +363,139 @@ class BillingService:
             )
             raise
 
-    def _get_checkout_metadata(self, team: tenancy_models.Team) -> dict[str, str]:
-        """Get metadata to include in checkout session.
-
-        Includes team_id by default. Override this method to add
-        project-specific metadata.
-
-        Args:
-            team: Team subscribing
-
-        Returns:
-            Metadata dictionary with team_id
-        """
-        return {
-            "team_id": str(team.id),
-        }
+        checkout_url = getattr(checkout, "url", "")
+        if not checkout_url:
+            raise ValueError(_("Polar checkout response missing URL"))
+        return cast(str, checkout_url)
 
     def get_customer_portal_url(
         self,
+        *,
         team: tenancy_models.Team,
+        return_url: str,
     ) -> str:
-        """Get customer portal URL for managing subscription.
-
-        Note: Polar.sh handles subscription management differently than Stripe.
-        Customers receive email links for managing subscriptions. This function
-        is stubbed for future implementation if Polar adds a portal API.
-
-        Args:
-            team: Team to get portal for
-
-        Returns:
-            Portal URL (stubbed)
-
-        Raises:
-            NotImplementedError: Polar doesn't currently provide a portal API
-        """
-        raise NotImplementedError(
-            "Polar.sh doesn't currently provide a customer portal API. "
-            "Customers manage subscriptions via email links or product dashboard."
-        )
-
-    def get_products(self, use_cache: bool = True) -> list[dict[str, Any]]:
-        """Get list of available products from Polar.
-
-        Args:
-            use_cache: Whether to use cached result (default: True)
-
-        Returns:
-            List of product dictionaries
-
-        Raises:
-            ValueError: If Polar client not configured
-            Exception: If Polar API call fails
-        """
-        cache_key = "polar_products"
-        if use_cache:
-            cached = cache.get(cache_key)
-            if cached:
-                return cached
-
         try:
             with self._get_client() as polar:
-                # Fetch products from Polar API
-                # Note: Actual SDK method may vary - check latest SDK docs
-                products_response = polar.products.list()
-
-                # Extract products list
-                products = products_response.get("items", []) or []
-
-                # Cache for 5 minutes
-                if use_cache:
-                    cache.set(cache_key, products, 300)
-
-                return products
-
+                session = polar.customer_sessions.create(
+                    request={
+                        "external_customer_id": str(team.id),
+                        "return_url": return_url,
+                    }
+                )
         except Exception:
-            logger.error("Failed to fetch Polar products", exc_info=True)
+            logger.error(
+                "Failed to create Polar customer portal session",
+                extra={"team_id": str(team.id)},
+                exc_info=True,
+            )
             raise
 
+        portal_url = getattr(session, "customer_portal_url", "")
+        if not portal_url:
+            raise ValueError(_("Polar customer portal response missing URL"))
+        return cast(str, portal_url)
 
-# Singleton instance
-_billing_service: BillingService | None = None
+    def get_products(self, *, use_cache: bool = True) -> list[dict[str, Any]]:
+        cache_key = f"billing:{self.code}:products"
+        if use_cache and (cached := cache.get(cache_key)):
+            return cast(list[dict[str, Any]], cached)
+
+        with self._get_client() as polar:
+            response = polar.products.list(
+                organization_id=self._require_organization_id(),
+                is_archived=False,
+                limit=100,
+            )
+
+        if response is None:
+            return []
+
+        products_response = getattr(response, "result", None)
+        product_items = getattr(products_response, "items", []) if products_response else []
+        products = [self._dump_model(product) for product in product_items]
+        for product in products:
+            self._sync_product(product)
+
+        if use_cache:
+            cache.set(cache_key, products, 300)
+
+        return products
+
+    def verify_webhook_signature(
+        self,
+        *,
+        body: bytes,
+        headers: Mapping[str, str],
+    ) -> VerifiedWebhookEvent:
+        if not self.webhook_secret:
+            raise WebhookVerificationError("POLAR_WEBHOOK_SECRET not configured")
+
+        normalized_headers = {str(key): str(value) for key, value in headers.items()}
+        payload = cast(
+            dict[str, Any],
+            Webhook(self.webhook_secret).verify(body, normalized_headers),
+        )
+        event_id = self._get_header(normalized_headers, "webhook-id")
+        if not event_id:
+            raise WebhookVerificationError("Missing webhook-id header")
+
+        event_type = str(payload.get("type") or "")
+        if not event_type:
+            raise WebhookVerificationError("Missing webhook event type")
+
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            data = {}
+
+        return VerifiedWebhookEvent(
+            provider=self.code,
+            event_id=event_id,
+            event_type=event_type,
+            payload=payload,
+            data=cast(dict[str, Any], data),
+        )
+
+    def handle_webhook_event(self, *, event: VerifiedWebhookEvent) -> str:
+        data = dict(event.data)
+        if event.event_type == "subscription.revoked":
+            data["status"] = models.SubscriptionStatus.REVOKED
+        elif event.event_type == "subscription.canceled":
+            data["status"] = models.SubscriptionStatus.CANCELED
+
+        if event.event_type in {
+            "subscription.created",
+            "subscription.updated",
+            "subscription.revoked",
+            "subscription.canceled",
+        }:
+            subscription = self._sync_subscription(data)
+            if subscription is None:
+                return models.WebhookEvent.ProcessingStatus.IGNORED
+            return models.WebhookEvent.ProcessingStatus.PROCESSED
+
+        logger.info(
+            "Ignoring unsupported Polar billing webhook event",
+            extra={"event_type": event.event_type},
+        )
+        return models.WebhookEvent.ProcessingStatus.IGNORED
 
 
-def get_billing_service() -> BillingService:
-    """Get singleton BillingService instance.
+_billing_provider: BillingProvider | None = None
 
-    Returns:
-        BillingService instance
-    """
-    global _billing_service
-    if _billing_service is None:
-        _billing_service = BillingService()
-    return _billing_service
+
+def get_billing_provider() -> BillingProvider:
+    global _billing_provider
+    if _billing_provider is not None:
+        return _billing_provider
+
+    provider_name = settings.BILLING_PROVIDER.lower()
+    if provider_name == models.BillingProviderChoices.POLAR:
+        _billing_provider = PolarBillingProvider()
+        return _billing_provider
+
+    raise ValueError(_("Unsupported billing provider configured"))
+
+
+def get_billing_service() -> BillingProvider:
+    """Backward-compatible alias for older template code."""
+    return get_billing_provider()
