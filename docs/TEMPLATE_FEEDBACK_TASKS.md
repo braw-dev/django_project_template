@@ -26,11 +26,7 @@ None.
 
 ## P2 — important for product quality and repeatability
 
-### 20. Ensure the template’s helper commands and scaffolds are complete
-
-**Problem:** Some scaffolding references appear incomplete or inconsistent, such as `startapp` expectations and container/deployment files.
-
-**Potential fix:** Verify every documented command and referenced file exists in a generated project. Prefer fewer commands that definitely work.
+None.
 
 ## P3 — useful later
 
