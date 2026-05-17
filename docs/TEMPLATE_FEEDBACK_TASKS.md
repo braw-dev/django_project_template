@@ -30,12 +30,6 @@ None.
 
 ## P3 — useful later
 
-### 23. Add a simple billing/accounting export stance
-
-**Problem:** A solo operator running several SaaS products will need consistent exports for bookkeeping and support.
-
-**Potential fix:** Document where source-of-truth billing data lives and add a minimal export path rather than building finance features into the product.
-
 ### 24. Add a template review checklist for future releases
 
 **Problem:** Some of the current gaps are consistency problems rather than architecture problems.
