@@ -155,6 +155,8 @@ class AppSettings(BaseSettings):
     ALLOWED_HOSTS: str
     DJANGO_ADMINS: str
     LOG_LEVEL: str = "INFO"
+    OBSERVABILITY_SLOW_REQUEST_THRESHOLD_MS: int = 500
+    OBSERVABILITY_SLOW_DB_DURATION_MS: int = 250
     DB_DEFAULT_URL: SecretStr
     CACHE_DEFAULT_URL: SecretStr = SecretStr("locmemcache://")
     SEND_EMAILS: bool = False
@@ -290,6 +292,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django_structlog.middlewares.RequestMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "{{ project_name }}.core.middleware.RequestPerformanceLoggingMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",  # Must be after SessionMiddleware
     "django.middleware.common.CommonMiddleware",
@@ -337,6 +340,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "{{ project_name }}.wsgi.application"
 
 LOG_LEVEL = APP_SETTINGS.LOG_LEVEL
+OBSERVABILITY_SLOW_REQUEST_THRESHOLD_MS = APP_SETTINGS.OBSERVABILITY_SLOW_REQUEST_THRESHOLD_MS
+OBSERVABILITY_SLOW_DB_DURATION_MS = APP_SETTINGS.OBSERVABILITY_SLOW_DB_DURATION_MS
 LOGGING_QUEUE = queue.SimpleQueue()
 LOG_FILE_PATH = BASE_DIR.parent / "logs" / "django.log"
 

@@ -138,15 +138,43 @@ For the default Hetzner + Bunny.net path:
 - let Bunny.net cache public static assets at the edge
 - decide explicitly whether media should stay on local disk, move to object storage, or be fronted by Bunny Storage/CDN in a generated project
 
-### Logging and error reporting
+### Logging, errors, and performance signals
 
 The template currently supports:
 
 - console logging
 - rotating JSON log files under `logs/`
 - optional Sentry error reporting via `SENTRY_DSN`
+- one structured request-performance log event per request, including:
+  - request duration
+  - DB query count
+  - total DB time
+  - slow-request / slow-DB flags
 
-It does **not** currently scaffold metrics, tracing, Grafana, or New Relic.
+This is the supported observability path for generated projects:
+
+- **exceptions**: Sentry
+- **application-level observability**: structured JSON logs from Django
+- **host metrics and log shipping**: Grafana Alloy on the VPS
+- **querying and dashboards**: Grafana Cloud
+
+The template does **not** currently scaffold distributed tracing or require OpenTelemetry.
+
+If you want more, add it in a generated project deliberately. The default here is to start with logs, health checks, and exceptions, then derive the dashboards that actually matter.
+
+### Suggested first dashboards
+
+If you ship the JSON logs to Grafana Cloud via Alloy, the first useful dashboards are usually:
+
+- request count by path or view name
+- request latency percentiles
+- slow request count over time
+- DB time contribution per request
+- 4xx / 5xx rates
+- exception count from Sentry
+- uptime from the health check endpoint and host metrics
+
+That is enough to spot availability issues, performance regressions, and the slow endpoints worth improving.
 
 ## Reverse proxy and edge
 
@@ -195,7 +223,9 @@ If you are deploying a new product with this default path, the boring order is:
 6. point Caddy at the app service
 7. optionally place Bunny.net in front once the origin is stable
 8. wire PostgreSQL and Dragonfly over private networking where possible
-9. document backups, restore steps, and where customer data actually lives
+9. configure Alloy to collect host metrics and ship app logs
+10. create a first Grafana dashboard for request latency, error rate, and slow requests
+11. document backups, restore steps, and where customer data actually lives
 
 ## Security contact
 

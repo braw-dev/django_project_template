@@ -3,6 +3,7 @@ import tempfile
 import uuid
 from datetime import timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import polib
@@ -11,6 +12,7 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.management import call_command
+from django.http import HttpResponse
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -23,6 +25,7 @@ from {{ project_name }}.tenancy import services as tenancy_services
 from . import models as core_models
 from .admin import AuditEventAdmin
 from .forms import NewsletterSignupForm
+from .middleware import RequestPerformanceLoggingMiddleware
 from .newsletter import get_newsletter_confirmation_token
 
 User = get_user_model()
@@ -221,6 +224,61 @@ class AuditEventTestCase(TestCase):
         self.assertEqual(audit_event.subject_user, self.subject)
         self.assertEqual(audit_event.subject_email, self.subject.email)
         self.assertEqual(audit_event.metadata["origin"], "django_hijack")
+
+
+class RequestPerformanceLoggingMiddlewareTestCase(TestCase):
+    def setUp(self):
+        self.request_factory = RequestFactory()
+
+    @override_settings(
+        OBSERVABILITY_SLOW_REQUEST_THRESHOLD_MS=10_000,
+        OBSERVABILITY_SLOW_DB_DURATION_MS=10_000,
+    )
+    def test_request_performance_middleware_logs_request_metrics(self):
+        core_models.NewsletterSignup.objects.create(email="metrics@example.com")
+
+        def get_response(request):
+            core_models.NewsletterSignup.objects.count()
+            return HttpResponse("ok")
+
+        request = self.request_factory.get("/metrics-test")
+        request.resolver_match = SimpleNamespace(view_name="metrics_test")
+        middleware = RequestPerformanceLoggingMiddleware(get_response)
+
+        with patch("{{ project_name }}.core.middleware.logger") as mock_logger:
+            response = middleware(request)
+
+        self.assertEqual(response.status_code, 200)
+        mock_logger.info.assert_called_once()
+        event_name = mock_logger.info.call_args.args[0]
+        log_fields = mock_logger.info.call_args.kwargs
+        self.assertEqual(event_name, "http.request_completed")
+        self.assertEqual(log_fields["path"], "/metrics-test")
+        self.assertEqual(log_fields["view_name"], "metrics_test")
+        self.assertEqual(log_fields["status_code"], 200)
+        self.assertGreaterEqual(log_fields["db_query_count"], 1)
+        self.assertGreaterEqual(log_fields["db_duration_ms"], 0)
+        self.assertFalse(log_fields["is_slow_request"])
+        self.assertFalse(log_fields["is_slow_db"])
+
+    @override_settings(
+        OBSERVABILITY_SLOW_REQUEST_THRESHOLD_MS=0,
+        OBSERVABILITY_SLOW_DB_DURATION_MS=0,
+    )
+    def test_request_performance_middleware_warns_for_slow_requests(self):
+        def get_response(request):
+            return HttpResponse("ok")
+
+        request = self.request_factory.get("/metrics-test")
+        middleware = RequestPerformanceLoggingMiddleware(get_response)
+
+        with patch("{{ project_name }}.core.middleware.logger") as mock_logger:
+            middleware(request)
+
+        mock_logger.warning.assert_called_once()
+        self.assertEqual(mock_logger.warning.call_args.args[0], "http.request_completed")
+        self.assertTrue(mock_logger.warning.call_args.kwargs["is_slow_request"])
+        self.assertTrue(mock_logger.warning.call_args.kwargs["is_slow_db"])
 
 
 class LanguageSwitchingTestCase(TestCase):

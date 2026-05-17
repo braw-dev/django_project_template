@@ -1,0 +1,108 @@
+"""Request-level observability helpers."""
+
+from __future__ import annotations
+
+import time
+from contextlib import ExitStack
+from dataclasses import dataclass
+
+import structlog
+from django.conf import settings
+from django.db import connections
+
+logger = structlog.get_logger(__name__)
+
+
+@dataclass
+class QueryStats:
+    count: int = 0
+    duration_ms: float = 0.0
+
+
+class QueryTimingWrapper:
+    def __init__(self, stats: QueryStats):
+        self.stats = stats
+
+    def __call__(self, execute, sql, params, many, context):
+        started_at = time.perf_counter()
+        try:
+            return execute(sql, params, many, context)
+        finally:
+            self.stats.count += 1
+            self.stats.duration_ms += (time.perf_counter() - started_at) * 1000
+
+
+class RequestPerformanceLoggingMiddleware:
+    """Log one structured request performance event per request."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        started_at = time.perf_counter()
+        query_stats = QueryStats()
+
+        with ExitStack() as stack:
+            timing_wrapper = QueryTimingWrapper(query_stats)
+            for connection in connections.all():
+                stack.enter_context(connection.execute_wrapper(timing_wrapper))
+
+            try:
+                response = self.get_response(request)
+            except Exception:
+                duration_ms = (time.perf_counter() - started_at) * 1000
+                logger.exception(
+                    "http.request_failed",
+                    **self._build_log_fields(
+                        request=request,
+                        status_code=500,
+                        duration_ms=duration_ms,
+                        query_stats=query_stats,
+                    ),
+                )
+                raise
+
+        duration_ms = (time.perf_counter() - started_at) * 1000
+        log_fields = self._build_log_fields(
+            request=request,
+            status_code=response.status_code,
+            duration_ms=duration_ms,
+            query_stats=query_stats,
+        )
+
+        if log_fields["is_slow_request"] or log_fields["is_slow_db"]:
+            logger.warning("http.request_completed", **log_fields)
+        else:
+            logger.info("http.request_completed", **log_fields)
+
+        return response
+
+    def _build_log_fields(
+        self,
+        *,
+        request,
+        status_code: int,
+        duration_ms: float,
+        query_stats: QueryStats,
+    ):
+        slow_request_threshold_ms = getattr(
+            settings,
+            "OBSERVABILITY_SLOW_REQUEST_THRESHOLD_MS",
+            500,
+        )
+        slow_db_duration_ms = getattr(settings, "OBSERVABILITY_SLOW_DB_DURATION_MS", 250)
+        resolver_match = getattr(request, "resolver_match", None)
+        team = getattr(request, "team", None)
+
+        return {
+            "method": request.method,
+            "path": request.path,
+            "view_name": resolver_match.view_name if resolver_match is not None else "",
+            "status_code": status_code,
+            "duration_ms": round(duration_ms, 2),
+            "db_query_count": query_stats.count,
+            "db_duration_ms": round(query_stats.duration_ms, 2),
+            "is_slow_request": duration_ms >= slow_request_threshold_ms,
+            "is_slow_db": query_stats.duration_ms >= slow_db_duration_ms,
+            "team_slug": getattr(team, "slug", ""),
+        }
