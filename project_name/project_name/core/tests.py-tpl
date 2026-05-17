@@ -1,6 +1,7 @@
 import os
 import tempfile
 import uuid
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -74,8 +75,11 @@ class NewsletterTestCase(TestCase):
         )
         self.assertContains(response, escape(NewsletterSignupForm.ALREADY_SUBSCRIBED_ERROR))
 
-    def test_newsletter_signup_resends_confirmation_for_unconfirmed_signup(self):
-        core_models.NewsletterSignup.objects.create(email=self.email)
+    def test_newsletter_signup_resends_confirmation_for_unconfirmed_signup_after_cooldown(self):
+        core_models.NewsletterSignup.objects.create(
+            email=self.email,
+            confirmation_email_sent_at=timezone.now() - timedelta(minutes=16),
+        )
 
         self.client.post(reverse("newsletter:signup"), {"email": self.email, "consent": "on"})
 
@@ -83,6 +87,20 @@ class NewsletterTestCase(TestCase):
         self.assertIsNotNone(signup.consented_at)
         self.assertIsNone(signup.confirmed_at)
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIsNotNone(signup.confirmation_email_sent_at)
+
+    def test_newsletter_signup_does_not_resend_confirmation_within_cooldown(self):
+        sent_at = timezone.now()
+        core_models.NewsletterSignup.objects.create(
+            email=self.email,
+            confirmation_email_sent_at=sent_at,
+        )
+
+        self.client.post(reverse("newsletter:signup"), {"email": self.email, "consent": "on"})
+
+        signup = core_models.NewsletterSignup.objects.get(email=self.email)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(signup.confirmation_email_sent_at, sent_at)
 
     def test_newsletter_confirmation_marks_signup_confirmed(self):
         signup = core_models.NewsletterSignup.objects.create(
@@ -119,6 +137,7 @@ class NewsletterTestCase(TestCase):
     def test_newsletter_model_tracks_optional_unsubscribe_fields(self):
         signup = core_models.NewsletterSignup.objects.create(email=self.email)
 
+        self.assertIsNone(signup.confirmation_email_sent_at)
         self.assertIsNone(signup.unsubscribed_at)
         self.assertEqual(signup.unsubscribe_reason, "")
 

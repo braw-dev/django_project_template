@@ -8,6 +8,7 @@ class NewsletterSignupAdmin(admin.ModelAdmin):
     list_display = (
         "email",
         "consented_at",
+        "confirmation_email_sent_at",
         "confirmed_at",
         "unsubscribed_at",
         "created_at",

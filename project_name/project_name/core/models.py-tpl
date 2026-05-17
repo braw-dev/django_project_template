@@ -74,6 +74,7 @@ class NewsletterSignup(models.Model):
 
     email = models.EmailField(unique=True)
     consented_at = models.DateTimeField(null=True, blank=True)
+    confirmation_email_sent_at = models.DateTimeField(null=True, blank=True)
     confirmed_at = models.DateTimeField(null=True, blank=True)
     unsubscribed_at = models.DateTimeField(null=True, blank=True)
     unsubscribe_reason = models.TextField(blank=True)

@@ -48,7 +48,7 @@ If you plan to use the built-in billing foundation in a new project, do this bef
 - [ ] Trigger the customer portal flow and confirm it redirects back to your dashboard
 - [ ] Keep billing-gated feature checks on local subscription/entitlement state, not direct provider API calls
 - [ ] Confirm your public pricing copy states that prices exclude VAT and final tax is calculated at checkout (the template default)
-- [ ] If using the newsletter, verify the double opt-in email flow and consent wording before sending marketing emails
+- [ ] If using the newsletter, verify the double opt-in email flow, consent wording, and resend cooldown before sending marketing emails
 
 For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 
@@ -71,7 +71,7 @@ For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 - **SEO**: `django-meta` integration.
 - **Legal**: Footer legal links are placeholders; privacy/terms/security pages are not scaffolded yet.
 - **Analytics**: Optional Plausible analytics include.
-- **Growth**: Newsletter sign-up with explicit consent, double opt-in email confirmation, and optional Chatwoot widget.
+- **Growth**: Newsletter sign-up with explicit consent, double opt-in email confirmation, resend cooldown protection, and optional Chatwoot widget.
 
 Marketing pages are intended to live in the same project as the app by default. Public pages stay public; app routes opt into protection explicitly with decorators such as `login_required` and `mfa_required`.
 

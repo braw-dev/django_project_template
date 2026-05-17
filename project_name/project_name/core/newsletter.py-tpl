@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.core import signing
 from django.core.mail import send_mail
@@ -57,7 +59,13 @@ def build_newsletter_confirmation_url(signup: models.NewsletterSignup, request) 
     return request.build_absolute_uri(reverse("newsletter:confirm", kwargs={"token": token}))
 
 
-def send_newsletter_confirmation_email(signup: models.NewsletterSignup, request) -> None:
+def send_newsletter_confirmation_email(signup: models.NewsletterSignup, request) -> bool:
+    cooldown_minutes = getattr(settings, "NEWSLETTER_CONFIRMATION_RESEND_COOLDOWN_MINUTES", 15)
+    if signup.confirmation_email_sent_at is not None:
+        resend_after = signup.confirmation_email_sent_at + timedelta(minutes=cooldown_minutes)
+        if resend_after > timezone.now():
+            return False
+
     confirmation_url = build_newsletter_confirmation_url(signup, request)
     body = render_to_string(
         "core/email/newsletter_confirmation.txt",
@@ -72,6 +80,9 @@ def send_newsletter_confirmation_email(signup: models.NewsletterSignup, request)
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[signup.email],
     )
+    signup.confirmation_email_sent_at = timezone.now()
+    signup.save(update_fields=["confirmation_email_sent_at"])
+    return True
 
 
 def confirm_newsletter_signup(*, token: str) -> models.NewsletterSignup:
