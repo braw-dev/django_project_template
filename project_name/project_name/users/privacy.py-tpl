@@ -1,0 +1,169 @@
+"""Operator-run privacy workflows for user export and deletion.
+
+Extend this module as your project adds app-specific personal data.
+Keep automatic deletion conservative: billing, finance, and statutory retention
+workflows need explicit product-specific decisions.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from allauth.account.models import EmailAddress
+from allauth.mfa.models import Authenticator
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.utils import timezone
+
+from {{ project_name }}.core.models import NewsletterSignup
+from {{ project_name }}.tenancy.models import TeamInvitation, TeamMembership, TeamRole
+from {{ project_name }}.tokens.models import ApiToken
+
+User = get_user_model()
+
+
+class PrivacyOperationError(Exception):
+    """Raised when a privacy operation cannot be completed safely."""
+
+
+def get_user_by_identifier(identifier: str):
+    """Look up a user by email address or primary key."""
+    email_match = User.objects.filter(email__iexact=identifier).first()
+    if email_match is not None:
+        return email_match
+    return User.objects.get(pk=identifier)
+
+
+def export_user_data(*, user) -> dict[str, Any]:
+    """Return a basic JSON-serialisable export of user-linked personal data."""
+    email_addresses = EmailAddress.objects.filter(user=user).order_by("email")
+    authenticators = Authenticator.objects.filter(user=user).order_by("type")
+    newsletter_signups = NewsletterSignup.objects.filter(email__iexact=user.email).order_by("email")
+    team_memberships = (
+        TeamMembership.objects.select_related("team").filter(user=user).order_by("team__slug")
+    )
+    invitations = TeamInvitation.objects.select_related("team").filter(email__iexact=user.email)
+    created_tokens = (
+        ApiToken.all_objects.select_related("team")
+        .filter(created_by=user)
+        .order_by("team__slug", "name")
+    )
+
+    return {
+        "schema_version": 1,
+        "exported_at": timezone.now(),
+        "user": {
+            "id": user.pk,
+            "email": user.email,
+            "name": user.name,
+            "company": user.company,
+            "role": user.role,
+            "is_active": user.is_active,
+            "date_joined": user.date_joined,
+            "last_login": user.last_login,
+            "onboarding_completed": user.onboarding_completed,
+            "preferences": user.preferences,
+        },
+        "email_addresses": [
+            {
+                "email": email_address.email,
+                "verified": email_address.verified,
+                "primary": email_address.primary,
+            }
+            for email_address in email_addresses
+        ],
+        "mfa_authenticators": [
+            {
+                "type": authenticator.type,
+            }
+            for authenticator in authenticators
+        ],
+        "newsletter_signups": [
+            {
+                "email": signup.email,
+                "consented_at": signup.consented_at,
+                "confirmation_email_sent_at": signup.confirmation_email_sent_at,
+                "confirmed_at": signup.confirmed_at,
+                "unsubscribed_at": signup.unsubscribed_at,
+                "unsubscribe_reason": signup.unsubscribe_reason,
+                "created_at": signup.created_at,
+            }
+            for signup in newsletter_signups
+        ],
+        "team_memberships": [
+            {
+                "team_id": membership.team_id,
+                "team_name": membership.team.name,
+                "team_slug": membership.team.slug,
+                "role": membership.role,
+                "created_at": membership.created_at,
+            }
+            for membership in team_memberships
+        ],
+        "team_invitations": [
+            {
+                "team_id": invitation.team_id,
+                "team_name": invitation.team.name,
+                "team_slug": invitation.team.slug,
+                "role": invitation.role,
+                "expires_at": invitation.expires_at,
+                "accepted_at": invitation.accepted_at,
+                "revoked_at": invitation.revoked_at,
+                "created_at": invitation.created_at,
+            }
+            for invitation in invitations
+        ],
+        "api_tokens_created": [
+            {
+                "token_id": token.token_id,
+                "team_id": token.team_id,
+                "team_name": token.team.name,
+                "team_slug": token.team.slug,
+                "name": token.name,
+                "environment": token.environment,
+                "created_at": token.created_at,
+                "expires_at": token.expires_at,
+                "revoked_at": token.revoked_at,
+                "last_used_at": token.last_used_at,
+            }
+            for token in created_tokens
+        ],
+    }
+
+
+@transaction.atomic
+def delete_user_data(*, user) -> dict[str, Any]:
+    """Delete a user and a minimal set of directly linked personal data.
+
+    This intentionally does not delete team-owned billing or finance records.
+    Those need explicit product and legal retention rules.
+    """
+    owner_memberships = TeamMembership.objects.select_related("team").filter(
+        user=user,
+        role=TeamRole.OWNER,
+    )
+    if owner_memberships.exists():
+        owned_team_slugs = ", ".join(owner_memberships.values_list("team__slug", flat=True))
+        raise PrivacyOperationError(
+            f"Cannot delete user {user.email} while they still own teams: {owned_team_slugs}. "
+            "Transfer ownership or delete those teams first."
+        )
+
+    newsletter_signups_deleted, _ = NewsletterSignup.objects.filter(
+        email__iexact=user.email
+    ).delete()
+    api_tokens_revoked_by_cleared = ApiToken.all_objects.filter(revoked_by=user).update(
+        revoked_by=None
+    )
+    api_tokens_created_deleted, _ = ApiToken.all_objects.filter(created_by=user).delete()
+
+    user_pk = user.pk
+    deleted_rows, _ = user.delete()
+
+    return {
+        "user_id": user_pk,
+        "newsletter_signups_deleted": newsletter_signups_deleted,
+        "api_tokens_created_deleted": api_tokens_created_deleted,
+        "api_tokens_revoked_by_cleared": api_tokens_revoked_by_cleared,
+        "deleted_rows": deleted_rows,
+    }

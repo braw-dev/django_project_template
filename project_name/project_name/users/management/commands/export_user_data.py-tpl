@@ -1,0 +1,24 @@
+import json
+
+from django.core.management.base import BaseCommand, CommandError
+from django.core.serializers.json import DjangoJSONEncoder
+
+from {{ project_name }}.users.models import User
+from {{ project_name }}.users.privacy import export_user_data, get_user_by_identifier
+
+
+class Command(BaseCommand):
+    help = "Export a user's basic personal data as JSON."
+
+    def add_arguments(self, parser):
+        parser.add_argument("user", help="User email address or primary key")
+
+    def handle(self, *args, **options):
+        identifier = options["user"]
+
+        try:
+            user = get_user_by_identifier(identifier)
+        except User.DoesNotExist as exc:
+            raise CommandError(f"User not found: {identifier}") from exc
+
+        self.stdout.write(json.dumps(export_user_data(user=user), indent=2, cls=DjangoJSONEncoder))

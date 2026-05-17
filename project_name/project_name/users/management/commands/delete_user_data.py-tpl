@@ -1,0 +1,41 @@
+import json
+
+from django.core.management.base import BaseCommand, CommandError
+from django.core.serializers.json import DjangoJSONEncoder
+
+from {{ project_name }}.users.models import User
+from {{ project_name }}.users.privacy import (
+    PrivacyOperationError,
+    delete_user_data,
+    get_user_by_identifier,
+)
+
+
+class Command(BaseCommand):
+    help = "Delete a user and basic directly linked personal data."
+
+    def add_arguments(self, parser):
+        parser.add_argument("user", help="User email address or primary key")
+        parser.add_argument(
+            "--yes",
+            action="store_true",
+            help="Confirm that you want to delete this user's data.",
+        )
+
+    def handle(self, *args, **options):
+        identifier = options["user"]
+        if not options["yes"]:
+            raise CommandError("Refusing to delete user data without --yes")
+
+        try:
+            user = get_user_by_identifier(identifier)
+        except User.DoesNotExist as exc:
+            raise CommandError(f"User not found: {identifier}") from exc
+
+        try:
+            result = delete_user_data(user=user)
+        except PrivacyOperationError as exc:
+            raise CommandError(str(exc)) from exc
+
+        self.stdout.write(self.style.SUCCESS(f"Deleted user data for {identifier}."))
+        self.stdout.write(json.dumps(result, indent=2, cls=DjangoJSONEncoder))

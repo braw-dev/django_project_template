@@ -50,6 +50,7 @@ If you plan to use the built-in billing foundation in a new project, do this bef
 - [ ] Confirm your public pricing copy states that prices exclude VAT and final tax is calculated at checkout (the template default)
 - [ ] If using the newsletter, verify the double opt-in email flow, consent wording, and resend cooldown before sending marketing emails
 - [ ] Review and replace the seeded Privacy, Terms, Security, and Subprocessors placeholder pages before launch
+- [ ] Review the built-in privacy export/delete hooks and decide what billing, finance, and statutory-retention data must be kept or deleted for your product before using delete workflows in production
 
 For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 
@@ -58,6 +59,7 @@ For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 ### Development
 
 - **Security**: Custom User with MFA, Argon2id hashing, SRI, and team-scoped API tokens.
+- **Privacy ops**: Operator-run user data export/delete hooks exposed through Django admin actions and management commands.
 - **Configuration**: Typed `pydantic-settings` setup with fast failure on missing required config.
 - **Structure**: Team-first multi-tenancy with memberships, invitations, and tenant-scoped models.
 - **Stack**: Django + Django Ninja API, PostgreSQL/PostGIS via `DB_DEFAULT_URL`, SQLite in tests, and a Redis-compatible cache via `CACHE_DEFAULT_URL`.
@@ -109,6 +111,23 @@ See `{{ project_name }}/tenancy/README.md`, `{{ project_name }}/tokens/README.md
 ### Route Protection Policy
 
 Use middleware for request-wide context such as active team resolution. Use decorators or mixins for access policy such as login, MFA, or onboarding requirements. Avoid global middleware with growing exception lists for public marketing pages.
+
+### Privacy operations
+
+This template includes boring operator-run hooks for basic user privacy requests:
+
+- Django admin actions on the Users admin changelist to export or delete selected users' personal data
+- `uv run python manage.py export_user_data user@example.com`
+- `uv run python manage.py delete_user_data user@example.com --yes`
+
+The default scope is intentionally narrow:
+
+- exports direct user-linked data such as the user profile, verified email addresses, MFA authenticator types, newsletter signup state, team memberships/invitations, and API tokens created by that user
+- deletes the user plus a minimal set of directly linked records needed for a basic privacy workflow
+- refuses to delete users who still own teams
+- does **not** automatically delete billing, finance, or other records that may be subject to statutory retention or business record requirements
+
+Downstream projects should extend `{{ project_name }}/users/privacy.py` as they add app-specific personal data and should document their own retention rules before using deletion in production.
 
 ## Development Setup
 
