@@ -22,12 +22,6 @@ None.
 
 ## P1 — important for EU B2B readiness
 
-### 13. Add basic privacy operations hooks
-
-**Problem:** There is no obvious scaffold for user/customer data export, deletion, or retention handling.
-
-**Potential fix:** Add minimal management commands, admin actions, or service-layer hooks for export/delete requests. Start with boring operational workflows before building end-user self-service.
-
 ### 14. Audit support access and impersonation
 
 **Problem:** `django-hijack` is enabled, but there is no obvious customer-facing audit trail or internal audit log around support access.
