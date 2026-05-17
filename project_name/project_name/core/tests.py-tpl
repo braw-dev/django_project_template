@@ -252,6 +252,17 @@ class LocaleRenderingTestCase(TestCase):
 
         self.assertContains(response, "locale: 'de'")
 
+    @override_settings(
+        CHATWOOT_WEBSITE_TOKEN="test-token",
+        PLAUSIBLE_DOMAIN="example.com",
+        PLAUSIBLE_SCRIPT_HOST="https://plausible.example",
+    )
+    def test_marketing_base_includes_marketing_scripts(self):
+        response = self.client.get("/")
+
+        self.assertContains(response, "https://plausible.example/js/script.js")
+        self.assertContains(response, "window.chatwootSettings")
+
 
 class InternationalizationTestCase(TestCase):
     def test_newsletter_duplicate_error_is_marked_for_translation(self):

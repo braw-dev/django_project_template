@@ -78,6 +78,13 @@ For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 
 Marketing pages are intended to live in the same project as the app by default. Public pages stay public; app routes opt into protection explicitly with decorators such as `login_required` and `mfa_required`.
 
+The template now separates layouts more clearly:
+
+- `base.html` is the default marketing/public layout and includes the footer plus optional Plausible and Chatwoot snippets
+- `app_base.html` is for authenticated app pages and omits those marketing/support snippets by default
+
+When adding new authenticated product UI, prefer extending `app_base.html` unless the page genuinely needs marketing-site footer or third-party scripts.
+
 ### Business
 
 - **Payments**: Polar-first billing foundation behind a lightweight provider interface, with hosted checkout/portal flows, local customer/product/subscription/entitlement models, verified idempotent webhooks, a thin provider-backed pricing-page helper, locale-aware pricing display for EUR/CHF/GBP/USD, and a default European stance of showing prices excluding VAT with final tax calculated at checkout.
