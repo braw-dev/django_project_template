@@ -6,6 +6,7 @@ from typing import Any, cast
 
 from django.db import transaction
 from django.utils import timezone
+from standardwebhooks.webhooks import WebhookVerificationError as WebhookVerificationError
 
 from . import models, services
 
