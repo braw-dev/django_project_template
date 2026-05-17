@@ -22,12 +22,6 @@ None.
 
 ## P1 — important for EU B2B readiness
 
-### 12. Seed legal and trust pages that B2B buyers expect
-
-**Problem:** The footer references legal links, but the template does not yet provide a strong default set of trust-facing pages.
-
-**Potential fix:** Add starter pages for Privacy, Terms, Security, and Subprocessors using the existing pages app or static templates. Keep them editable and plain.
-
 ### 13. Add basic privacy operations hooks
 
 **Problem:** There is no obvious scaffold for user/customer data export, deletion, or retention handling.
