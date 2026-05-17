@@ -65,13 +65,20 @@
                         <h3 class="text-sm font-semibold leading-6 text-white">{% trans "Legal" %}</h3>
                         <ul role="list" class="mt-6 space-y-4">
                             <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Claim" %}</a>
+                                <a href="{% url 'pages:page_detail' slug='privacy' %}"
+                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Privacy" %}</a>
                             </li>
                             <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Privacy" %}</a>
+                                <a href="{% url 'pages:page_detail' slug='terms' %}"
+                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Terms" %}</a>
                             </li>
                             <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Terms" %}</a>
+                                <a href="{% url 'pages:page_detail' slug='security' %}"
+                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Security" %}</a>
+                            </li>
+                            <li>
+                                <a href="{% url 'pages:page_detail' slug='subprocessors' %}"
+                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Subprocessors" %}</a>
                             </li>
                         </ul>
                     </div>

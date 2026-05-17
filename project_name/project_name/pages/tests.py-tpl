@@ -5,6 +5,36 @@ from django.urls import reverse
 from .models import Page
 
 
+class SeededTrustPagesTestCase(TestCase):
+    def test_seeded_trust_pages_are_published_and_render(self):
+        expected_pages = {
+            "privacy": "Privacy",
+            "terms": "Terms",
+            "security": "Security",
+            "subprocessors": "Subprocessors",
+        }
+
+        for slug, title in expected_pages.items():
+            with self.subTest(slug=slug):
+                page = Page.objects.get(slug=slug)
+                self.assertTrue(page.is_published)
+                response = self.client.get(reverse("pages:page_detail", kwargs={"slug": slug}))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, title)
+                self.assertContains(response, "REPLACE_ME")
+
+    def test_homepage_footer_links_to_seeded_trust_pages(self):
+        response = self.client.get("/")
+
+        self.assertContains(response, reverse("pages:page_detail", kwargs={"slug": "privacy"}))
+        self.assertContains(response, reverse("pages:page_detail", kwargs={"slug": "terms"}))
+        self.assertContains(response, reverse("pages:page_detail", kwargs={"slug": "security"}))
+        self.assertContains(
+            response,
+            reverse("pages:page_detail", kwargs={"slug": "subprocessors"}),
+        )
+
+
 class PageMarkdownSanitizationTestCase(TestCase):
     def test_page_detail_sanitizes_rendered_markdown(self):
         Page.objects.create(
