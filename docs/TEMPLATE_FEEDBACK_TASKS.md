@@ -16,6 +16,10 @@ Perspectives - take these into account when making changes:
 2. A technical expert performing a Technical Due Diligence for a VC/investor or potential acquirer;
 3. A customer of one of the micro-SaaS products built with this template focused on data privacy, security, performance, end-user experience and customer satisfaction.
 
+## P0 — fix first
+
+None.
+
 ## P1 — important for EU B2B readiness
 
 ### 8. Replace hardcoded pricing page content with real provider-backed data
