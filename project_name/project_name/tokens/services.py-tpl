@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, cast
 
+from {{ project_name }}.core.audit import record_audit_event
+from {{ project_name }}.core.models import AuditEventType
 from {{ project_name }}.tenancy.permissions import user_has_team_perm
 
 from . import models
@@ -43,6 +45,18 @@ def create_api_token(
         scopes=scopes or [],
         expires_at=expires_at,
     )
+    record_audit_event(
+        event_type=AuditEventType.TOKENS_API_TOKEN_CREATED,
+        actor=user,
+        team=team,
+        metadata={
+            "token_id": token.token_id,
+            "name": token.name,
+            "environment": token.environment,
+            "scopes": token.scopes,
+            "expires_at": token.expires_at.isoformat() if token.expires_at else None,
+        },
+    )
     return TokenCreationResult(token=token, plaintext=plaintext)
 
 
@@ -54,3 +68,13 @@ def revoke_api_token(*, token: models.ApiToken, user) -> None:
     if token.revoked_at is not None:
         raise ValueError("This API token has already been revoked.")
     token.revoke(actor=user)
+    record_audit_event(
+        event_type=AuditEventType.TOKENS_API_TOKEN_REVOKED,
+        actor=user,
+        team=token_model.team,
+        metadata={
+            "token_id": token.token_id,
+            "name": token.name,
+            "environment": token.environment,
+        },
+    )

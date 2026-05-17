@@ -190,7 +190,9 @@ class AuditEventTestCase(TestCase):
             hijacked=self.subject,
         )
 
-        audit_event = core_models.AuditEvent.objects.get(event_type="support.hijack_started")
+        audit_event = core_models.AuditEvent.objects.get(
+            event_type=core_models.AuditEventType.SUPPORT_HIJACK_STARTED
+        )
         self.assertEqual(audit_event.actor, self.actor)
         self.assertEqual(audit_event.subject_user, self.subject)
         self.assertEqual(audit_event.subject_email, self.subject.email)
@@ -212,7 +214,9 @@ class AuditEventTestCase(TestCase):
             hijacked=self.subject,
         )
 
-        audit_event = core_models.AuditEvent.objects.get(event_type="support.hijack_ended")
+        audit_event = core_models.AuditEvent.objects.get(
+            event_type=core_models.AuditEventType.SUPPORT_HIJACK_ENDED
+        )
         self.assertEqual(audit_event.actor, self.actor)
         self.assertEqual(audit_event.subject_user, self.subject)
         self.assertEqual(audit_event.subject_email, self.subject.email)

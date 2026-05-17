@@ -148,8 +148,14 @@ Default events wired by the template:
 - `privacy.user_data_exported`
 - `privacy.user_data_deleted`
 - `privacy.user_data_delete_blocked`
+- `tokens.api_token_created`
+- `tokens.api_token_revoked`
+- `tenancy.team_created`
+- `tenancy.membership_added`
+- `tenancy.invitation_created`
+- `tenancy.invitation_accepted`
 
-The audit log is stored in the database, visible in Django admin, and intentionally read-only there. Extend it for other sensitive actions such as billing changes, token lifecycle events, or team membership changes as your product needs them.
+The audit log is stored in the database, visible in Django admin, and intentionally read-only there. The intended pattern is to record security-sensitive changes at the service-layer entry points that own the mutation. Extend it for other sensitive actions such as billing changes as your product needs them.
 
 ## Deployment default
 

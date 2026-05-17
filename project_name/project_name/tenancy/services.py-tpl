@@ -11,6 +11,9 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from {{ project_name }}.core.audit import record_audit_event
+from {{ project_name }}.core.models import AuditEventType
+
 from . import models, permissions
 
 INVITATION_TOKEN_SALT = "tenancy.team-invitation"
@@ -32,6 +35,13 @@ def create_team(*, name: str, slug: str, owner) -> models.Team:
         user=owner,
         role=models.TeamRole.OWNER,
     )
+    record_audit_event(
+        event_type=AuditEventType.TENANCY_TEAM_CREATED,
+        actor=owner,
+        subject_user=owner,
+        team=team,
+        metadata={"team_name": team.name, "team_slug": team.slug},
+    )
     return team
 
 
@@ -48,6 +58,13 @@ def add_user_to_team(*, actor, team: models.Team, user, role: str) -> models.Tea
     if not created:
         raise ValueError(_("User is already a member of this team."))
 
+    record_audit_event(
+        event_type=AuditEventType.TENANCY_MEMBERSHIP_ADDED,
+        actor=actor,
+        subject_user=user,
+        team=team,
+        metadata={"role": membership.role},
+    )
     return membership
 
 
@@ -72,13 +89,25 @@ def create_invitation(*, actor, team: models.Team, email: str, role: str) -> mod
     ).update(revoked_at=now)
 
     expiry_hours = getattr(settings, "TEAM_INVITATION_EXPIRY_HOURS", 168)
-    return TeamInvitationModel.all_objects.create(
+    invitation = TeamInvitationModel.all_objects.create(
         team=team,
         email=normalized_email,
         role=role,
         invited_by=actor,
         expires_at=now + timedelta(hours=expiry_hours),
     )
+    record_audit_event(
+        event_type=AuditEventType.TENANCY_INVITATION_CREATED,
+        actor=actor,
+        subject_email=invitation.email,
+        team=team,
+        metadata={
+            "role": invitation.role,
+            "invitation_id": str(invitation.id),
+            "expires_at": invitation.expires_at.isoformat(),
+        },
+    )
+    return invitation
 
 
 def get_invitation_token(invitation: models.TeamInvitation) -> str:
@@ -152,4 +181,15 @@ def accept_invitation_from_token(*, token: str, user) -> models.TeamMembership:
     )[0]
     invitation.accepted_at = timezone.now()
     invitation.save(update_fields=["accepted_at", "updated_at"])
+    record_audit_event(
+        event_type=AuditEventType.TENANCY_INVITATION_ACCEPTED,
+        actor=user,
+        subject_user=user,
+        team=invitation.team,
+        metadata={
+            "role": membership.role,
+            "invitation_id": str(invitation.id),
+            "invited_by": invitation.invited_by.email if invitation.invited_by else "",
+        },
+    )
     return membership

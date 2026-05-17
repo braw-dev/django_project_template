@@ -6,6 +6,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+from {{ project_name }}.core.models import AuditEvent, AuditEventType
 from {{ project_name }}.tenancy import models as tenancy_models
 from {{ project_name }}.tenancy import services as tenancy_services
 
@@ -52,12 +53,22 @@ class TestTokenServices:
         assert result.plaintext.startswith(f"{models.TOKEN_PREFIX}_{models.TOKEN_ENV_LIVE}_")
         assert result.token.secret_hash != result.plaintext
 
+        audit_event = AuditEvent.objects.get(event_type=AuditEventType.TOKENS_API_TOKEN_CREATED)
+        assert audit_event.actor == owner
+        assert audit_event.team == team
+        assert audit_event.metadata["token_id"] == result.token.token_id
+
     def test_revoke_token(self, team, owner):
         result = services.create_api_token(team=team, user=owner, name="CI")
         services.revoke_api_token(token=result.token, user=owner)
 
         result.token.refresh_from_db()
         assert result.token.revoked_at is not None
+
+        audit_event = AuditEvent.objects.get(event_type=AuditEventType.TOKENS_API_TOKEN_REVOKED)
+        assert audit_event.actor == owner
+        assert audit_event.team == team
+        assert audit_event.metadata["token_id"] == result.token.token_id
 
     def test_non_admin_cannot_create_token(self, team, outsider):
         with pytest.raises(ValueError, match="permission"):

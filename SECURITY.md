@@ -191,7 +191,16 @@ The same audit trail also records the built-in privacy operations:
 - `privacy.user_data_deleted`
 - `privacy.user_data_delete_blocked`
 
-The audit log is intentionally read-only in Django admin. It is meant to be extended for other security-sensitive actions as generated projects grow.
+And the template now uses the same pattern for other security-sensitive service-layer actions:
+
+- `tokens.api_token_created`
+- `tokens.api_token_revoked`
+- `tenancy.team_created`
+- `tenancy.membership_added`
+- `tenancy.invitation_created`
+- `tenancy.invitation_accepted`
+
+The audit log is intentionally read-only in Django admin. The preferred pattern is to write audit rows inside the service-layer functions that own the change, so future security-sensitive mutations follow the same shape.
 
 ## Billing security
 

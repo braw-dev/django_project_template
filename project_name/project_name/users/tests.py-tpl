@@ -12,7 +12,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from {{ project_name }}.core.models import AuditEvent, NewsletterSignup
+from {{ project_name }}.core.models import AuditEvent, AuditEventType, NewsletterSignup
 from {{ project_name }}.tenancy import services as tenancy_services
 from {{ project_name }}.tenancy.models import TeamInvitation, TeamMembership, TeamRole
 from {{ project_name }}.tokens.models import ApiToken, hash_token_secret
@@ -108,7 +108,7 @@ class PrivacyOperationsTest(TestCase):
         self.assertEqual(payload["team_invitations"][0]["team_slug"], self.team.slug)
         self.assertEqual(payload["api_tokens_created"][0]["token_id"], self.created_token.token_id)
 
-        audit_event = AuditEvent.objects.get(event_type="privacy.user_data_exported")
+        audit_event = AuditEvent.objects.get(event_type=AuditEventType.PRIVACY_USER_DATA_EXPORTED)
         self.assertEqual(audit_event.actor, self.admin_user)
         self.assertEqual(audit_event.subject_user, self.member)
         self.assertEqual(audit_event.subject_email, self.member.email)
@@ -132,7 +132,7 @@ class PrivacyOperationsTest(TestCase):
         self.revoked_token.refresh_from_db()
         self.assertIsNone(self.revoked_token.revoked_by)
 
-        audit_event = AuditEvent.objects.get(event_type="privacy.user_data_deleted")
+        audit_event = AuditEvent.objects.get(event_type=AuditEventType.PRIVACY_USER_DATA_DELETED)
         self.assertEqual(audit_event.actor, self.admin_user)
         self.assertIsNone(audit_event.subject_user)
         self.assertEqual(audit_event.subject_email, self.member.email)
@@ -146,7 +146,9 @@ class PrivacyOperationsTest(TestCase):
                 metadata={"origin": "test"},
             )
 
-        audit_event = AuditEvent.objects.get(event_type="privacy.user_data_delete_blocked")
+        audit_event = AuditEvent.objects.get(
+            event_type=AuditEventType.PRIVACY_USER_DATA_DELETE_BLOCKED
+        )
         self.assertEqual(audit_event.actor, self.admin_user)
         self.assertEqual(audit_event.subject_user, self.owner)
         self.assertEqual(audit_event.metadata["reason"], "user_still_owns_teams")
@@ -159,7 +161,7 @@ class PrivacyOperationsTest(TestCase):
         payload = json.loads(stdout.getvalue())
         self.assertEqual(payload["user"]["email"], self.member.email)
 
-        audit_event = AuditEvent.objects.get(event_type="privacy.user_data_exported")
+        audit_event = AuditEvent.objects.get(event_type=AuditEventType.PRIVACY_USER_DATA_EXPORTED)
         self.assertEqual(audit_event.metadata["origin"], "management_command")
         self.assertEqual(audit_event.metadata["command"], "export_user_data")
 
@@ -175,7 +177,7 @@ class PrivacyOperationsTest(TestCase):
         self.assertFalse(User.objects.filter(pk=self.member.pk).exists())
         self.assertIn("Deleted user data for member@example.com.", stdout.getvalue())
 
-        audit_event = AuditEvent.objects.get(event_type="privacy.user_data_deleted")
+        audit_event = AuditEvent.objects.get(event_type=AuditEventType.PRIVACY_USER_DATA_DELETED)
         self.assertEqual(audit_event.metadata["origin"], "management_command")
         self.assertEqual(audit_event.metadata["command"], "delete_user_data")
 
@@ -210,7 +212,7 @@ class PrivacyOperationsTest(TestCase):
             response["Content-Disposition"],
         )
 
-        audit_event = AuditEvent.objects.get(event_type="privacy.user_data_exported")
+        audit_event = AuditEvent.objects.get(event_type=AuditEventType.PRIVACY_USER_DATA_EXPORTED)
         self.assertEqual(audit_event.actor, self.admin_user)
         self.assertEqual(audit_event.subject_user, self.member)
         self.assertEqual(audit_event.metadata["origin"], "django_admin")

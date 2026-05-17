@@ -6,7 +6,7 @@ from typing import Any
 
 from django.http import HttpRequest
 
-from .models import AuditEvent
+from .models import AuditEvent, AuditEventType
 
 
 def _get_request_ip_address(request: HttpRequest | None) -> str:
@@ -22,9 +22,10 @@ def _get_request_ip_address(request: HttpRequest | None) -> str:
 
 def record_audit_event(
     *,
-    event_type: str,
+    event_type: str | AuditEventType,
     actor=None,
     subject_user=None,
+    subject_email: str = "",
     team=None,
     request: HttpRequest | None = None,
     metadata: dict[str, Any] | None = None,
@@ -35,7 +36,7 @@ def record_audit_event(
         actor=actor,
         actor_email=getattr(actor, "email", ""),
         subject_user=subject_user,
-        subject_email=getattr(subject_user, "email", ""),
+        subject_email=subject_email or getattr(subject_user, "email", ""),
         team=team,
         ip_address=_get_request_ip_address(request),
         user_agent=request.META.get("HTTP_USER_AGENT", "") if request is not None else "",

@@ -10,6 +10,7 @@ from django.test import RequestFactory
 from django.utils import timezone
 
 from {{ project_name }}.billing import models as billing_models
+from {{ project_name }}.core.models import AuditEvent, AuditEventType
 from {{ project_name }}.tenancy import context, middleware, models, permissions, services
 
 User = get_user_model()
@@ -48,6 +49,12 @@ class TestTeamServices:
         membership = models.TeamMembership.all_objects.get(team=team, user=owner)
         assert membership.role == models.TeamRole.OWNER
 
+        audit_event = AuditEvent.objects.get(event_type=AuditEventType.TENANCY_TEAM_CREATED)
+        assert audit_event.actor == owner
+        assert audit_event.subject_user == owner
+        assert audit_event.team == team
+        assert audit_event.metadata["team_slug"] == team.slug
+
     def test_create_and_accept_invitation(self, owner, outsider, team):
         invitation = services.create_invitation(
             actor=owner,
@@ -55,6 +62,12 @@ class TestTeamServices:
             email=outsider.email,
             role=models.TeamRole.MEMBER,
         )
+
+        created_event = AuditEvent.objects.get(event_type=AuditEventType.TENANCY_INVITATION_CREATED)
+        assert created_event.actor == owner
+        assert created_event.subject_email == outsider.email
+        assert created_event.team == team
+        assert created_event.metadata["invitation_id"] == str(invitation.id)
 
         membership = services.accept_invitation_from_token(
             token=services.get_invitation_token(invitation),
@@ -65,6 +78,14 @@ class TestTeamServices:
         assert membership.team == team
         assert membership.user == outsider
         assert invitation.accepted_at is not None
+
+        accepted_event = AuditEvent.objects.get(
+            event_type=AuditEventType.TENANCY_INVITATION_ACCEPTED
+        )
+        assert accepted_event.actor == outsider
+        assert accepted_event.subject_user == outsider
+        assert accepted_event.team == team
+        assert accepted_event.metadata["invitation_id"] == str(invitation.id)
 
     def test_accept_invitation_rejects_wrong_email(self, owner, outsider, team):
         invitation = services.create_invitation(
@@ -79,6 +100,20 @@ class TestTeamServices:
                 token=services.get_invitation_token(invitation),
                 user=outsider,
             )
+
+    def test_add_user_to_team_records_audit_event(self, owner, outsider, team):
+        membership = services.add_user_to_team(
+            actor=owner,
+            team=team,
+            user=outsider,
+            role=models.TeamRole.ADMIN,
+        )
+
+        audit_event = AuditEvent.objects.get(event_type=AuditEventType.TENANCY_MEMBERSHIP_ADDED)
+        assert audit_event.actor == owner
+        assert audit_event.subject_user == outsider
+        assert audit_event.team == team
+        assert audit_event.metadata["role"] == membership.role
 
     def test_send_invitation_email(self, owner, team, rf, mailoutbox):
         invitation = services.create_invitation(

@@ -2,12 +2,13 @@ from django.dispatch import receiver
 from hijack.signals import hijack_ended, hijack_started
 
 from .audit import record_audit_event
+from .models import AuditEventType
 
 
 @receiver(hijack_started)
 def record_hijack_started(sender, request, hijacker, hijacked, **kwargs):
     record_audit_event(
-        event_type="support.hijack_started",
+        event_type=AuditEventType.SUPPORT_HIJACK_STARTED,
         actor=hijacker,
         subject_user=hijacked,
         request=request,
@@ -18,7 +19,7 @@ def record_hijack_started(sender, request, hijacker, hijacked, **kwargs):
 @receiver(hijack_ended)
 def record_hijack_ended(sender, request, hijacker, hijacked, **kwargs):
     record_audit_event(
-        event_type="support.hijack_ended",
+        event_type=AuditEventType.SUPPORT_HIJACK_ENDED,
         actor=hijacker,
         subject_user=hijacked,
         request=request,
