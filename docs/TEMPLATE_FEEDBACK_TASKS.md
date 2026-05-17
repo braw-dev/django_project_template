@@ -26,12 +26,6 @@ None.
 
 ## P2 — important for product quality and repeatability
 
-### 18. Add a basic audit log pattern for security-sensitive actions
-
-**Problem:** The template has good auth and tenancy primitives, but not a reusable audit trail pattern.
-
-**Potential fix:** Add a minimal app or model pattern for recording security-sensitive events such as billing changes, token creation, team membership changes, and impersonation.
-
 ### 19. Finish observability story or reduce the claim
 
 **Problem:** The docs talk about monitoring and metrics more strongly than the implementation supports.
