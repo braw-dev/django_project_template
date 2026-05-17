@@ -22,12 +22,6 @@ None.
 
 ## P1 — important for EU B2B readiness
 
-### 8. Replace hardcoded pricing page content with real provider-backed data
-
-**Problem:** The pricing page template is still mostly static placeholder copy and USD-style formatting.
-
-**Potential fix:** Render pricing from Polar-backed selectors with a small formatter layer. Prefer a thin mapping function over a large pricing abstraction.
-
 ### 9. Add locale-aware currency formatting
 
 **Problem:** Price formatting currently assumes dollars and simple string interpolation.
