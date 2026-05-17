@@ -14,6 +14,25 @@ Included by default:
 - **Webhook processing**: signature verification, duplicate-event short-circuiting, and local billing sync
 - **Selectors**: helpers for active subscription and entitlement checks
 
+## Billing vs accounting source of truth
+
+The template treats billing and accounting as related but different concerns.
+
+Use these sources of truth by default:
+
+- **Polar** for invoices, receipts, credit notes, refunds, subscription charges, tax handling, and provider-issued billing documents
+- **your bank account or payout statements** for cash actually received, provider fees, and reconciliation
+- **your Django database** for operational product state such as which team has an active subscription, which entitlements are active, and which provider IDs are linked to a local team
+
+This means the local billing models in this app are intentionally **not** an accounting ledger. They are for app behaviour and support workflows:
+
+- gating paid features from local subscription state
+- rendering billing status in the product UI
+- linking teams to provider-side customer and subscription IDs
+- helping debug webhook processing and support issues
+
+If you later need bookkeeping exports into a specific accounting tool, prefer exporting from Polar first and only add local project-specific reconciliation helpers if they clearly solve a real workflow.
+
 ## Configuration
 
 Add these environment variables to your `.env`:
@@ -90,6 +109,19 @@ Use local selectors such as `has_active_subscription(...)`, `get_active_subscrip
 
 Avoid making live provider API calls during normal feature checks.
 
+### 9. Decide your bookkeeping workflow
+
+Before launch, decide how you will reconcile money for this product.
+
+The boring default is:
+
+1. export invoices, refunds, and tax documents from Polar
+2. use Polar as the financial source of truth for what was billed
+3. use bank or payout statements as the source of truth for what cash actually arrived and what fees were deducted
+4. use local Django billing rows only for access control, support, and troubleshooting
+
+Do not assume that `Subscription` or `WebhookEvent` rows are enough to satisfy accounting, tax filing, or end-of-year bookkeeping requirements.
+
 ## European tax and billing display default
 
 The template takes a conservative default stance for EU-friendly B2B billing:
@@ -105,7 +137,8 @@ The template takes a conservative default stance for EU-friendly B2B billing:
 - if a business buyer is VAT-exempt or reverse charge applies, rely on Polar to handle that during checkout
 - do not try to hardcode country-specific VAT rules into templates or selectors
 - do not scaffold manual invoice issuance or local invoice reconciliation by default
-- if a generated project later needs offline invoicing or purchase-order workflows, add that as an explicit project-level extension rather than changing the default template flow
+- do not treat the local billing tables as a finance ledger for bookkeeping or statutory reporting
+- if a generated project later needs offline invoicing, purchase-order workflows, or accounting-tool exports, add that as an explicit project-level extension rather than changing the default template flow
 
 ## Usage
 

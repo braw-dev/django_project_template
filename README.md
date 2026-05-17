@@ -53,6 +53,7 @@ If you plan to use the built-in billing foundation in a new project, do this bef
 - [ ] Review the seeded support FAQs for hosting, encryption, backups, MFA, support access, and uptime/performance expectations before sharing the app with customers
 - [ ] Fill in the Subprocessors page with your real providers, hosting regions, data locations, and customer-notification process before customer review or launch
 - [ ] Review the built-in privacy export/delete hooks and decide what billing, finance, and statutory-retention data must be kept or deleted for your product before using delete workflows in production
+- [ ] Decide how bookkeeping will work: treat Polar as the source of truth for invoices, receipts, refunds, and tax documents; treat your bank or payout account as the source of truth for cash received; do not treat the local Django billing tables as your accounting ledger
 
 For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 
@@ -90,7 +91,7 @@ When adding new authenticated product UI, prefer extending `app_base.html` unles
 
 ### Business
 
-- **Payments**: Polar-first billing foundation behind a lightweight provider interface, with hosted checkout/portal flows, local customer/product/subscription/entitlement models, verified idempotent webhooks, a thin provider-backed pricing-page helper, locale-aware pricing display for EUR/CHF/GBP/USD, and a default European stance of showing prices excluding VAT with final tax calculated at checkout.
+- **Payments**: Polar-first billing foundation behind a lightweight provider interface, with hosted checkout/portal flows, local customer/product/subscription/entitlement models, verified idempotent webhooks, a thin provider-backed pricing-page helper, locale-aware pricing display for EUR/CHF/GBP/USD, and a default European stance of showing prices excluding VAT with final tax calculated at checkout. The local billing tables are for product access and support workflows, not a substitute for provider-issued billing documents or accounting records.
 - **i18n**: Django gettext workflow plus an AI-assisted helper for filling untranslated `.po` entries.
 - **Deployment**: Production-oriented container scaffolding via Dockerfiles and Compose manifests, with an opinionated docs default of Hetzner VPS + rootless Podman + `systemd --user` + root-managed Caddy + Bunny.net; final deployment wiring is still project-specific.
 - **Observability**: Sentry for exceptions, health checks, and structured request-performance logs that work well with Grafana Alloy + Grafana Cloud.
@@ -160,6 +161,23 @@ To embed featured FAQs on another template, pass `featured_faqs` from the view c
 ```
 
 The template intentionally keeps this simple: no FAQ model, no tags, no docs CMS, and no separate search index by default.
+
+### Billing and bookkeeping stance
+
+The template takes a deliberately boring stance for solo-operator bookkeeping:
+
+- **Polar is the source of truth** for invoices, receipts, credit notes, refunds, subscription charges, and tax documents
+- **your bank account or payout statement is the source of truth** for cash actually received and fees actually paid
+- **your Django database is the source of truth** for product access state such as which team has an active subscription or entitlement
+
+That means the local `billing.Customer`, `billing.Product`, `billing.Subscription`, `billing.Entitlement`, and `billing.WebhookEvent` records are primarily operational. They exist so your app can gate features, show billing status, and help with support/debugging. They are not intended to be a full accounting ledger.
+
+Minimum operator workflow for bookkeeping:
+
+1. export invoices, refunds, and tax documents from Polar
+2. reconcile payouts and fees against your bank account or payout statements
+3. use the local Django billing records only to answer support questions and verify access state
+4. if your accountant or bookkeeping tool needs structured imports, build that as a project-level extension from Polar exports rather than making Django the billing source of truth
 
 ### Privacy operations
 
