@@ -26,18 +26,6 @@ None.
 
 ## P2 — important for product quality and repeatability
 
-### 15. Separate marketing and app layouts more clearly
-
-**Problem:** analytics and support scripts are injected globally from `base.html`, which is not ideal for authenticated app pages.
-
-**Potential fix:** Split into a marketing base template and an app base template. Only load third-party scripts where they are needed.
-
-### 16. Tighten sovereign deployment guidance
-
-**Problem:** The repo direction is sovereignty-friendly, but the deployment guidance is still too generic for EU-focused use.
-
-**Potential fix:** Document one opinionated EU deployment path using boring providers and region-local services. Prefer a clear default over many options.
-
 ### 17. Add a simple subprocessor and hosting inventory
 
 **Problem:** A business customer will want a clear list of subprocessors and hosting locations.
