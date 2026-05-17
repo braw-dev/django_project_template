@@ -26,12 +26,6 @@ None.
 
 ## P2 — important for product quality and repeatability
 
-### 17. Add a simple subprocessor and hosting inventory
-
-**Problem:** A business customer will want a clear list of subprocessors and hosting locations.
-
-**Potential fix:** Add a markdown template listing service, purpose, region, and optional replacement. Keep it manual and easy to update.
-
 ### 18. Add a basic audit log pattern for security-sensitive actions
 
 **Problem:** The template has good auth and tenancy primitives, but not a reusable audit trail pattern.
