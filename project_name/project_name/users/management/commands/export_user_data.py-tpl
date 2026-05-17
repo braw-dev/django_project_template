@@ -21,4 +21,16 @@ class Command(BaseCommand):
         except User.DoesNotExist as exc:
             raise CommandError(f"User not found: {identifier}") from exc
 
-        self.stdout.write(json.dumps(export_user_data(user=user), indent=2, cls=DjangoJSONEncoder))
+        self.stdout.write(
+            json.dumps(
+                export_user_data(
+                    user=user,
+                    metadata={
+                        "origin": "management_command",
+                        "command": "export_user_data",
+                    },
+                ),
+                indent=2,
+                cls=DjangoJSONEncoder,
+            )
+        )

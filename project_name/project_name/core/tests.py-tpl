@@ -7,17 +7,25 @@ from unittest.mock import patch
 
 import polib
 from django.conf import settings
+from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import Promise
 from django.utils.html import escape
+from hijack.signals import hijack_ended, hijack_started
+
+from {{ project_name }}.tenancy import services as tenancy_services
 
 from . import models as core_models
+from .admin import AuditEventAdmin
 from .forms import NewsletterSignupForm
 from .newsletter import get_newsletter_confirmation_token
+
+User = get_user_model()
 
 
 class NewsletterTestCase(TestCase):
@@ -140,6 +148,75 @@ class NewsletterTestCase(TestCase):
         self.assertIsNone(signup.confirmation_email_sent_at)
         self.assertIsNone(signup.unsubscribed_at)
         self.assertEqual(signup.unsubscribe_reason, "")
+
+
+class AuditEventTestCase(TestCase):
+    def setUp(self):
+        self.request_factory = RequestFactory()
+        self.actor = User.objects.create_superuser(email="staff@example.com", password="password")
+        self.subject = User.objects.create_user(email="customer@example.com", password="password")
+        self.team = tenancy_services.create_team(name="Acme", slug="acme", owner=self.subject)
+
+    def test_audit_event_is_append_only(self):
+        audit_event = core_models.AuditEvent.objects.create(event_type="test.event")
+        audit_event.event_type = "test.event.changed"
+
+        with self.assertRaisesMessage(RuntimeError, "append-only"):
+            audit_event.save()
+
+        with self.assertRaisesMessage(RuntimeError, "append-only"):
+            audit_event.delete()
+
+    def test_audit_event_admin_is_read_only(self):
+        request = self.request_factory.get("/admin/core/auditevent/")
+        request.user = self.actor
+        audit_admin = AuditEventAdmin(core_models.AuditEvent, admin.site)
+
+        self.assertFalse(audit_admin.has_add_permission(request))
+        self.assertFalse(audit_admin.has_change_permission(request))
+        self.assertFalse(audit_admin.has_delete_permission(request))
+
+    def test_hijack_started_signal_creates_audit_event(self):
+        request = self.request_factory.post(
+            "/hijack/acquire/",
+            REMOTE_ADDR="127.0.0.1",
+            HTTP_USER_AGENT="test-agent",
+        )
+
+        hijack_started.send(
+            sender=None,
+            request=request,
+            hijacker=self.actor,
+            hijacked=self.subject,
+        )
+
+        audit_event = core_models.AuditEvent.objects.get(event_type="support.hijack_started")
+        self.assertEqual(audit_event.actor, self.actor)
+        self.assertEqual(audit_event.subject_user, self.subject)
+        self.assertEqual(audit_event.subject_email, self.subject.email)
+        self.assertEqual(audit_event.ip_address, "127.0.0.1")
+        self.assertEqual(audit_event.user_agent, "test-agent")
+        self.assertEqual(audit_event.metadata["origin"], "django_hijack")
+
+    def test_hijack_ended_signal_creates_audit_event(self):
+        request = self.request_factory.post(
+            "/hijack/release/",
+            REMOTE_ADDR="127.0.0.1",
+            HTTP_USER_AGENT="test-agent",
+        )
+
+        hijack_ended.send(
+            sender=None,
+            request=request,
+            hijacker=self.actor,
+            hijacked=self.subject,
+        )
+
+        audit_event = core_models.AuditEvent.objects.get(event_type="support.hijack_ended")
+        self.assertEqual(audit_event.actor, self.actor)
+        self.assertEqual(audit_event.subject_user, self.subject)
+        self.assertEqual(audit_event.subject_email, self.subject.email)
+        self.assertEqual(audit_event.metadata["origin"], "django_hijack")
 
 
 class LanguageSwitchingTestCase(TestCase):

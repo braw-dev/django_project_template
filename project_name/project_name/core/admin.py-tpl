@@ -15,3 +15,38 @@ class NewsletterSignupAdmin(admin.ModelAdmin):
     )
     search_fields = ("email", "unsubscribe_reason")
     readonly_fields = ("created_at",)
+
+
+@admin.register(models.AuditEvent)
+class AuditEventAdmin(admin.ModelAdmin):
+    list_display = (
+        "event_type",
+        "actor_email",
+        "subject_email",
+        "team",
+        "ip_address",
+        "created_at",
+    )
+    list_filter = ("event_type", "created_at")
+    search_fields = ("event_type", "actor_email", "subject_email", "ip_address", "user_agent")
+    readonly_fields = (
+        "event_type",
+        "actor",
+        "actor_email",
+        "subject_user",
+        "subject_email",
+        "team",
+        "ip_address",
+        "user_agent",
+        "metadata",
+        "created_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

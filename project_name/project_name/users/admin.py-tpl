@@ -58,7 +58,15 @@ class UserAdmin(auth_admin.UserAdmin):
 
     @admin.action(description=_("Export selected users' personal data"))
     def export_selected_users_data(self, request, queryset):
-        exported_users = [export_user_data(user=user) for user in queryset.order_by("email")]
+        exported_users = [
+            export_user_data(
+                user=user,
+                actor=request.user,
+                request=request,
+                metadata={"origin": "django_admin"},
+            )
+            for user in queryset.order_by("email")
+        ]
         payload = exported_users[0] if len(exported_users) == 1 else exported_users
 
         date_prefix = timezone.now().strftime("%Y%m%d")
@@ -89,7 +97,12 @@ class UserAdmin(auth_admin.UserAdmin):
 
         for user in queryset.order_by("email"):
             try:
-                delete_user_data(user=user)
+                delete_user_data(
+                    user=user,
+                    actor=request.user,
+                    request=request,
+                    metadata={"origin": "django_admin"},
+                )
             except PrivacyOperationError as exc:
                 self.message_user(request, str(exc), level=messages.ERROR)
                 continue

@@ -1,0 +1,26 @@
+from django.dispatch import receiver
+from hijack.signals import hijack_ended, hijack_started
+
+from .audit import record_audit_event
+
+
+@receiver(hijack_started)
+def record_hijack_started(sender, request, hijacker, hijacked, **kwargs):
+    record_audit_event(
+        event_type="support.hijack_started",
+        actor=hijacker,
+        subject_user=hijacked,
+        request=request,
+        metadata={"origin": "django_hijack"},
+    )
+
+
+@receiver(hijack_ended)
+def record_hijack_ended(sender, request, hijacker, hijacked, **kwargs):
+    record_audit_event(
+        event_type="support.hijack_ended",
+        actor=hijacker,
+        subject_user=hijacked,
+        request=request,
+        metadata={"origin": "django_hijack"},
+    )

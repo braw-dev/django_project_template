@@ -33,7 +33,13 @@ class Command(BaseCommand):
             raise CommandError(f"User not found: {identifier}") from exc
 
         try:
-            result = delete_user_data(user=user)
+            result = delete_user_data(
+                user=user,
+                metadata={
+                    "origin": "management_command",
+                    "command": "delete_user_data",
+                },
+            )
         except PrivacyOperationError as exc:
             raise CommandError(str(exc)) from exc
 

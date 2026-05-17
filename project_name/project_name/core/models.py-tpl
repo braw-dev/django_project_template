@@ -4,6 +4,7 @@ import unicodedata
 from datetime import date
 from typing import Any
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -82,3 +83,56 @@ class NewsletterSignup(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class AuditEvent(models.Model):
+    """Append-only audit trail for security-sensitive actions."""
+
+    event_type = models.CharField(max_length=100, db_index=True)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_events_as_actor",
+    )
+    actor_email = models.EmailField(blank=True)
+    subject_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_events_as_subject",
+    )
+    subject_email = models.EmailField(blank=True)
+    team = models.ForeignKey(
+        "tenancy.Team",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_events",
+    )
+    ip_address = models.GenericIPAddressField(null=True, blank=True, unpack_ipv4=True)
+    user_agent = models.TextField(blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["event_type", "created_at"]),
+            models.Index(fields=["actor", "created_at"]),
+            models.Index(fields=["subject_user", "created_at"]),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise RuntimeError("AuditEvent is append-only and cannot be modified.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise RuntimeError("AuditEvent is append-only and cannot be deleted.")
+
+    def __str__(self):
+        created_at = self.created_at.isoformat() if self.created_at else "pending"
+        return f"{self.event_type} @ {created_at}"

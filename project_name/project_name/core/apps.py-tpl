@@ -10,6 +10,8 @@ class CoreConfig(AppConfig):
     name = "{{ project_name }}.core"
 
     def ready(self):
+        from . import signals  # noqa: F401
+
         json_file_handler = logging.getHandlerByName("json_file")
         if json_file_handler:
             listener = QueueListener(

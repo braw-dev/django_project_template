@@ -15,6 +15,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
+from {{ project_name }}.core.audit import record_audit_event
 from {{ project_name }}.core.models import NewsletterSignup
 from {{ project_name }}.tenancy.models import TeamInvitation, TeamMembership, TeamRole
 from {{ project_name }}.tokens.models import ApiToken
@@ -34,7 +35,13 @@ def get_user_by_identifier(identifier: str):
     return User.objects.get(pk=identifier)
 
 
-def export_user_data(*, user) -> dict[str, Any]:
+def export_user_data(
+    *,
+    user,
+    actor=None,
+    request=None,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Return a basic JSON-serialisable export of user-linked personal data."""
     email_addresses = EmailAddress.objects.filter(user=user).order_by("email")
     authenticators = Authenticator.objects.filter(user=user).order_by("type")
@@ -49,7 +56,7 @@ def export_user_data(*, user) -> dict[str, Any]:
         .order_by("team__slug", "name")
     )
 
-    return {
+    export_payload = {
         "schema_version": 1,
         "exported_at": timezone.now(),
         "user": {
@@ -130,9 +137,23 @@ def export_user_data(*, user) -> dict[str, Any]:
         ],
     }
 
+    record_audit_event(
+        event_type="privacy.user_data_exported",
+        actor=actor,
+        subject_user=user,
+        request=request,
+        metadata=metadata,
+    )
+    return export_payload
 
-@transaction.atomic
-def delete_user_data(*, user) -> dict[str, Any]:
+
+def delete_user_data(
+    *,
+    user,
+    actor=None,
+    request=None,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Delete a user and a minimal set of directly linked personal data.
 
     This intentionally does not delete team-owned billing or finance records.
@@ -143,27 +164,55 @@ def delete_user_data(*, user) -> dict[str, Any]:
         role=TeamRole.OWNER,
     )
     if owner_memberships.exists():
-        owned_team_slugs = ", ".join(owner_memberships.values_list("team__slug", flat=True))
+        owned_team_slugs = list(owner_memberships.values_list("team__slug", flat=True))
+        record_audit_event(
+            event_type="privacy.user_data_delete_blocked",
+            actor=actor,
+            subject_user=user,
+            request=request,
+            metadata={
+                **(metadata or {}),
+                "reason": "user_still_owns_teams",
+                "owned_team_slugs": owned_team_slugs,
+            },
+        )
         raise PrivacyOperationError(
-            f"Cannot delete user {user.email} while they still own teams: {owned_team_slugs}. "
+            "Cannot delete user "
+            f"{user.email} while they still own teams: {', '.join(owned_team_slugs)}. "
             "Transfer ownership or delete those teams first."
         )
 
-    newsletter_signups_deleted, _ = NewsletterSignup.objects.filter(
-        email__iexact=user.email
-    ).delete()
-    api_tokens_revoked_by_cleared = ApiToken.all_objects.filter(revoked_by=user).update(
-        revoked_by=None
-    )
-    api_tokens_created_deleted, _ = ApiToken.all_objects.filter(created_by=user).delete()
+    with transaction.atomic():
+        newsletter_signups_deleted, _ = NewsletterSignup.objects.filter(
+            email__iexact=user.email
+        ).delete()
+        api_tokens_revoked_by_cleared = ApiToken.all_objects.filter(revoked_by=user).update(
+            revoked_by=None
+        )
+        api_tokens_created_deleted, _ = ApiToken.all_objects.filter(created_by=user).delete()
 
-    user_pk = user.pk
-    deleted_rows, _ = user.delete()
+        result = {
+            "user_id": user.pk,
+            "newsletter_signups_deleted": newsletter_signups_deleted,
+            "api_tokens_created_deleted": api_tokens_created_deleted,
+            "api_tokens_revoked_by_cleared": api_tokens_revoked_by_cleared,
+            "deleted_rows": 0,
+        }
 
-    return {
-        "user_id": user_pk,
-        "newsletter_signups_deleted": newsletter_signups_deleted,
-        "api_tokens_created_deleted": api_tokens_created_deleted,
-        "api_tokens_revoked_by_cleared": api_tokens_revoked_by_cleared,
-        "deleted_rows": deleted_rows,
-    }
+        record_audit_event(
+            event_type="privacy.user_data_deleted",
+            actor=actor,
+            subject_user=user,
+            request=request,
+            metadata={
+                **(metadata or {}),
+                "user_id": user.pk,
+                "newsletter_signups_deleted": newsletter_signups_deleted,
+                "api_tokens_created_deleted": api_tokens_created_deleted,
+                "api_tokens_revoked_by_cleared": api_tokens_revoked_by_cleared,
+            },
+        )
+
+        deleted_rows, _ = user.delete()
+        result["deleted_rows"] = deleted_rows
+        return result

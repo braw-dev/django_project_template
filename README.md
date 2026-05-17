@@ -58,7 +58,7 @@ For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 
 ### Development
 
-- **Security**: Custom User with MFA, Argon2id hashing, SRI, and team-scoped API tokens.
+- **Security**: Custom User with MFA, Argon2id hashing, SRI, team-scoped API tokens, and an append-only audit trail for sensitive operator actions.
 - **Privacy ops**: Operator-run user data export/delete hooks exposed through Django admin actions and management commands.
 - **Configuration**: Typed `pydantic-settings` setup with fast failure on missing required config.
 - **Structure**: Team-first multi-tenancy with memberships, invitations, and tenant-scoped models.
@@ -128,6 +128,20 @@ The default scope is intentionally narrow:
 - does **not** automatically delete billing, finance, or other records that may be subject to statutory retention or business record requirements
 
 Downstream projects should extend `{{ project_name }}/users/privacy.py` as they add app-specific personal data and should document their own retention rules before using deletion in production.
+
+### Audit trail
+
+This template includes an append-only `AuditEvent` model for sensitive operator actions.
+
+Default events wired by the template:
+
+- `support.hijack_started`
+- `support.hijack_ended`
+- `privacy.user_data_exported`
+- `privacy.user_data_deleted`
+- `privacy.user_data_delete_blocked`
+
+The audit log is stored in the database, visible in Django admin, and intentionally read-only there. Extend it for other sensitive actions such as billing changes, token lifecycle events, or team membership changes as your product needs them.
 
 ## Development Setup
 

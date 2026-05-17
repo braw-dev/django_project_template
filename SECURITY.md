@@ -176,7 +176,22 @@ If using PgBouncer transaction pooling, prefer explicit transaction scoping with
 
 `django-hijack` is enabled in the template and currently uses `hijack.permissions.superusers_and_staff`.
 
-That means staff users and superusers can impersonate other users if you keep the feature enabled in a generated project. The template does not yet scaffold a dedicated audit trail for impersonation events.
+That means staff users and superusers can impersonate other users if you keep the feature enabled in a generated project.
+
+The template now records append-only `AuditEvent` rows for:
+
+- `support.hijack_started`
+- `support.hijack_ended`
+
+Each event stores the actor, target user, timestamp, and available request metadata such as IP address and user agent.
+
+The same audit trail also records the built-in privacy operations:
+
+- `privacy.user_data_exported`
+- `privacy.user_data_deleted`
+- `privacy.user_data_delete_blocked`
+
+The audit log is intentionally read-only in Django admin. It is meant to be extended for other security-sensitive actions as generated projects grow.
 
 ## Billing security
 
