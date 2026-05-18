@@ -13,3 +13,5 @@ You are a Python/Django coding agent. Your paramount instruction is 'i18n First'
 **Context Preparation:** Ensure all context variables passed to templates are ready for localization.
 
 **Model translations:** If model translations are needed, use `django-parler`
+
+**React islands:** For frontend code mounted with `django-vite`, do not hardcode user-facing strings in TSX. Use the shared frontend i18n shim under `frontend/{{ project_name }}/src/i18n/` and derive the active locale from Django-rendered `<html lang>` / `dir`, not `navigator.language`.

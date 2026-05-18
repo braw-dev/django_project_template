@@ -10,6 +10,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         tailwind: "src/tailwind.css",
+        main: "src/main.tsx",
       }
     }
   },

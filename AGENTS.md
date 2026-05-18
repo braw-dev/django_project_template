@@ -193,6 +193,9 @@ This template includes both public marketing pages and protected app pages in th
 - The frontend is a separate Vite app served by Django in development/production.
 - **Location**: `frontend/{{ project_name }}/`.
 - **Commands**: managed via `just` (e.g., `install-frontend-dev` is called by `install-dev`).
+- The frontend is intended for **React islands**, not a separate SPA replacing Django templates.
+- Django remains the source of truth for the active language; React islands must derive locale from the rendered document (`<html lang>` / `dir`), not `navigator.language`.
+- For React-island UI strings, use the shared frontend i18n shim under `frontend/{{ project_name }}/src/i18n/` and register mountable islands in `frontend/{{ project_name }}/src/islands/registry.ts`.
 
 ---
 

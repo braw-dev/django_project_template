@@ -39,6 +39,9 @@
             {% include "core/partials/footer.html" %}
         {% endblock footer %}
         {% if not page or page.slug != "cookies" %}<c-consent />{% endif %}
+        {% block frontend_assets %}
+            {% vite_asset 'src/main.tsx' %}
+        {% endblock frontend_assets %}
         {% block third_party_scripts %}
             {% consent_required %}
             {% plausible_analytics %}

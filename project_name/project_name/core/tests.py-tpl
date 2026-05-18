@@ -543,6 +543,11 @@ class LocaleRenderingTestCase(TestCase):
 
         self.assertContains(response, "locale: 'de'")
 
+    def test_base_template_includes_react_island_entrypoint(self):
+        response = self.client.get("/", HTTP_ACCEPT_LANGUAGE="de")
+
+        self.assertContains(response, "src/main.tsx")
+
     @override_settings(
         CHATWOOT_WEBSITE_TOKEN="test-token",
         PLAUSIBLE_DOMAIN="example.com",
@@ -584,6 +589,14 @@ class LocaleRenderingTestCase(TestCase):
         ).render(Context({"request": request}))
 
         self.assertNotIn("test.js", rendered)
+
+    def test_react_island_template_tag_serializes_props(self):
+        rendered = Template(
+            "{" + "% load core %}" + "{" + "% react_island 'PricingCalculator' props %}"
+        ).render(Context({"props": {"teamSlug": "acme"}}))
+
+        self.assertIn('data-react-island="PricingCalculator"', rendered)
+        self.assertIn('data-react-props="{&quot;teamSlug&quot;: &quot;acme&quot;}"', rendered)
 
     def test_update_optional_tracking_consent_sets_cookie_and_redirects(self):
         response = self.client.post(

@@ -94,7 +94,7 @@ When adding new authenticated product UI, prefer extending `app_base.html` unles
 ### Business
 
 - **Payments**: Polar-first billing foundation behind a lightweight provider interface, with hosted checkout/portal flows, local customer/product/subscription/entitlement models, verified idempotent webhooks, a thin provider-backed pricing-page helper, locale-aware pricing display for EUR/CHF/GBP/USD, and a default European stance of showing prices excluding VAT with final tax calculated at checkout. The local billing tables are for product access and support workflows, not a substitute for provider-issued billing documents or accounting records.
-- **i18n**: Django gettext workflow plus an AI-assisted helper for filling untranslated `.po` entries.
+- **i18n**: Django gettext workflow plus an AI-assisted helper for filling untranslated `.po` entries, and a React-island bridge that reads the active Django-selected locale from `<html lang>`.
 - **Deployment**: Production-oriented container scaffolding via Dockerfiles and Compose manifests, with an opinionated docs default of Hetzner VPS + rootless Podman + `systemd --user` + root-managed Caddy + Bunny.net; final deployment wiring is still project-specific.
 - **Observability**: Sentry for exceptions, health checks, and structured request-performance logs that work well with Grafana Alloy + Grafana Cloud.
 
@@ -298,11 +298,13 @@ This template supports Django's built-in gettext workflow for Python and templat
 - Template strings marked with `{% templatetag openblock %} trans {% templatetag closeblock %}` / `{% templatetag openblock %} blocktrans {% templatetag closeblock %}`
 - Django's built-in language switching via the `set_language` view under `/i18n/`
 - Base templates set `<html lang>` and `dir` from the active language
+- React islands read the active document language from `<html lang>` and `dir` via the shared frontend i18n bridge
 - Locale-prefixed URLs for the `pages` catch-all routes via `i18n_patterns`
 
 ### What it does not cover
 
 - Translated database content stored with `django-parler` such as `Page` model content. That content needs a separate export/import workflow.
+- Django gettext catalogs and React JSON locale catalogs are separate; the template does not auto-sync strings between them.
 - Custom date/number/currency presentation still needs explicit template-level decisions where those values are shown.
 
 ### Prerequisites
@@ -353,14 +355,29 @@ just translate-locale de
 just compilemessages
 ```
 
+### React islands
+
+The template includes a small React-island i18n bridge for frontend code loaded with `django-vite`.
+
+Rules:
+
+- Django remains the source of truth for the active language
+- React islands must read locale from the document, not from `navigator.language`
+- use the shared frontend i18n helpers under `frontend/{{ project_name }}/src/i18n/`
+- register islands in `frontend/{{ project_name }}/src/islands/registry.ts`
+- render island roots from Django templates with `{% templatetag openblock %} react_island "ComponentName" props {% templatetag closeblock %}`
+
+See `{{ project_name }}/docs/frontend-i18n.md` for the concrete workflow.
+
 ### Checklist for new template pages
 
 - add `{% templatetag openblock %} load i18n {% templatetag closeblock %}` to templates with user-facing copy
 - wrap visible text with `{% templatetag openblock %} trans {% templatetag closeblock %}` or `{% templatetag openblock %} blocktrans {% templatetag closeblock %}`
 - wrap Python-side user-facing strings in views, forms, and messages with `_()` / `gettext_lazy()`
+- for React islands, put user-facing strings in the frontend locale JSON catalogs and use the shared `useAppTranslation()` helper
 - prefer `{% templatetag openblock %} blocktrans {% templatetag closeblock %}` or named interpolation for strings with variables
 - when rendering dates or numbers, use Django's locale-aware template tools rather than manual string formatting
-- run `just makemessages -l de` and confirm new strings were extracted
+- run `just makemessages -l de` and confirm new Django strings were extracted
 - test the page with the built-in language switcher before shipping
 
 ## Developing on the template

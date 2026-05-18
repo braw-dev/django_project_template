@@ -1,6 +1,9 @@
+import json
+
 from django import template
 from django.conf import settings
 from django.template import TemplateSyntaxError
+from django.utils.html import format_html
 
 from {{ project_name }}.core.consent import (
     OPTIONAL_TRACKING_CONSENT_COOKIE_NAME,
@@ -40,6 +43,15 @@ def optional_tracking_consent(context):
 @register.simple_tag
 def optional_tracking_consent_cookie_name():
     return OPTIONAL_TRACKING_CONSENT_COOKIE_NAME
+
+
+@register.simple_tag
+def react_island(component_name: str, props=None):
+    return format_html(
+        '<div data-react-island="{}" data-react-props="{}"></div>',
+        component_name,
+        json.dumps(props or {}),
+    )
 
 
 class ConsentRequiredNode(template.Node):
