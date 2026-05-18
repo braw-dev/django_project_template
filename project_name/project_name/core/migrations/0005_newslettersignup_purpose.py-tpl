@@ -1,0 +1,32 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("core", "0004_auditevent"),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name="newslettersignup",
+            name="purpose",
+            field=models.CharField(
+                choices=[("marketing", "marketing"), ("legal_updates", "legal_updates")],
+                default="marketing",
+                max_length=32,
+            ),
+            preserve_default=False,
+        ),
+        migrations.AlterField(
+            model_name="newslettersignup",
+            name="email",
+            field=models.EmailField(max_length=254),
+        ),
+        migrations.AddConstraint(
+            model_name="newslettersignup",
+            constraint=models.UniqueConstraint(
+                fields=("email", "purpose"),
+                name="core_unique_newsletter_signup_per_purpose",
+            ),
+        ),
+    ]

@@ -17,10 +17,21 @@ def _normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
-def create_pending_newsletter_signup(*, email: str) -> models.NewsletterSignup:
+def get_newsletter_subscription_label(purpose: str) -> str:
+    if purpose == models.NewsletterSignupPurpose.LEGAL_UPDATES:
+        return _("legal updates")
+    return _("newsletter")
+
+
+def create_pending_newsletter_signup(
+    *,
+    email: str,
+    purpose: str = models.NewsletterSignupPurpose.MARKETING,
+) -> models.NewsletterSignup:
     normalized_email = _normalize_email(email)
     signup, created = models.NewsletterSignup.objects.get_or_create(
         email=normalized_email,
+        purpose=purpose,
         defaults={
             "consented_at": timezone.now(),
         },
@@ -49,6 +60,7 @@ def get_newsletter_confirmation_token(signup: models.NewsletterSignup) -> str:
         {
             "newsletter_signup_id": signup.id,
             "email": signup.email,
+            "purpose": signup.purpose,
         },
         salt=NEWSLETTER_CONFIRMATION_TOKEN_SALT,
     )
@@ -72,10 +84,12 @@ def send_newsletter_confirmation_email(signup: models.NewsletterSignup, request)
         {
             "confirmation_url": confirmation_url,
             "signup": signup,
+            "subscription_label": get_newsletter_subscription_label(signup.purpose),
         },
     )
     send_mail(
-        subject=_("Confirm your newsletter subscription"),
+        subject=_("Confirm your %(subscription_label)s subscription")
+        % {"subscription_label": get_newsletter_subscription_label(signup.purpose)},
         message=body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[signup.email],
@@ -102,6 +116,8 @@ def confirm_newsletter_signup(*, token: str) -> models.NewsletterSignup:
     if signup is None:
         raise ValueError(_("This newsletter signup no longer exists."))
     if signup.email != payload.get("email"):
+        raise ValueError(_("This confirmation link is invalid."))
+    if signup.purpose != payload.get("purpose"):
         raise ValueError(_("This confirmation link is invalid."))
 
     if signup.confirmed_at is None:

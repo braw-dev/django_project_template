@@ -70,10 +70,20 @@ def validate_not_in_future(value: Any) -> Any:
     return value
 
 
+class NewsletterSignupPurpose(models.TextChoices):
+    MARKETING = "marketing", "marketing"
+    LEGAL_UPDATES = "legal_updates", "legal_updates"
+
+
 class NewsletterSignup(models.Model):
     """NewsletterSignup stores newsletter consent and double opt-in state."""
 
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
+    purpose = models.CharField(
+        max_length=32,
+        choices=NewsletterSignupPurpose.choices,
+        default=NewsletterSignupPurpose.MARKETING,
+    )
     consented_at = models.DateTimeField(null=True, blank=True)
     confirmation_email_sent_at = models.DateTimeField(null=True, blank=True)
     confirmed_at = models.DateTimeField(null=True, blank=True)
@@ -81,8 +91,16 @@ class NewsletterSignup(models.Model):
     unsubscribe_reason = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["email", "purpose"],
+                name="core_unique_newsletter_signup_per_purpose",
+            )
+        ]
+
     def __str__(self):
-        return self.email
+        return f"{self.email} ({self.purpose})"
 
 
 class AuditEventType(models.TextChoices):

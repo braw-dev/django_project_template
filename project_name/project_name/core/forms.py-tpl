@@ -1,17 +1,35 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from . import models
+
 
 class NewsletterSignupForm(forms.Form):
     ALREADY_SUBSCRIBED_ERROR = _("You are already subscribed.")
-    CONSENT_REQUIRED_ERROR = _("You must agree to receive newsletter emails.")
-    CONSENT_LABEL = _("I agree to receive occasional product updates and marketing emails.")
+    CONSENT_REQUIRED_ERROR = _("You must agree to receive these emails.")
+    MARKETING_CONSENT_LABEL = _(
+        "I agree to receive occasional product updates and marketing emails."
+    )
+    LEGAL_UPDATES_CONSENT_LABEL = _("I agree to receive legal and policy updates by email.")
 
     email = forms.EmailField(
         widget=forms.EmailInput(attrs={"data-testid": "newsletter-signup-form"})
     )
-    consent = forms.BooleanField(
-        label=CONSENT_LABEL,
-        required=True,
-        error_messages={"required": CONSENT_REQUIRED_ERROR},
-    )
+    consent = forms.BooleanField(required=True)
+
+    def __init__(
+        self,
+        *args,
+        purpose: str = models.NewsletterSignupPurpose.MARKETING,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.purpose = purpose
+        self.fields["consent"].error_messages = {"required": self.CONSENT_REQUIRED_ERROR}
+        self.fields["consent"].label = self.get_consent_label(purpose)
+
+    @classmethod
+    def get_consent_label(cls, purpose: str):
+        if purpose == models.NewsletterSignupPurpose.LEGAL_UPDATES:
+            return cls.LEGAL_UPDATES_CONSENT_LABEL
+        return cls.MARKETING_CONSENT_LABEL

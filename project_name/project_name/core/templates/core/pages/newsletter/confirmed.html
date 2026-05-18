@@ -2,9 +2,13 @@
 {% load i18n %}
 {% block body %}
     {% if confirmation_error %}
-        <p>{% trans "We could not confirm your newsletter subscription." %}</p>
+        <p>{% trans "We could not confirm your subscription." %}</p>
         <p>{{ confirmation_error }}</p>
     {% else %}
-        <p>{% trans "Your newsletter subscription has been confirmed." %}</p>
+        <p>
+            {% blocktrans with subscription_label=subscription_label %}
+                Your {{ subscription_label }} subscription has been confirmed.
+            {% endblocktrans %}
+        </p>
     {% endif %}
 {% endblock body %}

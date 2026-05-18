@@ -29,6 +29,16 @@ sitemaps = {
 newsletter_urls = [
     path("signup/", core_views.newsletter_signup, name="signup"),
     path("success/", core_views.newsletter_success, name="signup_success"),
+    path(
+        "legal-updates/signup/",
+        core_views.legal_updates_signup,
+        name="legal_updates_signup",
+    ),
+    path(
+        "legal-updates/success/",
+        core_views.legal_updates_success,
+        name="legal_updates_success",
+    ),
     path("confirm/<str:token>/", core_views.newsletter_confirm, name="confirm"),
 ]
 

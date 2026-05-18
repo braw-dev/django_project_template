@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% block body %}
-    <p>{% trans "Please check your email and confirm your subscription to complete newsletter signup." %}</p>
+    <p>
+        {% blocktrans with subscription_label=subscription_label %}
+            Please check your email and confirm your {{ subscription_label }} subscription.
+        {% endblocktrans %}
+    </p>
 {% endblock body %}

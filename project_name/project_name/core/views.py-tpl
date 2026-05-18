@@ -5,53 +5,120 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 from meta.views import Meta
 
+from . import models
 from .consent import set_optional_tracking_consent
 from .forms import NewsletterSignupForm
 from .newsletter import (
     confirm_newsletter_signup,
     create_pending_newsletter_signup,
+    get_newsletter_subscription_label,
     send_newsletter_confirmation_email,
 )
 
 
-def newsletter_signup(request):
-    form = NewsletterSignupForm()
-    meta = Meta(title=_("Newsletter signup"))
+def _newsletter_signup_view(
+    request,
+    *,
+    purpose: str,
+    success_url: str,
+    title: str,
+    description: str,
+):
+    form = NewsletterSignupForm(purpose=purpose)
+    meta = Meta(title=title)
 
     if request.method == "POST":
-        form = NewsletterSignupForm(request.POST)
+        form = NewsletterSignupForm(request.POST, purpose=purpose)
         if form.is_valid():
             try:
-                signup = create_pending_newsletter_signup(email=form.cleaned_data["email"])
+                signup = create_pending_newsletter_signup(
+                    email=form.cleaned_data["email"],
+                    purpose=purpose,
+                )
             except ValueError as exc:
                 form.add_error("email", str(exc))
             else:
                 send_newsletter_confirmation_email(signup, request)
-                return redirect("newsletter:signup_success")
-    return render(request, "core/pages/newsletter/signup.html", {"form": form, "meta": meta})
+                return redirect(success_url)
+    return render(
+        request,
+        "core/pages/newsletter/signup.html",
+        {"form": form, "meta": meta, "signup_title": title, "signup_description": description},
+    )
+
+
+def newsletter_signup(request):
+    return _newsletter_signup_view(
+        request,
+        purpose=models.NewsletterSignupPurpose.MARKETING,
+        success_url="newsletter:signup_success",
+        title=_("Newsletter signup"),
+        description=_(
+            "We will only send occasional product updates and marketing emails. "
+            "Please confirm your email address before we add you to the list."
+        ),
+    )
+
+
+def legal_updates_signup(request):
+    return _newsletter_signup_view(
+        request,
+        purpose=models.NewsletterSignupPurpose.LEGAL_UPDATES,
+        success_url="newsletter:legal_updates_success",
+        title=_("Legal updates signup"),
+        description=_(
+            "Subscribe to important legal, policy, and trust-page updates such as "
+            "subprocessors, privacy, and terms changes. Please confirm your email "
+            "address before we add you to the list."
+        ),
+    )
+
+
+def _newsletter_success_view(request, *, purpose: str):
+    meta = Meta(title=_("Check your email"))
+    return render(
+        request,
+        "core/pages/newsletter/success.html",
+        {
+            "meta": meta,
+            "subscription_label": get_newsletter_subscription_label(purpose),
+        },
+    )
 
 
 def newsletter_success(request):
-    meta = Meta(title=_("Check your email"))
-    return render(request, "core/pages/newsletter/success.html", {"meta": meta})
+    return _newsletter_success_view(request, purpose=models.NewsletterSignupPurpose.MARKETING)
+
+
+def legal_updates_success(request):
+    return _newsletter_success_view(request, purpose=models.NewsletterSignupPurpose.LEGAL_UPDATES)
 
 
 def newsletter_confirm(request, token: str):
     confirmation_error = None
+    subscription_label = _("subscription")
     try:
-        confirm_newsletter_signup(token=token)
+        signup = confirm_newsletter_signup(token=token)
     except ValueError as exc:
         confirmation_error = str(exc)
+    else:
+        subscription_label = get_newsletter_subscription_label(signup.purpose)
 
     meta = Meta(
-        title=_("Newsletter subscription confirmed")
-        if confirmation_error is None
-        else _("Newsletter confirmation failed")
+        title=(
+            _("Subscription confirmed")
+            if confirmation_error is None
+            else _("Subscription confirmation failed")
+        )
     )
     return render(
         request,
         "core/pages/newsletter/confirmed.html",
-        {"meta": meta, "confirmation_error": confirmation_error},
+        {
+            "meta": meta,
+            "confirmation_error": confirmation_error,
+            "subscription_label": subscription_label,
+        },
     )
 
 

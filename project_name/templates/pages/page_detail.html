@@ -28,5 +28,14 @@ Override by setting template_name on the Page instance.
                 <c-consent force_show inline />
             </div>
         {% endif %}
+        {% if page.slug == "subprocessors" %}
+            <section class="mt-8 rounded-xl border border-base-300 bg-base-100 p-6 not-prose">
+                <h2 class="text-2xl font-semibold mb-3">{% trans "Get legal update emails" %}</h2>
+                <p class="text-base-content/80 mb-4">
+                    {% trans "Subscribe for important notices about subprocessors, privacy, terms, and related legal updates." %}
+                </p>
+                <a href="{% url 'newsletter:legal_updates_signup' %}" class="btn btn-primary">{% trans "Subscribe to legal updates" %}</a>
+            </section>
+        {% endif %}
     </article>
 {% endblock page_content %}

@@ -65,6 +65,21 @@ class NewsletterTestCase(TestCase):
         self.assertEqual(mail.outbox[0].to, [self.email])
         self.assertIn("Confirm your newsletter subscription", mail.outbox[0].subject)
 
+    def test_legal_updates_signup_creates_pending_signup_with_legal_updates_purpose(self):
+        response = self.client.post(
+            reverse("newsletter:legal_updates_signup"),
+            {"email": self.email, "consent": "on"},
+        )
+
+        signup = core_models.NewsletterSignup.objects.get(
+            email=self.email,
+            purpose=core_models.NewsletterSignupPurpose.LEGAL_UPDATES,
+        )
+        self.assertRedirects(response, reverse("newsletter:legal_updates_success"))
+        self.assertIsNotNone(signup.consented_at)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Confirm your legal updates subscription", mail.outbox[0].subject)
+
     def test_newsletter_signup_requires_consent(self):
         response = self.client.post(reverse("newsletter:signup"), {"email": self.email})
         self.assertContains(response, escape(NewsletterSignupForm.CONSENT_REQUIRED_ERROR))
@@ -136,7 +151,7 @@ class NewsletterTestCase(TestCase):
         response = self.client.get(reverse("newsletter:confirm", kwargs={"token": "invalid"}))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "We could not confirm your newsletter subscription.")
+        self.assertContains(response, "We could not confirm your subscription.")
 
     def test_newsletter_signup_shows_client_error_on_invalid_email(self):
         response = self.client.post(
@@ -149,6 +164,14 @@ class NewsletterTestCase(TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "core/partials/newsletter/signup.html")
+
+    def test_newsletter_model_tracks_purpose(self):
+        signup = core_models.NewsletterSignup.objects.create(
+            email=self.email,
+            purpose=core_models.NewsletterSignupPurpose.MARKETING,
+        )
+
+        self.assertEqual(signup.purpose, core_models.NewsletterSignupPurpose.MARKETING)
 
     def test_newsletter_model_tracks_optional_unsubscribe_fields(self):
         signup = core_models.NewsletterSignup.objects.create(email=self.email)

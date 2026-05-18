@@ -88,6 +88,7 @@ def export_user_data(
         "newsletter_signups": [
             {
                 "email": signup.email,
+                "purpose": signup.purpose,
                 "consented_at": signup.consented_at,
                 "confirmation_email_sent_at": signup.confirmation_email_sent_at,
                 "confirmed_at": signup.confirmed_at,

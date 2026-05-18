@@ -44,6 +44,12 @@ class SeededTrustPagesTestCase(TestCase):
         self.assertContains(response, "Customer data involved")
         self.assertContains(response, "Application hosting")
 
+    def test_subprocessors_page_links_to_legal_updates_signup(self):
+        response = self.client.get(reverse("pages:page_detail", kwargs={"slug": "subprocessors"}))
+
+        self.assertContains(response, reverse("newsletter:legal_updates_signup"))
+        self.assertContains(response, "Subscribe to legal updates")
+
     def test_cookies_page_renders_cookie_preferences_component(self):
         response = self.client.get(reverse("pages:page_detail", kwargs={"slug": "cookies"}))
 

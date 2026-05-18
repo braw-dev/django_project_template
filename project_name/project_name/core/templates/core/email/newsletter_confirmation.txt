@@ -1,4 +1,4 @@
-{% load i18n %}{% blocktrans %}Please confirm your newsletter subscription by visiting the link below:{% endblocktrans %}
+{% load i18n %}{% blocktrans with subscription_label=subscription_label %}Please confirm your {{ subscription_label }} subscription by visiting the link below:{% endblocktrans %}
 
 {{ confirmation_url }}
 
