@@ -40,8 +40,6 @@ None
   - Store the borg passphrase and Storage Box SSH key path in env vars (`BORG_PASSPHRASE`, `BORG_RSH`) loaded from the existing secrets mechanism; never in the repo.
   - Document in `docs/backups.md`: how to provision a Hetzner Storage Box, how to initialise the repo (`borgmatic init --encryption repokey-blake2`), retention policy, passphrase rotation, the weekly restore-drill cadence, and how to recover end-to-end from a total host loss. Data loss is the only failure mode `MOTIVATION.md` explicitly calls out as unacceptable.
 
-- **Consolidate AI agent instructions.** `AGENTS.md`, `.claude/CLAUDE.md`, and `.cursor/rules/*` cover overlapping ground (template detection, security-first, grug-brain). The Justfile already has an `ai-link` recipe using `stow`, but `CLAUDE.md` itself is not in `ai/` and is hand-edited - meaning Claude/Cursor/Codex drift over time. Move the canonical text into `ai/docs/` and symlink from `.claude/` and `.cursor/`; add a CI check that fails if the symlinks are dangling or the canonical files diverge.
-
 ## P3 — useful later
 
 - **`/.well-known/security.txt` route.** Trivial, points at the security contact mentioned in `SECURITY.md`, and signals maturity in vendor questionnaires.
