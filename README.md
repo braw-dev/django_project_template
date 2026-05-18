@@ -237,6 +237,7 @@ This repo does not generate the host-level Caddy, Podman unit, or PostgreSQL set
 ### Prerequisites
 
 - [`uv`](https://docs.astral.sh/uv/) (Python) & [`pnpm`](https://github.com/pnpm/pnpm) (Frontend)
+- [`gitleaks`](https://github.com/gitleaks/gitleaks) for pre-commit secret scanning
 - [`mkcert`](https://github.com/FiloSottile/mkcert) for `just runserver`
 - [`entr`](https://github.com/eradman/entr) & [`rg`](https://github.com/BurntSushi/ripgrep) for watch-mode commands
 - [Playwright](https://playwright.dev/) for browser/E2E tests
@@ -245,7 +246,7 @@ This repo does not generate the host-level Caddy, Podman unit, or PostgreSQL set
 ### Installation
 
 1. `git init .` from the generated project root if you have not already done so
-2. `just install-dev` (Creates the Python virtualenv, installs Python and frontend dependencies, and sets up hooks)
+2. `just install-dev` (Creates the Python virtualenv, installs Python and frontend dependencies, and sets up hooks; expects `gitleaks` to already be installed locally)
 3. `cp {{ project_name }}/.env.dist {{ project_name }}/.env`
 4. For a zero-friction local setup, edit `{{ project_name }}/.env` and change these defaults:
    - `DEBUG=True`
