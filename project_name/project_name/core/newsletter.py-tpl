@@ -2,11 +2,11 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core import signing
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
+
+from {{ project_name }}.users.emails import send_transactional_email
 
 from . import models
 
@@ -79,20 +79,19 @@ def send_newsletter_confirmation_email(signup: models.NewsletterSignup, request)
             return False
 
     confirmation_url = build_newsletter_confirmation_url(signup, request)
-    body = render_to_string(
-        "core/email/newsletter_confirmation.txt",
-        {
+    subject = _("Confirm your %(subscription_label)s subscription") % {
+        "subscription_label": get_newsletter_subscription_label(signup.purpose)
+    }
+    send_transactional_email(
+        subject=subject,
+        template_prefix="core/email/newsletter_confirmation",
+        recipient_list=[signup.email],
+        context={
             "confirmation_url": confirmation_url,
             "signup": signup,
             "subscription_label": get_newsletter_subscription_label(signup.purpose),
         },
-    )
-    send_mail(
-        subject=_("Confirm your %(subscription_label)s subscription")
-        % {"subscription_label": get_newsletter_subscription_label(signup.purpose)},
-        message=body,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[signup.email],
     )
     signup.confirmation_email_sent_at = timezone.now()
     signup.save(update_fields=["confirmation_email_sent_at"])

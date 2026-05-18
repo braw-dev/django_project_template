@@ -67,6 +67,7 @@ This document is intentionally practical. It is not the full architecture guide.
 - `DEPLOYMENT.md` - default production shape and operational assumptions
 - `SECURITY.md` - security model and invariants
 - `docs/frontend-i18n.md` - Django/React island language bridge
+- `docs/transactional-email.md` - shared transactional email pattern
 - `{{ project_name }}/billing/README.md` - billing setup and operational stance
 
 ## Notes for future-you

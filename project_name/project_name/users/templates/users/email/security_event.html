@@ -1,0 +1,13 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+{% block email_body %}
+<p>{% translate "Hello," %}</p>
+<p>{{ summary }}</p>
+<ul>
+  <li>{% translate "Time" %}: {{ occurred_at|date:"Y-m-d H:i:s T" }}</li>
+  {% if ip_address %}<li>{% translate "IP address" %}: {{ ip_address }}</li>{% endif %}
+  {% if user_agent %}<li>{% translate "User agent" %}: {{ user_agent }}</li>{% endif %}
+  {% for detail in details %}<li>{{ detail.label }}: {{ detail.value }}</li>{% endfor %}
+</ul>
+<p>{% blocktranslate %}If this wasn't you, reset your password and review your account security settings immediately.{% endblocktranslate %}</p>
+{% endblock email_body %}

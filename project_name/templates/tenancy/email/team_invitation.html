@@ -1,0 +1,7 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+{% block email_body %}
+<p>{% blocktranslate with team_name=team.name %}You have been invited to join {{ team_name }}.{% endblocktranslate %}</p>
+<p>{% translate "Accept your invitation here:" %}<br><a href="{{ accept_url }}">{{ accept_url }}</a></p>
+<p>{% translate "If you were not expecting this invitation, you can ignore this email." %}</p>
+{% endblock email_body %}

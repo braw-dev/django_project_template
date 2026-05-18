@@ -101,6 +101,7 @@ When adding new authenticated product UI, prefer extending `app_base.html` unles
 - **i18n**: Django gettext workflow plus an AI-assisted helper for filling untranslated `.po` entries, and a React-island bridge that reads the active Django-selected locale from `<html lang>`.
 - **Deployment**: Production-oriented container scaffolding via Dockerfiles and Compose manifests, with an opinionated docs default of Hetzner VPS + rootless Podman + `systemd --user` + root-managed Caddy + Bunny.net; final deployment wiring is still project-specific.
 - **Observability**: Sentry for exceptions, split liveness/readiness health checks, and structured request-performance logs that work well with Grafana Alloy + Grafana Cloud.
+- **Email**: Shared multipart transactional email foundation for invitation, newsletter, and security-notification flows.
 
 ## Built-in Features
 

@@ -1,4 +1,7 @@
-{% load i18n %}{% translate "Hello," %}
+{% extends "email/base.txt" %}
+{% load i18n %}
+{% block email_body %}
+{% translate "Hello," %}
 
 {{ summary }}
 
@@ -8,3 +11,4 @@
 {% endif %}{% for detail in details %}{{ detail.label }}: {{ detail.value }}
 {% endfor %}
 {% blocktranslate %}If this wasn't you, reset your password and review your account security settings immediately.{% endblocktranslate %}
+{% endblock email_body %}

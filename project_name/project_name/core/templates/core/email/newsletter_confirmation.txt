@@ -1,5 +1,9 @@
-{% load i18n %}{% blocktrans with subscription_label=subscription_label %}Please confirm your {{ subscription_label }} subscription by visiting the link below:{% endblocktrans %}
+{% extends "email/base.txt" %}
+{% load i18n %}
+{% block email_body %}
+{% blocktrans with subscription_label=subscription_label %}Please confirm your {{ subscription_label }} subscription by visiting the link below:{% endblocktrans %}
 
 {{ confirmation_url }}
 
 {% blocktrans %}If you did not request this, you can ignore this email.{% endblocktrans %}
+{% endblock email_body %}

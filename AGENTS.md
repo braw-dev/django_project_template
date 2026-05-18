@@ -182,6 +182,13 @@ If you are helping set up a freshly generated project, read and follow `docs/NEW
 - `templates/`: Django HTML templates (mostly for auth/accounts).
 - `static/`: Static assets.
 
+### Transactional email convention
+
+- Use `{{ project_name }}.users.emails.send_transactional_email(...)` for new product emails.
+- Create matching `*.txt` and `*.html` templates and keep them small.
+- Reuse the shared wrappers in `templates/email/base.txt` and `templates/email/base.html`.
+- See `docs/transactional-email.md` in generated projects before adding new invitation, billing, or security emails.
+
 ### Public vs Protected Routes
 
 This template includes both public marketing pages and protected app pages in the same Django project.

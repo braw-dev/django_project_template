@@ -7,14 +7,13 @@ from xml.etree import ElementTree
 import httpx
 from django.conf import settings
 from django.core import signing
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from {{ project_name }}.core.audit import record_audit_event
 from {{ project_name }}.core.models import AuditEventType
+from {{ project_name }}.users.emails import send_transactional_email
 
 from . import models, permissions
 
@@ -217,20 +216,17 @@ def build_invitation_accept_url(invitation: models.TeamInvitation, request) -> s
 def send_invitation_email(invitation: models.TeamInvitation, request) -> None:
     """Render and send a team invitation email."""
     accept_url = build_invitation_accept_url(invitation, request)
-    body = render_to_string(
-        "tenancy/email/team_invitation.txt",
-        {
+    subject = _("You have been invited to join %(team_name)s") % {"team_name": invitation.team.name}
+    send_transactional_email(
+        subject=subject,
+        template_prefix="tenancy/email/team_invitation",
+        recipient_list=[invitation.email],
+        context={
             "accept_url": accept_url,
             "invitation": invitation,
             "team": invitation.team,
         },
-    )
-    send_mail(
-        subject=_("You have been invited to join %(team_name)s")
-        % {"team_name": invitation.team.name},
-        message=body,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[invitation.email],
     )
 
 

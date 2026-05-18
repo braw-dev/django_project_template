@@ -1,0 +1,6 @@
+{{ project_display_name }}
+
+{% block email_body %}{% endblock email_body %}
+
+--
+{{ project_display_name }}

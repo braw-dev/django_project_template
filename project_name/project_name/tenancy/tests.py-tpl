@@ -154,6 +154,9 @@ class TestTeamServices:
 
         assert len(mailoutbox) == 1
         assert "Acme" in mailoutbox[0].subject
+        assert len(mailoutbox[0].alternatives) == 1
+        assert mailoutbox[0].alternatives[0].mimetype == "text/html"
+        assert "Accept your invitation here:" in mailoutbox[0].body
 
 
 @pytest.mark.django_db

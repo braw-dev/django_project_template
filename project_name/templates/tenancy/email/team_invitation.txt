@@ -1,6 +1,10 @@
-You have been invited to join {{ team.name }}.
+{% extends "email/base.txt" %}
+{% load i18n %}
+{% block email_body %}
+{% blocktranslate with team_name=team.name %}You have been invited to join {{ team_name }}.{% endblocktranslate %}
 
-Accept your invitation here:
+{% translate "Accept your invitation here:" %}
 {{ accept_url }}
 
-If you were not expecting this invitation, you can ignore this email.
+{% translate "If you were not expecting this invitation, you can ignore this email." %}
+{% endblock email_body %}

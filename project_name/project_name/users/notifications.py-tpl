@@ -1,11 +1,10 @@
 from django.conf import settings
-from django.core.mail import send_mail
 from django.dispatch import receiver
-from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 
 from {{ project_name }}.core.audit import audit_event_created
 from {{ project_name }}.core.models import AuditEventType
+from {{ project_name }}.users.emails import send_transactional_email
 
 SECURITY_EVENT_EMAILS_PREFERENCE_KEY = "security_event_emails_enabled"
 
@@ -75,19 +74,16 @@ def send_security_event_email(sender, audit_event, **kwargs):
     if user is None or not user.email or not security_event_emails_enabled(user):
         return
 
-    body = render_to_string(
-        "users/email/security_event.txt",
-        {
+    send_transactional_email(
+        subject=content["subject"],
+        template_prefix="users/email/security_event",
+        recipient_list=[user.email],
+        context={
             "summary": content["summary"],
             "details": content["details"],
             "occurred_at": audit_event.created_at,
             "ip_address": audit_event.ip_address,
             "user_agent": audit_event.user_agent,
         },
-    )
-    send_mail(
-        subject=content["subject"],
-        message=body,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
     )

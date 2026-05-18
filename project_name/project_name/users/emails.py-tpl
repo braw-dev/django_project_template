@@ -1,0 +1,29 @@
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+
+
+def send_transactional_email(
+    *,
+    subject: str,
+    template_prefix: str,
+    recipient_list: list[str],
+    context: dict,
+    from_email: str | None = None,
+) -> None:
+    email_context = {
+        **context,
+        "email_subject": subject,
+        "project_display_name": getattr(settings, "PROJECT_DISPLAY_NAME", ""),
+    }
+    text_body = render_to_string(f"{template_prefix}.txt", email_context)
+    html_body = render_to_string(f"{template_prefix}.html", email_context)
+
+    message = EmailMultiAlternatives(
+        subject=subject,
+        body=text_body,
+        from_email=from_email or settings.DEFAULT_FROM_EMAIL,
+        to=recipient_list,
+    )
+    message.attach_alternative(html_body, "text/html")
+    message.send()
