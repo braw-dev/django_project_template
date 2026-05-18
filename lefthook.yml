@@ -1,6 +1,9 @@
 pre-commit:
   parallel: true
   commands:
+    gitleaks:
+      glob: "*"
+      run: gitleaks protect --staged --no-banner
     ruff:
       run: uv run ruff check --fix {staged_files}
       stage_fixed: true
