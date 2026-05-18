@@ -18,6 +18,7 @@ from django.template import Context, Template
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.csp import CSP
 from django.utils.functional import Promise
 from django.utils.html import escape
 from hijack.signals import hijack_ended, hijack_started
@@ -433,6 +434,36 @@ class LocaleRenderingTestCase(TestCase):
         self.assertEqual(
             response.cookies[OPTIONAL_TRACKING_CONSENT_COOKIE_NAME].value,
             OPTIONAL_TRACKING_CONSENT_ACCEPTED,
+        )
+
+    def test_default_debug_config_uses_report_only_csp(self):
+        response = self.client.get("/")
+
+        self.assertNotIn("Content-Security-Policy", response.headers)
+        self.assertIn("Content-Security-Policy-Report-Only", response.headers)
+        self.assertEqual(response.headers["Cross-Origin-Opener-Policy"], "same-origin")
+        self.assertEqual(response.headers["Cross-Origin-Resource-Policy"], "same-site")
+        self.assertEqual(
+            response.headers["Permissions-Policy"],
+            "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+        )
+
+    @override_settings(
+        SECURE_CSP={
+            "default-src": [CSP.SELF],
+            "script-src": [CSP.SELF, "https://plausible.example"],
+        },
+        SECURE_CSP_REPORT_ONLY={},
+    )
+    def test_enforced_csp_header_is_applied_when_configured(self):
+        response = self.client.get("/")
+
+        self.assertIn("Content-Security-Policy", response.headers)
+        self.assertNotIn("Content-Security-Policy-Report-Only", response.headers)
+        self.assertIn("default-src 'self'", response.headers["Content-Security-Policy"])
+        self.assertIn(
+            "script-src 'self' https://plausible.example",
+            response.headers["Content-Security-Policy"],
         )
 
 

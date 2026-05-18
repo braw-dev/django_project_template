@@ -20,7 +20,7 @@
     </select>
 </form>
 {% comment %} Submit the translation form when one of the languages is selected {% endcomment %}
-<script>
+<script nonce="{{ csp_nonce }}">
     document.addEventListener('DOMContentLoaded', function() {
         const languageSelect = document.querySelector('select[name="language"]');
         const languageForm = languageSelect.closest('form');

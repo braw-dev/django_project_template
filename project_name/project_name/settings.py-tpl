@@ -19,6 +19,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 import sentry_sdk
 import structlog
+from django.utils.csp import CSP
 from django.utils.translation import gettext_lazy as _
 from pydantic import SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -54,6 +55,10 @@ def parse_csv(value_name: str, value: str) -> list[str]:
 
 def parse_optional_csv(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def csp_sources(*values: str) -> list[str]:
+    return [value for value in values if value]
 
 
 def _coerce_url_value(value: str) -> str | int | bool:
@@ -310,6 +315,8 @@ MIDDLEWARE = [
     "{{ project_name }}.tenancy.middleware.ActiveTeamMiddleware",
     "hijack.middleware.HijackUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.csp.ContentSecurityPolicyMiddleware",
+    "{{ project_name }}.core.middleware.BrowserSecurityHeadersMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # allauth account middleware:
     "allauth.account.middleware.AccountMiddleware",
@@ -340,6 +347,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.csp",
             ],
         },
     },
@@ -696,11 +704,60 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Vite
 DJANGO_VITE = {"default": {"dev_mode": DEBUG}}
 
+plausible_script_host = APP_SETTINGS.PLAUSIBLE_SCRIPT_HOST.rstrip("/")
+plausible_api_host = PLAUSIBLE_API_HOST.rstrip("/")
+chatwoot_base_url = CHATWOOT_BASE_URL.rstrip("/")
+
+SECURE_CSP_BASE = {
+    "default-src": [CSP.SELF],
+    "base-uri": [CSP.SELF],
+    "form-action": [CSP.SELF],
+    "frame-ancestors": [CSP.NONE],
+    "object-src": [CSP.NONE],
+    "img-src": [CSP.SELF, "data:", "https:"],
+    "script-src": csp_sources(
+        CSP.SELF,
+        CSP.NONCE,
+        plausible_script_host,
+        chatwoot_base_url,
+    ),
+    "style-src": [CSP.SELF, CSP.UNSAFE_INLINE],
+    "font-src": [CSP.SELF, "data:"],
+    "connect-src": csp_sources(
+        CSP.SELF,
+        plausible_script_host,
+        plausible_api_host,
+        chatwoot_base_url,
+    ),
+    "frame-src": csp_sources(chatwoot_base_url),
+}
+
+SECURE_CSP_REPORT_ONLY = SECURE_CSP_BASE | {
+    "script-src": [
+        *SECURE_CSP_BASE["script-src"],
+        CSP.UNSAFE_INLINE,
+        "http://localhost:5173",
+        "ws://localhost:5173",
+    ],
+    "style-src": [CSP.SELF, CSP.UNSAFE_INLINE, "http://localhost:5173"],
+    "connect-src": [
+        *SECURE_CSP_BASE["connect-src"],
+        "http://localhost:5173",
+        "ws://localhost:5173",
+    ],
+}
+SECURE_CSP = {} if DEBUG else SECURE_CSP_BASE
+if not DEBUG:
+    SECURE_CSP_REPORT_ONLY = {}
+
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
+SECURE_PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+SECURE_CROSS_ORIGIN_RESOURCE_POLICY = "same-site"
 X_FRAME_OPTIONS = "DENY"
 
 # Celery

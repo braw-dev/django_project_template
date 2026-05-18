@@ -21,7 +21,7 @@
     {% endelement %}
     {% include "mfa/webauthn/snippets/scripts.html" %}
     {{ js_data|json_script:"js_data" }}
-    <script>
+    <script nonce="{{ csp_nonce }}">
         allauth.webauthn.forms.addForm({
             ids: {
                 add: "mfa_webauthn_add",

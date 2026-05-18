@@ -47,6 +47,31 @@ class TrustedProxyHeadersMiddleware:
         return self.get_response(request)
 
 
+class BrowserSecurityHeadersMiddleware:
+    """Set modern browser security headers not covered by Django's built-ins."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if permissions_policy := getattr(settings, "SECURE_PERMISSIONS_POLICY", ""):
+            response.headers.setdefault("Permissions-Policy", permissions_policy)
+
+        if cross_origin_resource_policy := getattr(
+            settings,
+            "SECURE_CROSS_ORIGIN_RESOURCE_POLICY",
+            "",
+        ):
+            response.headers.setdefault(
+                "Cross-Origin-Resource-Policy",
+                cross_origin_resource_policy,
+            )
+
+        return response
+
+
 class RequestPerformanceLoggingMiddleware:
     """Log one structured request performance event per request."""
 

@@ -33,7 +33,7 @@
     </form>
     {% include "mfa/webauthn/snippets/scripts.html" %}
     {{ js_data|json_script:"js_data" }}
-    <script>
+    <script nonce="{{ csp_nonce }}">
         allauth.webauthn.forms.signupForm({
             ids: {
                 signup: "mfa_webauthn_signup",

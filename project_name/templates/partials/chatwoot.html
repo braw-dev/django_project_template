@@ -1,7 +1,7 @@
 {% load i18n %}
 {% if website_token %}
     {% get_current_language as LANGUAGE_CODE %}
-    <script>
+    <script nonce="{{ csp_nonce }}">
         window.chatwootSettings = {
             hideMessageBubble: false,
             position: 'right',
