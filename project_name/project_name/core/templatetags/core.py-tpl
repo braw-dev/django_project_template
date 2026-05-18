@@ -1,5 +1,12 @@
 from django import template
 from django.conf import settings
+from django.template import TemplateSyntaxError
+
+from {{ project_name }}.core.consent import (
+    OPTIONAL_TRACKING_CONSENT_COOKIE_NAME,
+    get_optional_tracking_consent,
+    has_optional_tracking_consent,
+)
 
 register = template.Library()
 
@@ -23,3 +30,34 @@ def chatwoot_widget():
         "website_token": getattr(settings, "CHATWOOT_WEBSITE_TOKEN", ""),
         "base_url": getattr(settings, "CHATWOOT_BASE_URL", "https://app.chatwoot.com"),
     }
+
+
+@register.simple_tag(takes_context=True)
+def optional_tracking_consent(context):
+    return get_optional_tracking_consent(context.get("request"))
+
+
+@register.simple_tag
+def optional_tracking_consent_cookie_name():
+    return OPTIONAL_TRACKING_CONSENT_COOKIE_NAME
+
+
+class ConsentRequiredNode(template.Node):
+    def __init__(self, nodelist):
+        self.nodelist = nodelist
+
+    def render(self, context):
+        if has_optional_tracking_consent(context.get("request")):
+            return self.nodelist.render(context)
+        return ""
+
+
+@register.tag(name="consent_required")
+def do_consent_required(parser, token):
+    bits = token.split_contents()
+    if len(bits) != 1:
+        raise TemplateSyntaxError("consent_required does not take any arguments")
+
+    nodelist = parser.parse(("endconsent_required",))
+    parser.delete_first_token()
+    return ConsentRequiredNode(nodelist)

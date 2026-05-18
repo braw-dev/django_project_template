@@ -58,6 +58,31 @@ REPLACE_ME: Add your limitation of liability, warranty disclaimer, and governing
 """,
     },
     {
+        "slug": "cookies",
+        "title": "Cookies",
+        "meta_description": "Placeholder cookie notice for {{ project_name }}.",
+        "content": """# Cookies
+
+> REPLACE_ME: Update this page before launch. This starter text is not legal advice.
+
+## Default stance
+
+We only use required first-party cookies by default for core product functions such as session security, CSRF protection, language preferences, and consent storage.
+
+## Optional tools
+
+Optional third-party tools such as support chat widgets or future marketing tags stay disabled until a visitor explicitly allows them.
+
+## Managing preferences
+
+Visitors can allow or refuse optional tools from the cookie prompt and revisit this page to change that choice later.
+
+## What to replace
+
+REPLACE_ME: List your real cookies, purposes, durations, providers, and any country-specific legal wording your product needs.
+""",
+    },
+    {
         "slug": "security",
         "title": "Security",
         "meta_description": "Placeholder security overview for {{ project_name }}.",
@@ -149,7 +174,6 @@ def unseed_trust_pages(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("pages", "0002_alter_pagetranslation_unique_together_and_more"),
     ]

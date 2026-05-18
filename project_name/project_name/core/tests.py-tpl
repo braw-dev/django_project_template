@@ -14,6 +14,7 @@ from django.core import mail
 from django.core.management import call_command
 from django.http import HttpResponse
 from django.middleware.security import SecurityMiddleware
+from django.template import Context, Template
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -25,6 +26,7 @@ from {{ project_name }}.tenancy import services as tenancy_services
 
 from . import models as core_models
 from .admin import AuditEventAdmin
+from .consent import OPTIONAL_TRACKING_CONSENT_ACCEPTED, OPTIONAL_TRACKING_CONSENT_COOKIE_NAME
 from .forms import NewsletterSignupForm
 from .middleware import RequestPerformanceLoggingMiddleware, TrustedProxyHeadersMiddleware
 from .network import get_client_ip
@@ -371,6 +373,10 @@ class LocaleRenderingTestCase(TestCase):
 
     @override_settings(CHATWOOT_WEBSITE_TOKEN="test-token")
     def test_chatwoot_widget_uses_active_language(self):
+        self.client.cookies[OPTIONAL_TRACKING_CONSENT_COOKIE_NAME] = (
+            OPTIONAL_TRACKING_CONSENT_ACCEPTED
+        )
+
         response = self.client.get("/", HTTP_ACCEPT_LANGUAGE="de")
 
         self.assertContains(response, "locale: 'de'")
@@ -380,11 +386,54 @@ class LocaleRenderingTestCase(TestCase):
         PLAUSIBLE_DOMAIN="example.com",
         PLAUSIBLE_SCRIPT_HOST="https://plausible.example",
     )
-    def test_marketing_base_includes_marketing_scripts(self):
+    def test_marketing_base_does_not_include_marketing_scripts_without_consent(self):
+        response = self.client.get("/")
+
+        self.assertNotContains(response, "https://plausible.example/js/script.js")
+        self.assertNotContains(response, "window.chatwootSettings")
+        self.assertContains(response, "Allow optional tools")
+
+    @override_settings(
+        CHATWOOT_WEBSITE_TOKEN="test-token",
+        PLAUSIBLE_DOMAIN="example.com",
+        PLAUSIBLE_SCRIPT_HOST="https://plausible.example",
+    )
+    def test_marketing_base_includes_marketing_scripts_with_consent(self):
+        self.client.cookies[OPTIONAL_TRACKING_CONSENT_COOKIE_NAME] = (
+            OPTIONAL_TRACKING_CONSENT_ACCEPTED
+        )
+
         response = self.client.get("/")
 
         self.assertContains(response, "https://plausible.example/js/script.js")
         self.assertContains(response, "window.chatwootSettings")
+        self.assertNotContains(response, "Allow optional tools")
+
+    def test_consent_required_template_tag_hides_content_without_consent(self):
+        request = RequestFactory().get("/")
+        rendered = Template(
+            "{"
+            + "% load core %}"
+            + "{"
+            + "% consent_required %}"
+            + "<script src='https://example.com/test.js'></script>"
+            + "{"
+            + "% endconsent_required %}"
+        ).render(Context({"request": request}))
+
+        self.assertNotIn("test.js", rendered)
+
+    def test_update_optional_tracking_consent_sets_cookie_and_redirects(self):
+        response = self.client.post(
+            reverse("consent_update"),
+            {"choice": "accept", "next": "/pricing/"},
+        )
+
+        self.assertRedirects(response, "/pricing/")
+        self.assertEqual(
+            response.cookies[OPTIONAL_TRACKING_CONSENT_COOKIE_NAME].value,
+            OPTIONAL_TRACKING_CONSENT_ACCEPTED,
+        )
 
 
 class InternationalizationTestCase(TestCase):

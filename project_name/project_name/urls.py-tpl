@@ -51,6 +51,11 @@ protected_team_urls = [
 public_urls = [
     path("pricing/", views.pricing, name="pricing"),  # Pricing page
     path("newsletter/", include((newsletter_urls, "newsletter"))),
+    path(
+        "consent/optional-tracking/",
+        core_views.update_optional_tracking_consent,
+        name="consent_update",
+    ),
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
     path("robots.txt", views.robots_txt, name="robots_txt"),
     path(

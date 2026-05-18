@@ -23,5 +23,10 @@ Override by setting template_name on the Page instance.
             </figure>
         {% endif %}
         <div class="prose prose-lg max-w-none">{{ content_html }}</div>
+        {% if page.slug == "cookies" %}
+            <div class="mt-8 not-prose">
+                <c-consent force_show inline />
+            </div>
+        {% endif %}
     </article>
 {% endblock page_content %}

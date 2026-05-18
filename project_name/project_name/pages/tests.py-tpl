@@ -10,6 +10,7 @@ class SeededTrustPagesTestCase(TestCase):
         expected_pages = {
             "privacy": "Privacy",
             "terms": "Terms",
+            "cookies": "Cookies",
             "security": "Security",
             "subprocessors": "Subprocessors",
             "contact": "Contact",
@@ -43,10 +44,18 @@ class SeededTrustPagesTestCase(TestCase):
         self.assertContains(response, "Customer data involved")
         self.assertContains(response, "Application hosting")
 
+    def test_cookies_page_renders_cookie_preferences_component(self):
+        response = self.client.get(reverse("pages:page_detail", kwargs={"slug": "cookies"}))
+
+        self.assertContains(response, "Cookie preferences")
+        self.assertContains(response, "Allow optional tools")
+        self.assertContains(response, "Use only required cookies")
+
     def test_homepage_footer_links_to_seeded_trust_pages(self):
         response = self.client.get("/")
 
         self.assertContains(response, reverse("pages:page_detail", kwargs={"slug": "privacy"}))
+        self.assertContains(response, reverse("pages:page_detail", kwargs={"slug": "cookies"}))
         self.assertContains(response, reverse("pages:page_detail", kwargs={"slug": "terms"}))
         self.assertContains(response, reverse("pages:page_detail", kwargs={"slug": "security"}))
         self.assertContains(

@@ -1,7 +1,11 @@
+from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_POST
 from meta.views import Meta
 
+from .consent import set_optional_tracking_consent
 from .forms import NewsletterSignupForm
 from .newsletter import (
     confirm_newsletter_signup,
@@ -58,3 +62,22 @@ def coming_soon(request):
     return render(
         request, "core/pages/coming_soon.html", {"meta": meta, "newsletter_form": newsletter_form}
     )
+
+
+@require_POST
+def update_optional_tracking_consent(request):
+    next_url = request.POST.get("next") or "/"
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = "/"
+
+    choice = request.POST.get("choice", "").strip().lower()
+    if choice not in {"accept", "decline"}:
+        return HttpResponseBadRequest("Invalid consent choice.")
+
+    response = redirect(next_url)
+    set_optional_tracking_consent(response, consented=choice == "accept")
+    return response

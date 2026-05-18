@@ -38,9 +38,12 @@
             {% comment %} Include the footer partial by default {% endcomment %}
             {% include "core/partials/footer.html" %}
         {% endblock footer %}
+        {% if not page or page.slug != "cookies" %}<c-consent />{% endif %}
         {% block third_party_scripts %}
+            {% consent_required %}
             {% plausible_analytics %}
             {% chatwoot_widget %}
-        {% endblock third_party_scripts %}
-    </body>
+        {% endconsent_required %}
+    {% endblock third_party_scripts %}
+</body>
 </html>

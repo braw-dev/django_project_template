@@ -1,0 +1,32 @@
+"""Minimal visitor-level consent helpers for optional third-party tools."""
+
+from __future__ import annotations
+
+from django.conf import settings
+from django.http import HttpRequest, HttpResponse
+
+OPTIONAL_TRACKING_CONSENT_COOKIE_NAME = "optional_tracking_consent"
+OPTIONAL_TRACKING_CONSENT_ACCEPTED = "accepted"
+OPTIONAL_TRACKING_CONSENT_DECLINED = "declined"
+OPTIONAL_TRACKING_CONSENT_MAX_AGE = 60 * 60 * 24 * 180
+
+
+def get_optional_tracking_consent(request: HttpRequest | None) -> str:
+    if request is None:
+        return ""
+    return request.COOKIES.get(OPTIONAL_TRACKING_CONSENT_COOKIE_NAME, "").strip().lower()
+
+
+def has_optional_tracking_consent(request: HttpRequest | None) -> bool:
+    return get_optional_tracking_consent(request) == OPTIONAL_TRACKING_CONSENT_ACCEPTED
+
+
+def set_optional_tracking_consent(response: HttpResponse, *, consented: bool) -> None:
+    response.set_cookie(
+        OPTIONAL_TRACKING_CONSENT_COOKIE_NAME,
+        OPTIONAL_TRACKING_CONSENT_ACCEPTED if consented else OPTIONAL_TRACKING_CONSENT_DECLINED,
+        max_age=OPTIONAL_TRACKING_CONSENT_MAX_AGE,
+        secure=getattr(settings, "SESSION_COOKIE_SECURE", False),
+        httponly=True,
+        samesite="Lax",
+    )
