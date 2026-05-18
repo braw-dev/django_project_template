@@ -1,0 +1,56 @@
+from datetime import timedelta
+
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
+from django.utils import timezone
+
+from {{ project_name }}.core.audit import record_audit_event
+from {{ project_name }}.core.models import AuditEvent, AuditEventType
+
+
+class Command(BaseCommand):
+    help = "Delete old audit events older than the configured retention window."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--batch-size",
+            type=int,
+            default=1000,
+            help="Number of audit events to prune per batch.",
+        )
+
+    def handle(self, *args, **options):
+        retention_days = getattr(settings, "AUDIT_EVENT_RETENTION_DAYS", 0)
+        if retention_days <= 0:
+            raise CommandError("AUDIT_EVENT_RETENTION_DAYS must be greater than zero.")
+
+        batch_size = options["batch_size"]
+        if batch_size <= 0:
+            raise CommandError("--batch-size must be greater than zero.")
+
+        cutoff = timezone.now() - timedelta(days=retention_days)
+        total_deleted = 0
+
+        while True:
+            batch = list(
+                AuditEvent.objects.filter(created_at__lt=cutoff).order_by("created_at", "pk")[
+                    :batch_size
+                ]
+            )
+            if not batch:
+                break
+
+            batch_ids = [audit_event.pk for audit_event in batch]
+            record_audit_event(
+                event_type=AuditEventType.AUDIT_RETENTION_PRUNED,
+                metadata={
+                    "cutoff": cutoff.isoformat(),
+                    "pruned_count": len(batch_ids),
+                    "oldest_created_at": batch[0].created_at.isoformat(),
+                    "newest_created_at": batch[-1].created_at.isoformat(),
+                },
+            )
+            deleted_rows, _ = AuditEvent.objects.filter(pk__in=batch_ids).delete(_allow_delete=True)
+            total_deleted += deleted_rows
+
+        self.stdout.write(self.style.SUCCESS(f"Pruned {total_deleted} audit events."))

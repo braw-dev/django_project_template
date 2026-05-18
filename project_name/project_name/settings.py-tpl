@@ -19,6 +19,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 import sentry_sdk
 import structlog
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.csp import CSP
 from django.utils.translation import gettext_lazy as _
 from pydantic import SecretStr, ValidationInfo, field_validator
@@ -197,6 +198,7 @@ class AppSettings(BaseSettings):
     TEAM_INVITATION_EXPIRY_HOURS: int = 168
     NEWSLETTER_CONFIRMATION_EXPIRY_HOURS: int = 72
     NEWSLETTER_CONFIRMATION_RESEND_COOLDOWN_MINUTES: int = 15
+    AUDIT_EVENT_RETENTION_DAYS: int = 365
     CHATWOOT_WEBSITE_TOKEN: SecretStr = SecretStr("")
     CHATWOOT_BASE_URL: str = "https://app.chatwoot.com"
     CELERY_BROKER_URL: SecretStr = SecretStr("redis://localhost:6379/0")
@@ -256,6 +258,11 @@ NEWSLETTER_CONFIRMATION_EXPIRY_HOURS = APP_SETTINGS.NEWSLETTER_CONFIRMATION_EXPI
 NEWSLETTER_CONFIRMATION_RESEND_COOLDOWN_MINUTES = (
     APP_SETTINGS.NEWSLETTER_CONFIRMATION_RESEND_COOLDOWN_MINUTES
 )
+AUDIT_EVENT_RETENTION_DAYS = APP_SETTINGS.AUDIT_EVENT_RETENTION_DAYS
+if AUDIT_EVENT_RETENTION_DAYS <= 0 and IS_PRODUCTION:
+    raise ImproperlyConfigured(
+        "AUDIT_EVENT_RETENTION_DAYS must be set to a positive integer in production."
+    )
 TENANCY_RESOLUTION_STRATEGY = "path"
 
 # Application definition

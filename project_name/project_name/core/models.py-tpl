@@ -131,6 +131,14 @@ class AuditEventType(models.TextChoices):
         "tenancy.invitation_accepted",
     )
     TENANCY_VAT_VALIDATED = "tenancy.vat_validated", "tenancy.vat_validated"
+    AUDIT_RETENTION_PRUNED = "audit.retention_pruned", "audit.retention_pruned"
+
+
+class AuditEventQuerySet(models.QuerySet):
+    def delete(self, *, _allow_delete: bool = False):
+        if not _allow_delete:
+            raise RuntimeError("AuditEvent is append-only and cannot be deleted.")
+        return super().delete()
 
 
 class AuditEvent(models.Model):
@@ -165,6 +173,8 @@ class AuditEvent(models.Model):
     metadata = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    objects = AuditEventQuerySet.as_manager()
+
     class Meta:
         ordering = ["-created_at"]
         indexes = [
@@ -179,7 +189,10 @@ class AuditEvent(models.Model):
         return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        raise RuntimeError("AuditEvent is append-only and cannot be deleted.")
+        _allow_delete = kwargs.pop("_allow_delete", False)
+        if not _allow_delete:
+            raise RuntimeError("AuditEvent is append-only and cannot be deleted.")
+        return super().delete(*args, **kwargs)
 
     def __str__(self):
         created_at = self.created_at.isoformat() if self.created_at else "pending"

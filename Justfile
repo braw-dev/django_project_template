@@ -106,6 +106,11 @@ makemessages *FLAGS:
 compilemessages:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} compilemessages
 
+# Prune audit events older than the configured retention window
+[working-directory('{{ project_name }}')]
+audit-prune:
+    @{% templatetag openvariable %} manage {% templatetag closevariable %} audit_prune
+
 # Translate untranslated .po entries with an OpenAI-compatible API
 [working-directory('{{ project_name }}')]
 translate-locale LOCALE *FLAGS:

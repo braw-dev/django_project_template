@@ -14,7 +14,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.core.management import call_command
+from django.core.management import CommandError, call_command
 from django.http import HttpResponse
 from django.middleware.security import SecurityMiddleware
 from django.template import Context, Template
@@ -234,6 +234,69 @@ class AuditEventTestCase(TestCase):
 
         with self.assertRaisesMessage(RuntimeError, "append-only"):
             audit_event.delete()
+
+    def test_audit_event_can_be_deleted_only_with_explicit_allow_flag(self):
+        audit_event = core_models.AuditEvent.objects.create(event_type="test.event")
+
+        with self.assertRaisesMessage(RuntimeError, "append-only"):
+            audit_event.delete()
+
+        audit_event.delete(_allow_delete=True)
+
+        self.assertFalse(core_models.AuditEvent.objects.filter(pk=audit_event.pk).exists())
+
+    def test_audit_event_queryset_delete_requires_explicit_allow_flag(self):
+        audit_event = core_models.AuditEvent.objects.create(event_type="test.event")
+
+        with self.assertRaisesMessage(RuntimeError, "append-only"):
+            core_models.AuditEvent.objects.filter(pk=audit_event.pk).delete()
+
+        core_models.AuditEvent.objects.filter(pk=audit_event.pk).delete(_allow_delete=True)
+
+        self.assertFalse(core_models.AuditEvent.objects.filter(pk=audit_event.pk).exists())
+
+    @override_settings(AUDIT_EVENT_RETENTION_DAYS=30)
+    def test_audit_prune_command_deletes_old_events_and_records_prune_event(self):
+        old_event_one = core_models.AuditEvent.objects.create(
+            event_type=core_models.AuditEventType.TOKENS_API_TOKEN_CREATED,
+            created_at=timezone.now() - timedelta(days=31),
+        )
+        old_event_two = core_models.AuditEvent.objects.create(
+            event_type=core_models.AuditEventType.TOKENS_API_TOKEN_REVOKED,
+            created_at=timezone.now() - timedelta(days=32),
+        )
+        recent_event = core_models.AuditEvent.objects.create(
+            event_type=core_models.AuditEventType.USERS_LOGIN_SUCCEEDED,
+            created_at=timezone.now() - timedelta(days=5),
+        )
+
+        core_models.AuditEvent.objects.filter(pk=old_event_one.pk).update(
+            created_at=timezone.now() - timedelta(days=31)
+        )
+        core_models.AuditEvent.objects.filter(pk=old_event_two.pk).update(
+            created_at=timezone.now() - timedelta(days=32)
+        )
+        core_models.AuditEvent.objects.filter(pk=recent_event.pk).update(
+            created_at=timezone.now() - timedelta(days=5)
+        )
+
+        call_command("audit_prune", "--batch-size", "1")
+
+        self.assertFalse(core_models.AuditEvent.objects.filter(pk=old_event_one.pk).exists())
+        self.assertFalse(core_models.AuditEvent.objects.filter(pk=old_event_two.pk).exists())
+        self.assertTrue(core_models.AuditEvent.objects.filter(pk=recent_event.pk).exists())
+
+        prune_events = core_models.AuditEvent.objects.filter(
+            event_type=core_models.AuditEventType.AUDIT_RETENTION_PRUNED
+        ).order_by("created_at")
+        self.assertEqual(prune_events.count(), 2)
+        self.assertEqual(prune_events[0].metadata["pruned_count"], 1)
+        self.assertEqual(prune_events[1].metadata["pruned_count"], 1)
+
+    @override_settings(AUDIT_EVENT_RETENTION_DAYS=0)
+    def test_audit_prune_command_requires_positive_retention_window(self):
+        with self.assertRaisesMessage(CommandError, "AUDIT_EVENT_RETENTION_DAYS"):
+            call_command("audit_prune")
 
     def test_audit_event_admin_is_read_only(self):
         request = self.request_factory.get("/admin/core/auditevent/")

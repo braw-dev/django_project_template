@@ -205,6 +205,10 @@ And the template now uses the same pattern for other security-sensitive service-
 
 The audit log is intentionally read-only in Django admin. The preferred pattern is to write audit rows inside the service-layer functions that own the change, so future security-sensitive mutations follow the same shape.
 
+At the ORM level, audit events also reject both instance deletion and queryset deletion unless an explicit internal `_allow_delete=True` escape hatch is used. The intended deletion path is the `just audit-prune` management command, which records its own `audit.retention_pruned` event before removing old rows.
+
+Retention is controlled by `AUDIT_EVENT_RETENTION_DAYS`.
+
 ## Security event emails
 
 The template sends small transactional security emails for a narrow allowlist of audit events:
