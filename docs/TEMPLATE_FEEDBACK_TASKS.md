@@ -28,8 +28,6 @@ None
 
 ## P1 — important for EU B2B readiness
 
-- **A real "subprocessors changed" notification path.** The seeded `subprocessors` page is good, but there is no mechanism for the `subprocessor_notifications` mailing list described in customer DPAs (this is what EU enterprise buyers actually ask for). Reuse the existing `NewsletterSignup` model with a `purpose` field (`marketing` vs `subprocessor_updates`) and a separate confirmation flow, or add a tiny `SubprocessorSubscription` model. Either is fine; pick one and wire it on the subprocessors page.
-
 - **Session lifetime + reauthentication for sensitive actions.** `settings.py-tpl` leaves `SESSION_COOKIE_AGE` at Django's two-week default and does not set `SESSION_EXPIRE_AT_BROWSER_CLOSE`. For B2B SaaS the expected baseline is shorter sessions, optional idle timeout, and a `reauthentication_required` decorator gating things like "delete team", "rotate API token", "change billing email". Allauth already exposes the primitives - wire them on the team/token/billing services and add a `reauthenticate` template under `templates/account/`.
 
 - **Login + security-event email notifications.** `core/audit.py-tpl` records security events but never notifies the user. For B2B, "new sign-in from a new device" and "MFA disabled" / "recovery codes regenerated" / "API token created" are table stakes. Add a small `users/notifications.py` that subscribes to the audit-event signal and sends a transactional email for a narrow allowlist of event types, gated behind a per-user preference.
