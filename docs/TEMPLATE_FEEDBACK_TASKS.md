@@ -24,7 +24,7 @@ The gaps below are the deltas that, in my view, would meaningfully raise the EU 
 
 ## P0 — fix first
 
-- **Add automated dependency updates and a secrets scan to CI.** There is no `.github/dependabot.yml` / `renovate.json`, and `.github/workflows/ci.yml` runs no secret-leak step. For a portfolio of long-running SaaS sites with a single maintainer, both are foundational - missing them is the kind of thing a TDD reviewer flags immediately. Add Renovate (weekly, grouped, pip + npm + github-actions + docker) and a `gitleaks` step in CI. Optionally add `pip-audit`/`uv tool run pip-audit` as a non-blocking job.
+None
 
 ## P1 — important for EU B2B readiness
 
