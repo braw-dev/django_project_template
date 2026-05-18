@@ -28,8 +28,6 @@ None
 
 ## P1 — important for EU B2B readiness
 
-- **Login + security-event email notifications.** `core/audit.py-tpl` records security events but never notifies the user. For B2B, "new sign-in from a new device" and "MFA disabled" / "recovery codes regenerated" / "API token created" are table stakes. Add a small `users/notifications.py` that subscribes to the audit-event signal and sends a transactional email for a narrow allowlist of event types, gated behind a per-user preference.
-
 - **Rate-limit the non-login attack surface.** `django-axes` covers login, but newsletter signup, newsletter confirmation resend, allauth password reset, allauth email confirmation resend, and the team-invitation accept endpoint are all unauthenticated and reachable. Use a single boring abstraction (e.g. `django-ratelimit` with Redis/Dragonfly) and apply it to those views; add a test per endpoint that hits the limit and asserts the 429 response uses the existing template.
 
 - **Frontend i18n is missing despite the i18n-first claim.** `frontend/project_name/package.json` has no `i18next` / `react-intl` / `formatjs` dependency, and the `internationalisation-first` doc only covers the Django side. Either add `i18next` + a `useTranslation` shim wired through Django-rendered `<html lang>` and a JSON catalogue per `LANGUAGES`, or explicitly document that "frontend stays English-only until requested" so generated projects don't ship half-translated UIs. My preference: add the shim - this is high-leverage and cheap once, expensive per project.
