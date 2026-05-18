@@ -28,7 +28,7 @@ None
 
 ## P1 — important for EU B2B readiness
 
-- **Frontend i18n is missing despite the i18n-first claim.** `frontend/project_name/package.json` has no `i18next` / `react-intl` / `formatjs` dependency, and the `internationalisation-first` doc only covers the Django side. Either add `i18next` + a `useTranslation` shim wired through Django-rendered `<html lang>` and a JSON catalogue per `LANGUAGES`, or explicitly document that "frontend stays English-only until requested" so generated projects don't ship half-translated UIs. My preference: add the shim - this is high-leverage and cheap once, expensive per project.
+None
 
 ## P2 — important for product quality and repeatability
 
