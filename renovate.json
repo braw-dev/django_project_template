@@ -1,0 +1,24 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:best-practices"],
+  "timezone": "Europe/Berlin",
+  "schedule": ["on monday"],
+  "packageRules": [
+    {
+      "matchManagers": ["pep621", "uv"],
+      "groupName": "python dependencies"
+    },
+    {
+      "matchManagers": ["npm"],
+      "groupName": "frontend dependencies"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "groupName": "docker dependencies"
+    }
+  ]
+}
