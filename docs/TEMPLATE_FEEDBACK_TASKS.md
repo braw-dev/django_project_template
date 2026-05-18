@@ -44,14 +44,6 @@ None
 
 - **Per-project cost telemetry.** `MOTIVATION.md` describes a BI dashboard with revenue/expenses/profit per project. Today nothing in the template emits cost-side data. A small `core/costs.py` module that consumes Hetzner + Bunny + Scaleway billing APIs and writes a daily `CostSnapshot` row is enough to start; the dashboard itself can live outside the template.
 
-- **OpenTelemetry exporter, opt-in.** The structlog setup is good. An optional OTEL bridge (gated behind an env var, off by default) would let any single product graduate to traces without re-architecting logging.
-
-- **MoR fallback - Stripe abstraction.** `billing/services.py-tpl` is Polar-specific. If a product ever needs Stripe (some EU enterprise customers refuse non-Stripe checkout), a thin `BillingProvider` protocol with Polar as the only implementation is cheap to add now and expensive to retrofit later. Only do this once the second implementation is actually needed - speculative abstractions violate the grug-brain rule.
-
-- **PWA + offline shell for the marketing site.** Low cost, helps Lighthouse / Core Web Vitals scores, which Google uses for ranking. Skip until the first product proves it cares.
-
-- **`just doctor` for the generated project.** Beyond the Day-1 checklist - an idempotent recipe that re-checks all envs, all secrets, that `ADMINS` is set, that Sentry receives a test event, that the health check passes, that the latest backup is younger than N hours.
-
 ## Definition of done for each task
 
 Prefer each task to be considered done only when:
