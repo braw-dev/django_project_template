@@ -258,6 +258,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
+    "django.contrib.sitemaps",
     "whitenoise.runserver_nostatic",  # Whitenoise for static files in development
     "django.contrib.staticfiles",
     "axes",  # Login throttling

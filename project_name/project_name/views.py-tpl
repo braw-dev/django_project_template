@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
@@ -27,3 +29,12 @@ def dashboard(request):
 def pricing(request):
     products = selectors.product_list(locale=getattr(request, "LANGUAGE_CODE", None))
     return render(request, "core/pages/pricing.html", {"products": products})
+
+
+def robots_txt(request):
+    if settings.IS_PRODUCTION and not settings.DEBUG:
+        sitemap_url = request.build_absolute_uri(reverse("sitemap"))
+        content = f"User-agent: *\nAllow: /\n\nSitemap: {sitemap_url}\n"
+    else:
+        content = "User-agent: *\nDisallow: /\n"
+    return HttpResponse(content, content_type="text/plain")

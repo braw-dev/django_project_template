@@ -1,5 +1,5 @@
 from django.template import Context, Template
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .models import Page
@@ -96,6 +96,35 @@ class HomepageFeaturedFaqTestCase(TestCase):
         self.assertContains(response, "Can support staff access customer accounts or data?")
         self.assertContains(response, "What uptime and performance should customers expect?")
         self.assertContains(response, reverse("pages:support_index"))
+
+
+class SitemapAndRobotsTestCase(TestCase):
+    @override_settings(DEBUG=False, IS_PRODUCTION=True)
+    def test_sitemap_xml_is_available_in_production(self):
+        response = self.client.get(reverse("sitemap"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/xml")
+        self.assertContains(response, "/privacy/")
+
+    @override_settings(DEBUG=False, IS_PRODUCTION=True)
+    def test_robots_txt_allows_indexing_in_production(self):
+        response = self.client.get(reverse("robots_txt"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/plain")
+        self.assertContains(response, "User-agent: *")
+        self.assertContains(response, "Allow: /")
+        self.assertContains(response, "Sitemap: http://testserver/sitemap.xml")
+
+    @override_settings(DEBUG=True, IS_PRODUCTION=False)
+    def test_robots_txt_disallows_indexing_outside_production(self):
+        response = self.client.get(reverse("robots_txt"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/plain")
+        self.assertContains(response, "User-agent: *")
+        self.assertContains(response, "Disallow: /")
 
 
 class PageMarkdownSanitizationTestCase(TestCase):

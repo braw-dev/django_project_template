@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls.i18n import i18n_patterns
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
+from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 
 if "debug_toolbar" in settings.INSTALLED_APPS:
@@ -15,10 +16,15 @@ else:
 from {{ project_name }}.core import views as core_views
 from {{ project_name }}.core.api import api_v1, webhooks_api
 from {{ project_name }}.core.health import ReadinessCheckView
+from {{ project_name }}.pages.sitemaps import PageSitemap
 from {{ project_name }}.tenancy import views as tenancy_views
 from {{ project_name }}.users.decorators import mfa_required
 
 from . import views
+
+sitemaps = {
+    "pages": PageSitemap,
+}
 
 newsletter_urls = [
     path("signup/", core_views.newsletter_signup, name="signup"),
@@ -45,6 +51,8 @@ protected_team_urls = [
 public_urls = [
     path("pricing/", views.pricing, name="pricing"),  # Pricing page
     path("newsletter/", include((newsletter_urls, "newsletter"))),
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
+    path("robots.txt", views.robots_txt, name="robots_txt"),
     path(
         "teams/invitations/accept/<str:token>/",
         tenancy_views.accept_team_invitation,
