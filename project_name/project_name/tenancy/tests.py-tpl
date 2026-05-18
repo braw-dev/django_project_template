@@ -3,7 +3,6 @@
 from datetime import timedelta
 
 import pytest
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.http import Http404, HttpResponse
 from django.test import RequestFactory
@@ -12,33 +11,6 @@ from django.utils import timezone
 from {{ project_name }}.billing import models as billing_models
 from {{ project_name }}.core.models import AuditEvent, AuditEventType
 from {{ project_name }}.tenancy import context, middleware, models, permissions, services
-
-User = get_user_model()
-
-
-@pytest.fixture
-def owner(db):
-    return User.objects.create_user(email="owner@example.com", password="testpass123")
-
-
-@pytest.fixture
-def admin_user(db):
-    return User.objects.create_user(email="admin@example.com", password="testpass123")
-
-
-@pytest.fixture
-def member_user(db):
-    return User.objects.create_user(email="member@example.com", password="testpass123")
-
-
-@pytest.fixture
-def outsider(db):
-    return User.objects.create_user(email="outsider@example.com", password="testpass123")
-
-
-@pytest.fixture
-def team(owner):
-    return services.create_team(name="Acme", slug="acme", owner=owner)
 
 
 @pytest.mark.django_db
@@ -186,17 +158,9 @@ class TestTeamServices:
 
 @pytest.mark.django_db
 class TestPermissions:
-    def test_role_permission_matrix(self, owner, admin_user, member_user, team):
-        models.TeamMembership.all_objects.create(
-            team=team,
-            user=admin_user,
-            role=models.TeamRole.ADMIN,
-        )
-        models.TeamMembership.all_objects.create(
-            team=team,
-            user=member_user,
-            role=models.TeamRole.MEMBER,
-        )
+    def test_role_permission_matrix(
+        self, owner, admin_user, member_user, team, admin_membership, member_membership
+    ):
 
         assert permissions.user_has_team_perm(owner, "tenancy.manage_team_billing", team) is True
         assert (
@@ -259,12 +223,10 @@ class TestMiddleware:
 
 @pytest.mark.django_db
 class TestTenantScopedManager:
-    def test_scoped_manager_filters_by_active_team_context(self, owner):
-        team_a = services.create_team(name="Acme", slug="acme", owner=owner)
-        team_b = services.create_team(name="Beta", slug="beta", owner=owner)
+    def test_scoped_manager_filters_by_active_team_context(self, team, another_team):
         now = timezone.now() + timedelta(days=30)
         billing_models.Subscription.all_objects.create(
-            team=team_a,
+            team=team,
             provider=billing_models.BillingProviderChoices.POLAR,
             external_subscription_id="sub_team_a",
             external_customer_id="cust_team_a",
@@ -273,7 +235,7 @@ class TestTenantScopedManager:
             current_period_end=now,
         )
         billing_models.Subscription.all_objects.create(
-            team=team_b,
+            team=another_team,
             provider=billing_models.BillingProviderChoices.POLAR,
             external_subscription_id="sub_team_b",
             external_customer_id="cust_team_b",
@@ -282,7 +244,7 @@ class TestTenantScopedManager:
             current_period_end=now,
         )
 
-        with context.team_context(team_a.id):
+        with context.team_context(team.id):
             assert list(
                 billing_models.Subscription.objects.values_list(
                     "external_subscription_id", flat=True

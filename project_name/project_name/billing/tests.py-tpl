@@ -1,43 +1,13 @@
 """Tests for billing app."""
 
 import json
-from datetime import timedelta
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from django.contrib.auth import get_user_model
-from django.utils import timezone
 from standardwebhooks.webhooks import WebhookVerificationError
 
-from {{ project_name }}.tenancy import services as tenancy_services
-
 from . import models, selectors, services, webhooks
-
-User = get_user_model()
-
-
-@pytest.fixture
-def owner(db):
-    return User.objects.create_user(email="owner@example.com", password="testpass123")
-
-
-@pytest.fixture
-def team(owner):
-    return tenancy_services.create_team(name="Acme", slug="acme", owner=owner)
-
-
-@pytest.fixture
-def subscription(team):
-    return models.Subscription.all_objects.create(
-        team=team,
-        provider=models.BillingProviderChoices.POLAR,
-        external_subscription_id="sub_test123",
-        external_customer_id="cust_test123",
-        external_product_id="prod_test123",
-        status=models.SubscriptionStatus.ACTIVE,
-        current_period_end=timezone.now() + timedelta(days=30),
-    )
 
 
 @pytest.mark.django_db

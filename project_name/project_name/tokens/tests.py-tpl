@@ -4,45 +4,11 @@ from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
-from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from {{ project_name }}.core.models import AuditEvent, AuditEventType
-from {{ project_name }}.tenancy import models as tenancy_models
-from {{ project_name }}.tenancy import services as tenancy_services
 
 from . import auth, models, services
-
-User = get_user_model()
-
-
-@pytest.fixture
-def owner(db):
-    return User.objects.create_user(email="owner@example.com", password="testpass123")
-
-
-@pytest.fixture
-def admin_user(db):
-    return User.objects.create_user(email="admin@example.com", password="testpass123")
-
-
-@pytest.fixture
-def outsider(db):
-    return User.objects.create_user(email="outsider@example.com", password="testpass123")
-
-
-@pytest.fixture
-def team(owner):
-    return tenancy_services.create_team(name="Acme", slug="acme", owner=owner)
-
-
-@pytest.fixture
-def admin_membership(team, admin_user):
-    return tenancy_models.TeamMembership.all_objects.create(
-        team=team,
-        user=admin_user,
-        role=tenancy_models.TeamRole.ADMIN,
-    )
 
 
 @pytest.mark.django_db

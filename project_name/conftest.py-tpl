@@ -1,0 +1,75 @@
+import pytest
+from {{ project_name }}.tenancy import models as tenancy_models
+from tests.factories import (
+    SubscriptionFactory,
+    TeamFactory,
+    TeamMembershipFactory,
+    UserFactory,
+)
+
+
+@pytest.fixture
+def user(db):
+    return UserFactory()
+
+
+@pytest.fixture
+def owner(db):
+    return UserFactory(email="owner@example.com")
+
+
+@pytest.fixture
+def admin_user(db):
+    return UserFactory(email="admin@example.com")
+
+
+@pytest.fixture
+def member_user(db):
+    return UserFactory(email="member@example.com")
+
+
+@pytest.fixture
+def outsider(db):
+    return UserFactory(email="outsider@example.com")
+
+
+@pytest.fixture
+def team(db, owner):
+    team = TeamFactory(name="Acme", slug="acme")
+    TeamMembershipFactory(team=team, user=owner, role=tenancy_models.TeamRole.OWNER)
+    return team
+
+
+@pytest.fixture
+def another_team(db, owner):
+    team = TeamFactory(name="Beta", slug="beta")
+    TeamMembershipFactory(team=team, user=owner, role=tenancy_models.TeamRole.OWNER)
+    return team
+
+
+@pytest.fixture
+def owner_membership(db, team, owner):
+    return tenancy_models.TeamMembership.all_objects.get(team=team, user=owner)
+
+
+@pytest.fixture
+def admin_membership(db, team, admin_user):
+    return TeamMembershipFactory(
+        team=team,
+        user=admin_user,
+        role=tenancy_models.TeamRole.ADMIN,
+    )
+
+
+@pytest.fixture
+def member_membership(db, team, member_user):
+    return TeamMembershipFactory(
+        team=team,
+        user=member_user,
+        role=tenancy_models.TeamRole.MEMBER,
+    )
+
+
+@pytest.fixture
+def subscription(db, team):
+    return SubscriptionFactory(team=team)
