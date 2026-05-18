@@ -162,6 +162,8 @@ If you are reading this file inside a project *generated* from this template (i.
 
 Always use `just` commands to ensure environment consistency.
 
+If you are helping set up a freshly generated project, read and follow `docs/NEW_PROJECT_CHECKLIST.md` early. Treat it as the canonical short checklist for first-run, pre-deploy, and pre-customer setup work.
+
 - **Setup**: `just install-dev` (sets up venv, installs python/node deps, hooks).
 - **Start Server**: `just runserver` (runs Django + Vite).
 - **Tests**:

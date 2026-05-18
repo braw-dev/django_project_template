@@ -2,6 +2,8 @@
 
 Opinionated Django template for SaaS MVPs. Start from a production-oriented baseline with auth, tenancy, billing, marketing pages, and frontend scaffolding.
 
+If you are starting a real product from this template, read `{{ project_name }}/docs/NEW_PROJECT_CHECKLIST.md` early. That is the short operator-facing checklist for "what do I need to do before I forget?".
+
 To get started, make sure you have Django installed (5.1+) and run:
 
 ```bash
@@ -20,6 +22,8 @@ uv run django-admin startproject \
 ```
 
 ## Post-setup checklist
+
+For the fuller "before deploy / before customers / before launch" list, use `{{ project_name }}/docs/NEW_PROJECT_CHECKLIST.md`.
 
 - [ ] Init a new git repository `git init .`
 - [ ] Install dev dependencies & lefthook git hooks `just install-dev`
