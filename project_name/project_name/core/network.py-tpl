@@ -1,0 +1,41 @@
+"""Trusted proxy and client IP helpers."""
+
+from __future__ import annotations
+
+from ipaddress import ip_address, ip_network
+
+from django.conf import settings
+from django.http import HttpRequest
+
+
+def get_remote_addr(request: HttpRequest | None) -> str:
+    if request is None:
+        return ""
+    return request.META.get("REMOTE_ADDR", "").strip()
+
+
+def is_request_from_trusted_proxy(request: HttpRequest | None) -> bool:
+    remote_addr = get_remote_addr(request)
+    if not settings.IS_PRODUCTION or not remote_addr:
+        return False
+
+    for proxy in settings.TRUSTED_PROXY_IPS:
+        try:
+            if ip_address(remote_addr) in ip_network(proxy, strict=False):
+                return True
+        except ValueError:
+            continue
+
+    return False
+
+
+def get_client_ip(request: HttpRequest | None) -> str:
+    if request is None:
+        return ""
+
+    if is_request_from_trusted_proxy(request):
+        forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "").strip()
+        if forwarded_for:
+            return forwarded_for.split(",", 1)[0].strip()
+
+    return get_remote_addr(request)

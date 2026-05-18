@@ -7,17 +7,7 @@ from typing import Any
 from django.http import HttpRequest
 
 from .models import AuditEvent, AuditEventType
-
-
-def _get_request_ip_address(request: HttpRequest | None) -> str:
-    if request is None:
-        return ""
-
-    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "").strip()
-    if forwarded_for:
-        return forwarded_for.split(",", 1)[0].strip()
-
-    return request.META.get("REMOTE_ADDR", "").strip()
+from .network import get_client_ip
 
 
 def record_audit_event(
@@ -38,7 +28,7 @@ def record_audit_event(
         subject_user=subject_user,
         subject_email=subject_email or getattr(subject_user, "email", ""),
         team=team,
-        ip_address=_get_request_ip_address(request),
+        ip_address=get_client_ip(request),
         user_agent=request.META.get("HTTP_USER_AGENT", "") if request is not None else "",
         metadata=metadata or {},
     )

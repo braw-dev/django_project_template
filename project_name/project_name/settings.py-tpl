@@ -52,6 +52,10 @@ def parse_csv(value_name: str, value: str) -> list[str]:
     return items
 
 
+def parse_optional_csv(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
 def _coerce_url_value(value: str) -> str | int | bool:
     lowered = value.lower()
     if lowered == "true":
@@ -153,6 +157,7 @@ class AppSettings(BaseSettings):
     DEBUG: bool = False
     ENVIRONMENT: str = "prod"
     ALLOWED_HOSTS: str
+    TRUSTED_PROXY_IPS: str = ""
     DJANGO_ADMINS: str
     LOG_LEVEL: str = "INFO"
     OBSERVABILITY_SLOW_REQUEST_THRESHOLD_MS: int = 500
@@ -229,6 +234,7 @@ if sentry_dsn := APP_SETTINGS.SENTRY_DSN.get_secret_value().strip():
     sentry_sdk.init(dsn=sentry_dsn)
 
 ALLOWED_HOSTS = parse_csv("ALLOWED_HOSTS", APP_SETTINGS.ALLOWED_HOSTS)
+TRUSTED_PROXY_IPS = parse_optional_csv(APP_SETTINGS.TRUSTED_PROXY_IPS)
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -290,6 +296,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "{{ project_name }}.core.middleware.TrustedProxyHeadersMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django_structlog.middlewares.RequestMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -726,11 +733,11 @@ if IS_PRODUCTION:
     # https://docs.djangoproject.com/en/5.1/ref/settings/#std-setting-CSRF_COOKIE_SECURE
     CSRF_COOKIE_SECURE = True
 
-    # Read this header to determine if the request is secure
+    # Only trust reverse-proxy forwarding headers from explicitly trusted peers.
+    # Leave TRUSTED_PROXY_IPS empty to disable proxy header trust entirely.
     # https://docs.djangoproject.com/en/5.1/ref/settings/#std-setting-SECURE_PROXY_SSL_HEADER
-    # Caddy sets this server on the reverse proxy
-    # https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#defaults
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    if TRUSTED_PROXY_IPS:
+        SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
     # HSTS settings
     # ----------------------------------------

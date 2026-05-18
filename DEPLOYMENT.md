@@ -187,6 +187,18 @@ This repo does not include the final reverse-proxy config. For the default path,
 
 That split keeps product repos focused on application concerns while the host handles ingress and certificates centrally.
 
+### Proxy header contract
+
+Generated projects trust proxy headers only when the connecting peer is listed in `TRUSTED_PROXY_IPS`.
+
+For the default Caddy-on-the-same-host shape, keep the app private and set `TRUSTED_PROXY_IPS` to the address or CIDR that Caddy uses when proxying to Django. Examples:
+
+- `TRUSTED_PROXY_IPS=127.0.0.1`
+- `TRUSTED_PROXY_IPS=10.0.0.0/8`
+- `TRUSTED_PROXY_IPS=127.0.0.1,10.0.0.0/8`
+
+Leave it empty if Django is not behind a trusted reverse proxy yet. In that state, forwarded headers are ignored and `SECURE_PROXY_SSL_HEADER` is not enabled.
+
 ## Security-related deployment notes
 
 ### Authentication

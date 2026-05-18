@@ -13,6 +13,7 @@ from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.management import call_command
 from django.http import HttpResponse
+from django.middleware.security import SecurityMiddleware
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -25,7 +26,8 @@ from {{ project_name }}.tenancy import services as tenancy_services
 from . import models as core_models
 from .admin import AuditEventAdmin
 from .forms import NewsletterSignupForm
-from .middleware import RequestPerformanceLoggingMiddleware
+from .middleware import RequestPerformanceLoggingMiddleware, TrustedProxyHeadersMiddleware
+from .network import get_client_ip
 from .newsletter import get_newsletter_confirmation_token
 
 User = get_user_model()
@@ -183,6 +185,7 @@ class AuditEventTestCase(TestCase):
         request = self.request_factory.post(
             "/hijack/acquire/",
             REMOTE_ADDR="127.0.0.1",
+            HTTP_X_FORWARDED_FOR="203.0.113.10, 127.0.0.1",
             HTTP_USER_AGENT="test-agent",
         )
 
@@ -203,10 +206,12 @@ class AuditEventTestCase(TestCase):
         self.assertEqual(audit_event.user_agent, "test-agent")
         self.assertEqual(audit_event.metadata["origin"], "django_hijack")
 
-    def test_hijack_ended_signal_creates_audit_event(self):
+    @override_settings(IS_PRODUCTION=True, TRUSTED_PROXY_IPS=["127.0.0.1"])
+    def test_hijack_ended_signal_uses_forwarded_ip_from_trusted_proxy(self):
         request = self.request_factory.post(
             "/hijack/release/",
             REMOTE_ADDR="127.0.0.1",
+            HTTP_X_FORWARDED_FOR="203.0.113.20, 127.0.0.1",
             HTTP_USER_AGENT="test-agent",
         )
 
@@ -223,7 +228,63 @@ class AuditEventTestCase(TestCase):
         self.assertEqual(audit_event.actor, self.actor)
         self.assertEqual(audit_event.subject_user, self.subject)
         self.assertEqual(audit_event.subject_email, self.subject.email)
+        self.assertEqual(audit_event.ip_address, "203.0.113.20")
         self.assertEqual(audit_event.metadata["origin"], "django_hijack")
+
+    @override_settings(IS_PRODUCTION=True, TRUSTED_PROXY_IPS=["10.0.0.0/8"])
+    def test_get_client_ip_ignores_forwarded_header_from_untrusted_peer(self):
+        request = self.request_factory.get(
+            "/",
+            REMOTE_ADDR="203.0.113.30",
+            HTTP_X_FORWARDED_FOR="198.51.100.10, 10.0.0.1",
+        )
+
+        self.assertEqual(get_client_ip(request), "203.0.113.30")
+
+
+class TrustedProxyHeadersMiddlewareTestCase(TestCase):
+    def setUp(self):
+        self.request_factory = RequestFactory()
+
+    @override_settings(
+        IS_PRODUCTION=True,
+        TRUSTED_PROXY_IPS=["127.0.0.1"],
+        SECURE_SSL_REDIRECT=True,
+        SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"),
+    )
+    def test_spoofed_forwarded_proto_is_ignored_for_untrusted_peer(self):
+        middleware = TrustedProxyHeadersMiddleware(
+            SecurityMiddleware(lambda request: HttpResponse("ok"))
+        )
+        request = self.request_factory.get(
+            "/",
+            REMOTE_ADDR="203.0.113.30",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+        response = middleware(request)
+
+        self.assertEqual(response.status_code, 301)
+
+    @override_settings(
+        IS_PRODUCTION=True,
+        TRUSTED_PROXY_IPS=["127.0.0.1"],
+        SECURE_SSL_REDIRECT=True,
+        SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"),
+    )
+    def test_forwarded_proto_is_honored_for_trusted_peer(self):
+        middleware = TrustedProxyHeadersMiddleware(
+            SecurityMiddleware(lambda request: HttpResponse("ok"))
+        )
+        request = self.request_factory.get(
+            "/",
+            REMOTE_ADDR="127.0.0.1",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+        response = middleware(request)
+
+        self.assertEqual(response.status_code, 200)
 
 
 class RequestPerformanceLoggingMiddlewareTestCase(TestCase):

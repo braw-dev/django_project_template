@@ -202,6 +202,25 @@ And the template now uses the same pattern for other security-sensitive service-
 
 The audit log is intentionally read-only in Django admin. The preferred pattern is to write audit rows inside the service-layer functions that own the change, so future security-sensitive mutations follow the same shape.
 
+## Reverse proxy trust contract
+
+In production, the template only trusts `X-Forwarded-Proto` and `X-Forwarded-For` when **both** of these are true:
+
+- `TRUSTED_PROXY_IPS` is set to one or more explicit proxy IPs or CIDR ranges
+- the immediate peer (`REMOTE_ADDR`) is in that trusted list
+
+Default behavior is safer: `TRUSTED_PROXY_IPS` is empty, so forwarded headers are ignored and audit IPs fall back to `REMOTE_ADDR`.
+
+This means a generated project must not rely on spoofable client-supplied forwarding headers unless you have put a real reverse proxy in front of Django and documented its source addresses.
+
+Recommended contract:
+
+- bind the app only to localhost or a private interface
+- put Caddy in front of it as the only public ingress
+- set `TRUSTED_PROXY_IPS` to the exact Caddy source IPs or private-network CIDRs that will reach Django
+- do not expose Gunicorn directly to the public internet
+- if the proxy path changes, update `TRUSTED_PROXY_IPS` before enabling HTTPS redirect assumptions
+
 ## Billing security
 
 Billing in the template is team-owned. Billing API endpoints require:

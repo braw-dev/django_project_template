@@ -10,6 +10,8 @@ import structlog
 from django.conf import settings
 from django.db import connections
 
+from .network import is_request_from_trusted_proxy
+
 logger = structlog.get_logger(__name__)
 
 
@@ -30,6 +32,19 @@ class QueryTimingWrapper:
         finally:
             self.stats.count += 1
             self.stats.duration_ms += (time.perf_counter() - started_at) * 1000
+
+
+class TrustedProxyHeadersMiddleware:
+    """Strip spoofable forwarded headers unless the peer is trusted."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if not is_request_from_trusted_proxy(request):
+            request.META.pop("HTTP_X_FORWARDED_FOR", None)
+            request.META.pop("HTTP_X_FORWARDED_PROTO", None)
+        return self.get_response(request)
 
 
 class RequestPerformanceLoggingMiddleware:
