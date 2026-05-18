@@ -4,7 +4,13 @@ pre-commit:
     gitleaks:
       glob: "*"
       run: gitleaks protect --staged --no-banner
-    ruff:
+    ruff-format:
+      run: uv run ruff format {staged_files}
+      stage_fixed: true
+      glob:
+        - "*.py"
+        - "*.py-tpl"
+    ruff-check:
       run: uv run ruff check --fix {staged_files}
       stage_fixed: true
       glob:
