@@ -2,6 +2,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 
 from . import selectors
 from .pages.faq import get_featured_faqs
@@ -37,4 +38,23 @@ def robots_txt(request):
         content = f"User-agent: *\nAllow: /\n\nSitemap: {sitemap_url}\n"
     else:
         content = "User-agent: *\nDisallow: /\n"
+    return HttpResponse(content, content_type="text/plain")
+
+
+def security_txt(request):
+    canonical_url = request.build_absolute_uri(reverse("security_txt"))
+    contact_url = request.build_absolute_uri(
+        reverse("pages:page_detail", kwargs={"slug": "contact"})
+    )
+    policy_url = request.build_absolute_uri(
+        reverse("pages:page_detail", kwargs={"slug": "security"})
+    )
+    expires_at = (timezone.now() + timezone.timedelta(days=365)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    content = (
+        f"Contact: {contact_url}\n"
+        f"Policy: {policy_url}\n"
+        f"Canonical: {canonical_url}\n"
+        f"Expires: {expires_at}\n"
+        "Preferred-Languages: en\n"
+    )
     return HttpResponse(content, content_type="text/plain")

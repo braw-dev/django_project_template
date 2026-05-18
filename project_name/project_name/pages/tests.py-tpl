@@ -141,6 +141,26 @@ class SitemapAndRobotsTestCase(TestCase):
         self.assertContains(response, "User-agent: *")
         self.assertContains(response, "Disallow: /")
 
+    def test_security_txt_exposes_contact_policy_and_canonical_urls(self):
+        response = self.client.get(reverse("security_txt"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/plain")
+        self.assertContains(
+            response,
+            f"Contact: http://testserver{reverse('pages:page_detail', kwargs={'slug': 'contact'})}",
+        )
+        self.assertContains(
+            response,
+            f"Policy: http://testserver{reverse('pages:page_detail', kwargs={'slug': 'security'})}",
+        )
+        self.assertContains(
+            response,
+            "Canonical: http://testserver/.well-known/security.txt",
+        )
+        self.assertContains(response, "Expires: ")
+        self.assertContains(response, "Preferred-Languages: en")
+
 
 class PageMarkdownSanitizationTestCase(TestCase):
     def test_page_detail_sanitizes_rendered_markdown(self):
