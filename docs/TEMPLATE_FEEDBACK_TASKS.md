@@ -28,8 +28,6 @@ None
 
 ## P1 — important for EU B2B readiness
 
-- **Session lifetime + reauthentication for sensitive actions.** `settings.py-tpl` leaves `SESSION_COOKIE_AGE` at Django's two-week default and does not set `SESSION_EXPIRE_AT_BROWSER_CLOSE`. For B2B SaaS the expected baseline is shorter sessions, optional idle timeout, and a `reauthentication_required` decorator gating things like "delete team", "rotate API token", "change billing email". Allauth already exposes the primitives - wire them on the team/token/billing services and add a `reauthenticate` template under `templates/account/`.
-
 - **Login + security-event email notifications.** `core/audit.py-tpl` records security events but never notifies the user. For B2B, "new sign-in from a new device" and "MFA disabled" / "recovery codes regenerated" / "API token created" are table stakes. Add a small `users/notifications.py` that subscribes to the audit-event signal and sends a transactional email for a narrow allowlist of event types, gated behind a per-user preference.
 
 - **Rate-limit the non-login attack surface.** `django-axes` covers login, but newsletter signup, newsletter confirmation resend, allauth password reset, allauth email confirmation resend, and the team-invitation accept endpoint are all unauthenticated and reachable. Use a single boring abstraction (e.g. `django-ratelimit` with Redis/Dragonfly) and apply it to those views; add a test per endpoint that hits the limit and asserts the 429 response uses the existing template.
