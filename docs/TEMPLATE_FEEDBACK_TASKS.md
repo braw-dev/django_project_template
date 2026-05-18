@@ -28,8 +28,6 @@ None
 
 ## P1 — important for EU B2B readiness
 
-- **VAT identity capture on `Team`, even if Polar does the tax math.** `billing/README.md` correctly delegates tax to Polar, but the `Team` model has no `billing_country`, `vat_number`, or `vat_validated_at` fields. Without those, every product has to retrofit them later, and there is no Django-side hook for "remind admin to enter VAT before first invoice." Add nullable fields + a one-shot VIES validation service (`tenancy/services.py`) that records validated state and a `tenancy.vat_validated` audit event. Keep actual tax calculation with Polar; this is just _capture_ and _display_ on invoices/receipts surfaced in-app.
-
 - **Document and verify the Polar / merchant-of-record posture for EU customers.** Polar is a US-incorporated MoR. For a German or French B2B buyer doing vendor review, this is a question on every procurement form. Add a short section to `billing/README.md` and `docs/PRODUCT_OVERVIEW.md` (or a new `docs/billing-eu.md`) that says exactly: who is the contracting party, who issues invoices, where is data stored, what is the fallback if Polar coverage changes. No code change required, but the doc has to exist for the trust-pages to be honest.
 
 - **A real "subprocessors changed" notification path.** The seeded `subprocessors` page is good, but there is no mechanism for the `subprocessor_notifications` mailing list described in customer DPAs (this is what EU enterprise buyers actually ask for). Reuse the existing `NewsletterSignup` model with a `purpose` field (`marketing` vs `subprocessor_updates`) and a separate confirmation flow, or add a tiny `SubprocessorSubscription` model. Either is fine; pick one and wire it on the subprocessors page.
