@@ -32,8 +32,6 @@ None
 
 ## P2 — important for product quality and repeatability
 
-- **First-run / Day-1 generated-project checklist.** `README.md` is comprehensive but it is not a checklist - a founder reading it after `django-admin startproject` does not have a 10-item "before customers" list (rotate `SECRET_KEY`, fill `PRODUCT_OVERVIEW.md`, replace placeholder trust-page bodies, set `ADMINS`, set `EMAIL_DOMAIN`, configure Sentry DSN, configure Polar, set Plausible domain, take a first backup, run a restore drill). Add `docs/NEW_PROJECT_CHECKLIST.md` and link it from the top of the generated README. Bonus: a `just doctor` recipe that checks the obvious env/secret/host invariants and prints what is missing.
-
 - **Backup, restore, and a _tested_ restore drill using borg + borgmatic + Hetzner Storage Box.** `DEPLOYMENT.md` honestly says backups are not scaffolded. For a portfolio of unattended SaaS products, scaffold encrypted, deduplicated, append-only backups using `borg` driven by `borgmatic`, with a Hetzner Storage Box as the off-site repository (SSH/SFTP target, cheap, EU-located). Concretely:
   - Ship a `borgmatic.yaml` (or `config.yaml` under `/etc/borgmatic.d/`) template in the generated project with: repository pointing at `ssh://<user>@<box>.your-storagebox.de:23/./repo`, `repokey-blake2` encryption, sensible `keep_daily`/`keep_weekly`/`keep_monthly` retention, a `before_backup` hook that runs `pg_dump --format=custom` to a staging path (or uses borgmatic's built-in `postgresql_databases:` hook), and `checks: [repository, archives]` running on a weekly cadence.
   - Add a `just db-backup` recipe that invokes `borgmatic create --verbosity 1 --stats` and a `just db-backup-check` recipe that runs `borgmatic check`.
