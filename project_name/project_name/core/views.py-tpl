@@ -1,3 +1,4 @@
+from allauth.core import ratelimit
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -30,6 +31,13 @@ def _newsletter_signup_view(
     if request.method == "POST":
         form = NewsletterSignupForm(request.POST, purpose=purpose)
         if form.is_valid():
+            response_429 = ratelimit.consume_or_429(
+                request,
+                action="newsletter_signup",
+                key=form.cleaned_data["email"].lower(),
+            )
+            if response_429:
+                return response_429
             try:
                 signup = create_pending_newsletter_signup(
                     email=form.cleaned_data["email"],

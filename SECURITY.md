@@ -218,6 +218,12 @@ These notifications are enabled by default and can be disabled per user via the 
 
 The default implementation sends these emails inline from a notification signal subscriber. It intentionally uses robust signal dispatch so a mail delivery failure does not block the underlying security-sensitive action. Projects that need retries or higher volume can move the notification function behind Celery later without changing the audit event model.
 
+## Public form rate limiting
+
+The template reuses allauth's cache-backed rate limiting for public account flows and also applies the same `429.html` response path to newsletter signup submissions.
+
+By default newsletter signup POSTs are limited by `ACCOUNT_RATE_LIMITS["newsletter_signup"] = "20/m/ip,5/m/key"`.
+
 ## Reverse proxy trust contract
 
 In production, the template only trusts `X-Forwarded-Proto` and `X-Forwarded-For` when **both** of these are true:

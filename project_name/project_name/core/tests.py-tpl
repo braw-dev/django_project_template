@@ -41,7 +41,8 @@ User = get_user_model()
 
 
 class NewsletterTestCase(TestCase):
-    email = f"{uuid.uuid4()}@example.com"
+    def setUp(self):
+        self.email = f"{uuid.uuid4()}@example.com"
 
     def test_newsletter_signup_uses_correct_template(self):
         response = self.client.get(reverse("newsletter:signup"))
@@ -168,6 +169,38 @@ class NewsletterTestCase(TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "core/partials/newsletter/signup.html")
+
+    @override_settings(ACCOUNT_RATE_LIMITS={"newsletter_signup": "1/m/key"})
+    def test_newsletter_signup_returns_429_when_rate_limited(self):
+        response = self.client.post(
+            reverse("newsletter:signup"),
+            {"email": self.email, "consent": "on"},
+        )
+        self.assertRedirects(response, reverse("newsletter:signup_success"))
+
+        limited_response = self.client.post(
+            reverse("newsletter:signup"),
+            {"email": self.email, "consent": "on"},
+        )
+
+        self.assertEqual(limited_response.status_code, 429)
+        self.assertTemplateUsed(limited_response, "429.html")
+
+    @override_settings(ACCOUNT_RATE_LIMITS={"newsletter_signup": "1/m/key"})
+    def test_legal_updates_signup_returns_429_when_rate_limited(self):
+        response = self.client.post(
+            reverse("newsletter:legal_updates_signup"),
+            {"email": self.email, "consent": "on"},
+        )
+        self.assertRedirects(response, reverse("newsletter:legal_updates_success"))
+
+        limited_response = self.client.post(
+            reverse("newsletter:legal_updates_signup"),
+            {"email": self.email, "consent": "on"},
+        )
+
+        self.assertEqual(limited_response.status_code, 429)
+        self.assertTemplateUsed(limited_response, "429.html")
 
     def test_newsletter_model_tracks_purpose(self):
         signup = core_models.NewsletterSignup.objects.create(
