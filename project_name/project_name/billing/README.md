@@ -134,6 +134,22 @@ The template takes a conservative default stance for EU-friendly B2B billing:
 
 The tenancy `Team` model now includes optional `billing_country`, `vat_number`, and `vat_validated_at` fields so generated projects can capture VAT identity early. A small service-layer VIES check can validate and persist that identity, but Polar remains responsible for actual tax calculation and provider-issued billing documents.
 
+## Merchant of record posture for EU customers
+
+Polar is currently the template's default billing provider and is a **US-incorporated merchant of record**.
+
+Generated projects using the default Polar flow should document that clearly for procurement, DPA, and vendor-review questionnaires:
+
+- **Contracting party for checkout transactions:** the merchant of record is Polar, not your Django app
+- **Invoices, receipts, and tax documents:** issued by Polar
+- **Product access and support state:** stored in your Django app's local billing tables for entitlement checks and operational workflows
+- **Customer data location:** depends on the providers you actually configure and must be documented per project in your trust pages and subprocessor inventory
+- **Fallback if Polar coverage or fit changes:** treat the billing layer as provider-backed; if Polar becomes unsuitable for a specific market or customer segment, migrate future checkout and billing flows to another supported provider rather than pretending the local Django models are the merchant of record
+
+Do not describe the app itself as the merchant of record unless you have explicitly replaced the default provider-backed flow and updated the legal, tax, and operational documentation accordingly.
+
+For a generated-project customer-facing explanation, see `docs/billing-eu.md`.
+
 ### What this means in practice
 
 - if a business buyer is VAT-exempt or reverse charge applies, rely on Polar to handle that during checkout
