@@ -7,10 +7,12 @@ workflows need explicit product-specific decisions.
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any
 
 from allauth.account.models import EmailAddress
 from allauth.mfa.models import Authenticator
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
@@ -69,6 +71,7 @@ def export_user_data(
             "date_joined": user.date_joined,
             "last_login": user.last_login,
             "onboarding_completed": user.onboarding_completed,
+            "deletion_requested_at": user.deletion_requested_at,
             "preferences": user.preferences,
         },
         "email_addresses": [
@@ -148,18 +151,7 @@ def export_user_data(
     return export_payload
 
 
-def delete_user_data(
-    *,
-    user,
-    actor=None,
-    request=None,
-    metadata: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Delete a user and a minimal set of directly linked personal data.
-
-    This intentionally does not delete team-owned billing or finance records.
-    Those need explicit product and legal retention rules.
-    """
+def _validate_user_deletion_request(*, user, actor=None, request=None, metadata=None) -> None:
     owner_memberships = TeamMembership.objects.select_related("team").filter(
         user=user,
         role=TeamRole.OWNER,
@@ -182,6 +174,64 @@ def delete_user_data(
             f"{user.email} while they still own teams: {', '.join(owned_team_slugs)}. "
             "Transfer ownership or delete those teams first."
         )
+
+
+def delete_user_data(
+    *,
+    user,
+    actor=None,
+    request=None,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Request user deletion after a grace window.
+
+    The user is disabled immediately and hard-deleted later by a background task.
+    """
+    _validate_user_deletion_request(user=user, actor=actor, request=request, metadata=metadata)
+
+    requested_at = user.deletion_requested_at or timezone.now()
+    if user.deletion_requested_at is None:
+        user.is_active = False
+        user.set_unusable_password()
+        user.deletion_requested_at = requested_at
+        user.save(update_fields=["is_active", "password", "deletion_requested_at"])
+
+    grace_days = getattr(settings, "USER_DELETION_GRACE_DAYS", 30)
+    scheduled_for = requested_at + timedelta(days=grace_days)
+
+    record_audit_event(
+        event_type=AuditEventType.PRIVACY_USER_DATA_DELETION_REQUESTED,
+        actor=actor,
+        subject_user=user,
+        request=request,
+        metadata={
+            **(metadata or {}),
+            "user_id": user.pk,
+            "deletion_requested_at": requested_at.isoformat(),
+            "scheduled_for": scheduled_for.isoformat(),
+            "grace_days": grace_days,
+        },
+    )
+
+    return {
+        "user_id": user.pk,
+        "deletion_requested_at": requested_at,
+        "scheduled_for": scheduled_for,
+        "grace_days": grace_days,
+        "is_active": user.is_active,
+    }
+
+
+def finalize_user_data_deletion(
+    *,
+    user,
+    actor=None,
+    request=None,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Hard-delete a previously requested user deletion."""
+    if user.deletion_requested_at is None:
+        raise PrivacyOperationError(f"User {user.email} does not have a pending deletion request.")
 
     with transaction.atomic():
         newsletter_signups_deleted, _ = NewsletterSignup.objects.filter(
@@ -208,6 +258,7 @@ def delete_user_data(
             metadata={
                 **(metadata or {}),
                 "user_id": user.pk,
+                "deletion_requested_at": user.deletion_requested_at.isoformat(),
                 "newsletter_signups_deleted": newsletter_signups_deleted,
                 "api_tokens_created_deleted": api_tokens_created_deleted,
                 "api_tokens_revoked_by_cleared": api_tokens_revoked_by_cleared,
@@ -217,3 +268,14 @@ def delete_user_data(
         deleted_rows, _ = user.delete()
         result["deleted_rows"] = deleted_rows
         return result
+
+
+def get_users_pending_deletion(*, now=None):
+    """Return users whose deletion grace window has elapsed."""
+    current_time = now or timezone.now()
+    grace_days = getattr(settings, "USER_DELETION_GRACE_DAYS", 30)
+    cutoff = current_time - timedelta(days=grace_days)
+    return User.objects.filter(
+        deletion_requested_at__isnull=False,
+        deletion_requested_at__lte=cutoff,
+    )

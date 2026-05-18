@@ -189,14 +189,14 @@ Minimum operator workflow for bookkeeping:
 
 This template includes boring operator-run hooks for basic user privacy requests:
 
-- Django admin actions on the Users admin changelist to export or delete selected users' personal data
+- Django admin actions on the Users admin changelist to export or request deletion of selected users' personal data
 - `uv run python manage.py export_user_data user@example.com`
 - `uv run python manage.py delete_user_data user@example.com --yes`
 
 The default scope is intentionally narrow:
 
 - exports direct user-linked data such as the user profile, verified email addresses, MFA authenticator types, newsletter signup state, team memberships/invitations, and API tokens created by that user
-- deletes the user plus a minimal set of directly linked records needed for a basic privacy workflow
+- requests deletion by disabling the account immediately and hard-deleting it after the configured grace window
 - refuses to delete users who still own teams
 - does **not** automatically delete billing, finance, or other records that may be subject to statutory retention or business record requirements
 

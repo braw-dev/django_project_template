@@ -7,6 +7,7 @@ from allauth.mfa.models import Authenticator
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.management import CommandError, call_command
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
@@ -18,7 +19,13 @@ from {{ project_name }}.tenancy.models import TeamInvitation, TeamMembership, Te
 from {{ project_name }}.tokens.models import ApiToken, hash_token_secret
 
 from .admin import UserAdmin
-from .privacy import PrivacyOperationError, delete_user_data, export_user_data
+from .privacy import (
+    PrivacyOperationError,
+    delete_user_data,
+    export_user_data,
+    finalize_user_data_deletion,
+)
+from .tasks import delete_users_pending_deletion
 
 User = get_user_model()
 
@@ -114,9 +121,36 @@ class PrivacyOperationsTest(TestCase):
         self.assertEqual(audit_event.subject_email, self.member.email)
         self.assertEqual(audit_event.metadata["origin"], "test")
 
-    def test_delete_user_data_deletes_user_and_directly_linked_records(self):
+    def test_delete_user_data_requests_deletion_and_disables_user(self):
         result = delete_user_data(
             user=self.member,
+            actor=self.admin_user,
+            metadata={"origin": "test"},
+        )
+
+        self.member.refresh_from_db()
+        self.assertFalse(self.member.is_active)
+        self.assertIsNotNone(self.member.deletion_requested_at)
+        self.assertEqual(result["user_id"], self.member.pk)
+        self.assertEqual(result["grace_days"], settings.USER_DELETION_GRACE_DAYS)
+
+        audit_event = AuditEvent.objects.get(
+            event_type=AuditEventType.PRIVACY_USER_DATA_DELETION_REQUESTED
+        )
+        self.assertEqual(audit_event.actor, self.admin_user)
+        self.assertEqual(audit_event.subject_user, self.member)
+        self.assertEqual(audit_event.subject_email, self.member.email)
+        self.assertEqual(audit_event.metadata["origin"], "test")
+
+    def test_finalize_user_data_deletion_deletes_user_and_directly_linked_records(self):
+        delete_user_data(
+            user=self.member,
+            actor=self.admin_user,
+            metadata={"origin": "request"},
+        )
+
+        result = finalize_user_data_deletion(
+            user=User.objects.get(pk=self.member.pk),
             actor=self.admin_user,
             metadata={"origin": "test"},
         )
@@ -169,15 +203,19 @@ class PrivacyOperationsTest(TestCase):
         with self.assertRaisesMessage(CommandError, "without --yes"):
             call_command("delete_user_data", self.member.email)
 
-    def test_delete_user_data_command_deletes_user(self):
+    def test_delete_user_data_command_requests_deletion(self):
         stdout = StringIO()
 
         call_command("delete_user_data", self.member.email, "--yes", stdout=stdout)
 
-        self.assertFalse(User.objects.filter(pk=self.member.pk).exists())
-        self.assertIn("Deleted user data for member@example.com.", stdout.getvalue())
+        self.member.refresh_from_db()
+        self.assertFalse(self.member.is_active)
+        self.assertIsNotNone(self.member.deletion_requested_at)
+        self.assertIn("Requested deletion for member@example.com.", stdout.getvalue())
 
-        audit_event = AuditEvent.objects.get(event_type=AuditEventType.PRIVACY_USER_DATA_DELETED)
+        audit_event = AuditEvent.objects.get(
+            event_type=AuditEventType.PRIVACY_USER_DATA_DELETION_REQUESTED
+        )
         self.assertEqual(audit_event.metadata["origin"], "management_command")
         self.assertEqual(audit_event.metadata["command"], "delete_user_data")
 
@@ -190,6 +228,45 @@ class PrivacyOperationsTest(TestCase):
 
         self.assertIn("export_selected_users_data", actions)
         self.assertIn("delete_selected_users_data", actions)
+
+    def test_user_admin_delete_action_requests_deletion(self):
+        request = self.request_factory.post("/admin/users/user/")
+        request.user = self.admin_user
+        request.session = {}
+        request._messages = FallbackStorage(request)
+        user_admin = UserAdmin(User, admin.site)
+
+        user_admin.delete_selected_users_data(request, User.objects.filter(pk=self.member.pk))
+
+        self.member.refresh_from_db()
+        self.assertFalse(self.member.is_active)
+        self.assertIsNotNone(self.member.deletion_requested_at)
+
+        audit_event = AuditEvent.objects.get(
+            event_type=AuditEventType.PRIVACY_USER_DATA_DELETION_REQUESTED
+        )
+        self.assertEqual(audit_event.actor, self.admin_user)
+        self.assertEqual(audit_event.metadata["origin"], "django_admin")
+
+    def test_delete_users_pending_deletion_task_hard_deletes_due_users(self):
+        delete_user_data(
+            user=self.member,
+            actor=self.admin_user,
+            metadata={"origin": "request"},
+        )
+        User.objects.filter(pk=self.member.pk).update(
+            deletion_requested_at=(
+                timezone.now() - timedelta(days=settings.USER_DELETION_GRACE_DAYS + 1)
+            )
+        )
+
+        deleted_count = delete_users_pending_deletion()
+
+        self.assertEqual(deleted_count, 1)
+        self.assertFalse(User.objects.filter(pk=self.member.pk).exists())
+        audit_event = AuditEvent.objects.get(event_type=AuditEventType.PRIVACY_USER_DATA_DELETED)
+        self.assertEqual(audit_event.metadata["origin"], "celery_task")
+        self.assertEqual(audit_event.metadata["task"], "delete_users_pending_deletion")
 
     def test_user_admin_export_action_returns_json_attachment(self):
         request = self.request_factory.post("/admin/users/user/")

@@ -56,6 +56,7 @@ class User(AbstractUser):
     onboarding_completed = models.DateField(null=True, blank=True, default=None)
     company = CharField(_("Company"), blank=True, max_length=255)
     role = CharField(_("Role/Title"), blank=True, max_length=255)
+    deletion_requested_at = models.DateTimeField(null=True, blank=True, default=None)
 
     # User preferences stored as JSON
     preferences = models.JSONField(

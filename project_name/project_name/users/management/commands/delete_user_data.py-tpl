@@ -12,7 +12,7 @@ from {{ project_name }}.users.privacy import (
 
 
 class Command(BaseCommand):
-    help = "Delete a user and basic directly linked personal data."
+    help = "Request user deletion after the configured grace window."
 
     def add_arguments(self, parser):
         parser.add_argument("user", help="User email address or primary key")
@@ -43,5 +43,5 @@ class Command(BaseCommand):
         except PrivacyOperationError as exc:
             raise CommandError(str(exc)) from exc
 
-        self.stdout.write(self.style.SUCCESS(f"Deleted user data for {identifier}."))
+        self.stdout.write(self.style.SUCCESS(f"Requested deletion for {identifier}."))
         self.stdout.write(json.dumps(result, indent=2, cls=DjangoJSONEncoder))

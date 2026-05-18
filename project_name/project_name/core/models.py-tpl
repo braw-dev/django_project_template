@@ -107,6 +107,10 @@ class AuditEventType(models.TextChoices):
     SUPPORT_HIJACK_STARTED = "support.hijack_started", "support.hijack_started"
     SUPPORT_HIJACK_ENDED = "support.hijack_ended", "support.hijack_ended"
     PRIVACY_USER_DATA_EXPORTED = "privacy.user_data_exported", "privacy.user_data_exported"
+    PRIVACY_USER_DATA_DELETION_REQUESTED = (
+        "privacy.user_data_deletion_requested",
+        "privacy.user_data_deletion_requested",
+    )
     PRIVACY_USER_DATA_DELETED = "privacy.user_data_deleted", "privacy.user_data_deleted"
     PRIVACY_USER_DATA_DELETE_BLOCKED = (
         "privacy.user_data_delete_blocked",

@@ -1,6 +1,8 @@
 from celery import shared_task
 from django.contrib.auth import get_user_model
 
+from .privacy import finalize_user_data_deletion, get_users_pending_deletion
+
 User = get_user_model()
 
 
@@ -8,3 +10,19 @@ User = get_user_model()
 def delete_user(user_id: int):
     """Delete a user by their ID."""
     User.objects.get(id=user_id).delete()
+
+
+@shared_task
+def delete_users_pending_deletion() -> int:
+    """Hard-delete users whose deletion grace window has elapsed."""
+    deleted_count = 0
+    for user in get_users_pending_deletion().order_by("deletion_requested_at", "pk"):
+        finalize_user_data_deletion(
+            user=user,
+            metadata={
+                "origin": "celery_task",
+                "task": "delete_users_pending_deletion",
+            },
+        )
+        deleted_count += 1
+    return deleted_count

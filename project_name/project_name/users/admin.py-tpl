@@ -29,6 +29,7 @@ class UserAdmin(auth_admin.UserAdmin):
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         (_("Personal info"), {"fields": ("name",)}),
+        (_("Privacy"), {"fields": ("deletion_requested_at",)}),
         (
             _("Permissions"),
             {
@@ -43,7 +44,7 @@ class UserAdmin(auth_admin.UserAdmin):
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
-    list_display = ["email", "name", "is_superuser"]
+    list_display = ["email", "name", "deletion_requested_at", "is_superuser"]
     search_fields = ["email", "name"]
     ordering = ["email"]
     add_fieldsets = (
@@ -91,7 +92,7 @@ class UserAdmin(auth_admin.UserAdmin):
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
 
-    @admin.action(description=_("Delete selected users' personal data"))
+    @admin.action(description=_("Request deletion of selected users' personal data"))
     def delete_selected_users_data(self, request, queryset):
         deleted_count = 0
 
@@ -112,6 +113,6 @@ class UserAdmin(auth_admin.UserAdmin):
         if deleted_count:
             self.message_user(
                 request,
-                _("Deleted personal data for %(count)s selected users.") % {"count": deleted_count},
+                _("Scheduled deletion for %(count)s selected users.") % {"count": deleted_count},
                 level=messages.SUCCESS,
             )
