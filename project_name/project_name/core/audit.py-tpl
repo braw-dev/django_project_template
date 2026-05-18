@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.dispatch import Signal
 from django.http import HttpRequest
 
 from .models import AuditEvent, AuditEventType
 from .network import get_client_ip
+
+audit_event_created = Signal()
 
 
 def record_audit_event(
@@ -21,7 +24,7 @@ def record_audit_event(
     metadata: dict[str, Any] | None = None,
 ) -> AuditEvent:
     """Create an append-only audit event."""
-    return AuditEvent.objects.create(
+    audit_event = AuditEvent.objects.create(
         event_type=event_type,
         actor=actor,
         actor_email=getattr(actor, "email", ""),
@@ -32,3 +35,5 @@ def record_audit_event(
         user_agent=request.META.get("HTTP_USER_AGENT", "") if request is not None else "",
         metadata=metadata or {},
     )
+    audit_event_created.send_robust(sender=AuditEvent, audit_event=audit_event)
+    return audit_event

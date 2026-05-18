@@ -199,8 +199,24 @@ And the template now uses the same pattern for other security-sensitive service-
 - `tenancy.membership_added`
 - `tenancy.invitation_created`
 - `tenancy.invitation_accepted`
+- `users.login_succeeded`
+- `users.mfa_authenticator_removed`
+- `users.mfa_recovery_codes_regenerated`
 
 The audit log is intentionally read-only in Django admin. The preferred pattern is to write audit rows inside the service-layer functions that own the change, so future security-sensitive mutations follow the same shape.
+
+## Security event emails
+
+The template sends small transactional security emails for a narrow allowlist of audit events:
+
+- successful account sign-in
+- API token creation
+- MFA authenticator removal
+- recovery code regeneration
+
+These notifications are enabled by default and can be disabled per user via the `preferences["security_event_emails_enabled"]` flag.
+
+The default implementation sends these emails inline from a notification signal subscriber. It intentionally uses robust signal dispatch so a mail delivery failure does not block the underlying security-sensitive action. Projects that need retries or higher volume can move the notification function behind Celery later without changing the audit event model.
 
 ## Reverse proxy trust contract
 

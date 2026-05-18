@@ -7,6 +7,9 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import polib
+from allauth.account.signals import user_logged_in
+from allauth.mfa.models import Authenticator
+from allauth.mfa.signals import authenticator_removed, authenticator_reset
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -27,6 +30,7 @@ from {{ project_name }}.tenancy import services as tenancy_services
 
 from . import models as core_models
 from .admin import AuditEventAdmin
+from .audit import record_audit_event
 from .consent import OPTIONAL_TRACKING_CONSENT_ACCEPTED, OPTIONAL_TRACKING_CONSENT_COOKIE_NAME
 from .forms import NewsletterSignupForm
 from .middleware import RequestPerformanceLoggingMiddleware, TrustedProxyHeadersMiddleware
@@ -256,6 +260,107 @@ class AuditEventTestCase(TestCase):
         self.assertEqual(audit_event.subject_email, self.subject.email)
         self.assertEqual(audit_event.ip_address, "203.0.113.20")
         self.assertEqual(audit_event.metadata["origin"], "django_hijack")
+
+    def test_user_logged_in_signal_creates_audit_event_and_sends_email(self):
+        request = self.request_factory.post(
+            "/accounts/login/",
+            REMOTE_ADDR="203.0.113.40",
+            HTTP_USER_AGENT="login-agent",
+        )
+
+        user_logged_in.send(sender=None, request=request, user=self.subject)
+
+        audit_event = core_models.AuditEvent.objects.get(
+            event_type=core_models.AuditEventType.USERS_LOGIN_SUCCEEDED
+        )
+        self.assertEqual(audit_event.actor, self.subject)
+        self.assertEqual(audit_event.subject_user, self.subject)
+        self.assertEqual(audit_event.ip_address, "203.0.113.40")
+        self.assertEqual(audit_event.metadata["origin"], "allauth_account")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.subject.email])
+        self.assertIn("New sign-in", mail.outbox[0].subject)
+
+    def test_authenticator_removed_signal_creates_audit_event_and_sends_email(self):
+        request = self.request_factory.post(
+            "/accounts/mfa/",
+            REMOTE_ADDR="203.0.113.41",
+            HTTP_USER_AGENT="mfa-agent",
+        )
+        authenticator = Authenticator.objects.create(
+            user=self.subject,
+            type=Authenticator.Type.TOTP,
+            data={"secret": "totp-secret"},
+        )
+
+        authenticator_removed.send(
+            sender=None,
+            request=request,
+            user=self.subject,
+            authenticator=authenticator,
+        )
+
+        audit_event = core_models.AuditEvent.objects.get(
+            event_type=core_models.AuditEventType.USERS_MFA_AUTHENTICATOR_REMOVED
+        )
+        self.assertEqual(audit_event.metadata["authenticator_type"], Authenticator.Type.TOTP)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("MFA method removed", mail.outbox[0].subject)
+
+    def test_recovery_codes_regenerated_signal_creates_audit_event_and_sends_email(self):
+        request = self.request_factory.post(
+            "/accounts/mfa/recovery-codes/",
+            REMOTE_ADDR="203.0.113.42",
+            HTTP_USER_AGENT="recovery-agent",
+        )
+        authenticator = Authenticator.objects.create(
+            user=self.subject,
+            type=Authenticator.Type.RECOVERY_CODES,
+            data={"unused_mask": 0, "codes": ["one", "two"]},
+        )
+
+        authenticator_reset.send(
+            sender=None,
+            request=request,
+            user=self.subject,
+            authenticator=authenticator,
+        )
+
+        audit_event = core_models.AuditEvent.objects.get(
+            event_type=core_models.AuditEventType.USERS_MFA_RECOVERY_CODES_REGENERATED
+        )
+        self.assertEqual(
+            audit_event.metadata["authenticator_type"],
+            Authenticator.Type.RECOVERY_CODES,
+        )
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Recovery codes regenerated", mail.outbox[0].subject)
+
+    def test_token_created_audit_event_sends_email(self):
+        record_audit_event(
+            event_type=core_models.AuditEventType.TOKENS_API_TOKEN_CREATED,
+            actor=self.subject,
+            team=self.team,
+            metadata={"name": "Deploy", "environment": "live"},
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.subject.email])
+        self.assertIn("API token created", mail.outbox[0].subject)
+        self.assertIn("Token name: Deploy", mail.outbox[0].body)
+        self.assertIn("Team: Acme", mail.outbox[0].body)
+
+    def test_security_event_email_respects_user_preference(self):
+        self.subject.set_preference("security_event_emails_enabled", False)
+
+        record_audit_event(
+            event_type=core_models.AuditEventType.TOKENS_API_TOKEN_CREATED,
+            actor=self.subject,
+            team=self.team,
+            metadata={"name": "Deploy", "environment": "live"},
+        )
+
+        self.assertEqual(len(mail.outbox), 0)
 
     @override_settings(IS_PRODUCTION=True, TRUSTED_PROXY_IPS=["10.0.0.0/8"])
     def test_get_client_ip_ignores_forwarded_header_from_untrusted_peer(self):

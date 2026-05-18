@@ -112,6 +112,15 @@ class AuditEventType(models.TextChoices):
         "privacy.user_data_delete_blocked",
         "privacy.user_data_delete_blocked",
     )
+    USERS_LOGIN_SUCCEEDED = "users.login_succeeded", "users.login_succeeded"
+    USERS_MFA_AUTHENTICATOR_REMOVED = (
+        "users.mfa_authenticator_removed",
+        "users.mfa_authenticator_removed",
+    )
+    USERS_MFA_RECOVERY_CODES_REGENERATED = (
+        "users.mfa_recovery_codes_regenerated",
+        "users.mfa_recovery_codes_regenerated",
+    )
     TOKENS_API_TOKEN_CREATED = "tokens.api_token_created", "tokens.api_token_created"
     TOKENS_API_TOKEN_REVOKED = "tokens.api_token_revoked", "tokens.api_token_revoked"
     TENANCY_TEAM_CREATED = "tenancy.team_created", "tenancy.team_created"

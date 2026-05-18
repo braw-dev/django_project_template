@@ -1,0 +1,93 @@
+from django.conf import settings
+from django.core.mail import send_mail
+from django.dispatch import receiver
+from django.template.loader import render_to_string
+from django.utils.translation import gettext_lazy as _
+
+from {{ project_name }}.core.audit import audit_event_created
+from {{ project_name }}.core.models import AuditEventType
+
+SECURITY_EVENT_EMAILS_PREFERENCE_KEY = "security_event_emails_enabled"
+
+
+def security_event_emails_enabled(user) -> bool:
+    return bool(user.get_preference(SECURITY_EVENT_EMAILS_PREFERENCE_KEY, True))
+
+
+def _detail(label, value) -> dict[str, str]:
+    return {"label": str(label), "value": str(value)}
+
+
+def _get_security_event_content(audit_event) -> dict | None:
+    metadata = audit_event.metadata or {}
+    if audit_event.event_type == AuditEventType.TOKENS_API_TOKEN_CREATED:
+        details = []
+        if metadata.get("name"):
+            details.append(_detail(_("Token name"), metadata["name"]))
+        if audit_event.team is not None:
+            details.append(_detail(_("Team"), audit_event.team.name))
+        if metadata.get("environment"):
+            details.append(_detail(_("Environment"), metadata["environment"]))
+        return {
+            "subject": _("API token created"),
+            "summary": _("A new API token was created for your account."),
+            "details": details,
+        }
+
+    if audit_event.event_type == AuditEventType.USERS_LOGIN_SUCCEEDED:
+        return {
+            "subject": _("New sign-in to your account"),
+            "summary": _("Your account was used to sign in successfully."),
+            "details": [],
+        }
+
+    if audit_event.event_type == AuditEventType.USERS_MFA_AUTHENTICATOR_REMOVED:
+        details = []
+        if metadata.get("authenticator_type"):
+            details.append(_detail(_("Authenticator type"), metadata["authenticator_type"]))
+        return {
+            "subject": _("MFA method removed"),
+            "summary": _("A multi-factor authentication method was removed from your account."),
+            "details": details,
+        }
+
+    if audit_event.event_type == AuditEventType.USERS_MFA_RECOVERY_CODES_REGENERATED:
+        return {
+            "subject": _("Recovery codes regenerated"),
+            "summary": _("Your account recovery codes were regenerated."),
+            "details": [],
+        }
+
+    return None
+
+
+def _get_notification_recipient(audit_event):
+    return audit_event.subject_user or audit_event.actor
+
+
+@receiver(audit_event_created)
+def send_security_event_email(sender, audit_event, **kwargs):
+    content = _get_security_event_content(audit_event)
+    if content is None:
+        return
+
+    user = _get_notification_recipient(audit_event)
+    if user is None or not user.email or not security_event_emails_enabled(user):
+        return
+
+    body = render_to_string(
+        "users/email/security_event.txt",
+        {
+            "summary": content["summary"],
+            "details": content["details"],
+            "occurred_at": audit_event.created_at,
+            "ip_address": audit_event.ip_address,
+            "user_agent": audit_event.user_agent,
+        },
+    )
+    send_mail(
+        subject=content["subject"],
+        message=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+    )

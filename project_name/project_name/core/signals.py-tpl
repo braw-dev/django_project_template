@@ -1,3 +1,6 @@
+from allauth.account.signals import user_logged_in
+from allauth.mfa.models import Authenticator
+from allauth.mfa.signals import authenticator_removed, authenticator_reset
 from django.dispatch import receiver
 from hijack.signals import hijack_ended, hijack_started
 
@@ -24,4 +27,46 @@ def record_hijack_ended(sender, request, hijacker, hijacked, **kwargs):
         subject_user=hijacked,
         request=request,
         metadata={"origin": "django_hijack"},
+    )
+
+
+@receiver(user_logged_in)
+def record_user_logged_in(sender, request, user, **kwargs):
+    record_audit_event(
+        event_type=AuditEventType.USERS_LOGIN_SUCCEEDED,
+        actor=user,
+        subject_user=user,
+        request=request,
+        metadata={"origin": "allauth_account"},
+    )
+
+
+@receiver(authenticator_removed)
+def record_authenticator_removed(sender, request, user, authenticator, **kwargs):
+    record_audit_event(
+        event_type=AuditEventType.USERS_MFA_AUTHENTICATOR_REMOVED,
+        actor=user,
+        subject_user=user,
+        request=request,
+        metadata={
+            "origin": "allauth_mfa",
+            "authenticator_type": authenticator.type,
+        },
+    )
+
+
+@receiver(authenticator_reset)
+def record_recovery_codes_regenerated(sender, request, user, authenticator, **kwargs):
+    if authenticator.type != Authenticator.Type.RECOVERY_CODES:
+        return
+
+    record_audit_event(
+        event_type=AuditEventType.USERS_MFA_RECOVERY_CODES_REGENERATED,
+        actor=user,
+        subject_user=user,
+        request=request,
+        metadata={
+            "origin": "allauth_mfa",
+            "authenticator_type": authenticator.type,
+        },
     )

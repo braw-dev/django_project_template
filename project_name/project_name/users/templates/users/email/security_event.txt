@@ -1,0 +1,10 @@
+{% load i18n %}{% translate "Hello," %}
+
+{{ summary }}
+
+{% translate "Time" %}: {{ occurred_at|date:"Y-m-d H:i:s T" }}
+{% if ip_address %}{% translate "IP address" %}: {{ ip_address }}
+{% endif %}{% if user_agent %}{% translate "User agent" %}: {{ user_agent }}
+{% endif %}{% for detail in details %}{{ detail.label }}: {{ detail.value }}
+{% endfor %}
+{% blocktranslate %}If this wasn't you, reset your password and review your account security settings immediately.{% endblocktranslate %}
