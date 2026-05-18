@@ -5,9 +5,10 @@ from . import models
 
 @admin.register(models.Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "created_at")
-    search_fields = ("name", "slug")
+    list_display = ("name", "slug", "billing_country", "vat_number", "vat_validated_at")
+    search_fields = ("name", "slug", "vat_number")
     prepopulated_fields = {"slug": ("name",)}
+    readonly_fields = ("vat_validated_at",)
 
 
 @admin.register(models.TeamMembership)

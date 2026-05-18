@@ -115,6 +115,60 @@ class TestTeamServices:
         assert audit_event.team == team
         assert audit_event.metadata["role"] == membership.role
 
+    def test_validate_team_vat_number_updates_team_and_records_audit_event(self, owner, team):
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(services, "_check_vies_vat_number", lambda country, number: True)
+
+            updated_team = services.validate_team_vat_number(
+                actor=owner,
+                team=team,
+                billing_country="de",
+                vat_number="DE 123 456 789",
+            )
+
+        updated_team.refresh_from_db()
+        assert updated_team.billing_country == "DE"
+        assert updated_team.vat_number == "123456789"
+        assert updated_team.vat_validated_at is not None
+
+        audit_event = AuditEvent.objects.get(event_type=AuditEventType.TENANCY_VAT_VALIDATED)
+        assert audit_event.actor == owner
+        assert audit_event.team == team
+        assert audit_event.metadata["billing_country"] == "DE"
+        assert audit_event.metadata["vat_number"] == "123456789"
+
+    def test_validate_team_vat_number_rejects_invalid_vat(self, owner, team):
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(services, "_check_vies_vat_number", lambda country, number: False)
+
+            with pytest.raises(ValueError, match="not valid"):
+                services.validate_team_vat_number(
+                    actor=owner,
+                    team=team,
+                    billing_country="DE",
+                    vat_number="123456789",
+                )
+
+        team.refresh_from_db()
+        assert team.billing_country in {None, ""}
+        assert team.vat_number in {None, ""}
+        assert team.vat_validated_at is None
+
+    def test_non_owner_cannot_validate_team_vat_number(self, admin_user, team):
+        models.TeamMembership.all_objects.create(
+            team=team,
+            user=admin_user,
+            role=models.TeamRole.ADMIN,
+        )
+
+        with pytest.raises(ValueError, match="permission"):
+            services.validate_team_vat_number(
+                actor=admin_user,
+                team=team,
+                billing_country="DE",
+                vat_number="123456789",
+            )
+
     def test_send_invitation_email(self, owner, team, rf, mailoutbox):
         invitation = services.create_invitation(
             actor=owner,

@@ -103,6 +103,7 @@ class AuditEventType(models.TextChoices):
         "tenancy.invitation_accepted",
         "tenancy.invitation_accepted",
     )
+    TENANCY_VAT_VALIDATED = "tenancy.vat_validated", "tenancy.vat_validated"
 
 
 class AuditEvent(models.Model):

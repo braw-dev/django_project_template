@@ -2,7 +2,9 @@
 
 from datetime import timedelta
 from typing import Any, cast
+from xml.etree import ElementTree
 
+import httpx
 from django.conf import settings
 from django.core import signing
 from django.core.mail import send_mail
@@ -17,6 +19,8 @@ from {{ project_name }}.core.models import AuditEventType
 from . import models, permissions
 
 INVITATION_TOKEN_SALT = "tenancy.team-invitation"
+VIES_CHECK_VAT_URL = "https://ec.europa.eu/taxation_customs/vies/services/checkVatService"
+VIES_NAMESPACE = "urn:ec.europa.eu:taxud:vies:services:checkVat:types"
 
 TeamModel = cast(Any, models.Team)
 TeamMembershipModel = cast(Any, models.TeamMembership)
@@ -25,6 +29,41 @@ TeamInvitationModel = cast(Any, models.TeamInvitation)
 
 def _normalize_email(email: str) -> str:
     return email.strip().lower()
+
+
+def _normalize_vat_number(country_code: str, vat_number: str) -> tuple[str, str]:
+    normalized_country_code = country_code.strip().upper()
+    normalized_vat_number = "".join(vat_number.strip().upper().split())
+    if normalized_vat_number.startswith(normalized_country_code):
+        normalized_vat_number = normalized_vat_number[len(normalized_country_code) :]
+    return normalized_country_code, normalized_vat_number
+
+
+def _check_vies_vat_number(country_code: str, vat_number: str) -> bool:
+    body = (
+        f'<?xml version="1.0" encoding="UTF-8"?>\n'
+        f'<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"\n'
+        f'                  xmlns:urn="{VIES_NAMESPACE}">\n'
+        "  <soapenv:Header/>\n"
+        "  <soapenv:Body>\n"
+        "    <urn:checkVat>\n"
+        f"      <urn:countryCode>{country_code}</urn:countryCode>\n"
+        f"      <urn:vatNumber>{vat_number}</urn:vatNumber>\n"
+        "    </urn:checkVat>\n"
+        "  </soapenv:Body>\n"
+        "</soapenv:Envelope>\n"
+    )
+    response = httpx.post(
+        VIES_CHECK_VAT_URL,
+        content=body,
+        headers={"Content-Type": "text/xml; charset=utf-8"},
+        timeout=10.0,
+    )
+    response.raise_for_status()
+
+    root = ElementTree.fromstring(response.content)
+    valid_node = root.find(".//{" + VIES_NAMESPACE + "}valid")
+    return valid_node is not None and valid_node.text == "true"
 
 
 def create_team(*, name: str, slug: str, owner) -> models.Team:
@@ -41,6 +80,52 @@ def create_team(*, name: str, slug: str, owner) -> models.Team:
         subject_user=owner,
         team=team,
         metadata={"team_name": team.name, "team_slug": team.slug},
+    )
+    return team
+
+
+def validate_team_vat_number(
+    *,
+    actor,
+    team: models.Team,
+    billing_country: str,
+    vat_number: str,
+    request=None,
+) -> models.Team:
+    """Validate and persist a team's VAT identity using VIES."""
+    if not permissions.user_has_team_perm(actor, "tenancy.manage_team_billing", team):
+        raise ValueError(_("You do not have permission to manage team billing."))
+
+    normalized_country, normalized_vat_number = _normalize_vat_number(billing_country, vat_number)
+    if len(normalized_country) != 2:
+        raise ValueError(_("Billing country must be a two-letter country code."))
+    if not normalized_vat_number:
+        raise ValueError(_("VAT number is required."))
+
+    try:
+        is_valid = _check_vies_vat_number(normalized_country, normalized_vat_number)
+    except (httpx.HTTPError, ElementTree.ParseError) as exc:
+        raise ValueError(_("VAT number could not be validated right now.")) from exc
+
+    if not is_valid:
+        raise ValueError(_("VAT number is not valid according to VIES."))
+
+    team.billing_country = normalized_country
+    team.vat_number = normalized_vat_number
+    team.vat_validated_at = timezone.now()
+    team.save(update_fields=["billing_country", "vat_number", "vat_validated_at", "updated_at"])
+    record_audit_event(
+        event_type=AuditEventType.TENANCY_VAT_VALIDATED,
+        actor=actor,
+        team=team,
+        request=request,
+        metadata={
+            "billing_country": team.billing_country,
+            "vat_number": team.vat_number,
+            "vat_validated_at": team.vat_validated_at.isoformat()
+            if team.vat_validated_at
+            else None,
+        },
     )
     return team
 

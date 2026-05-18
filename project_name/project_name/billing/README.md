@@ -132,6 +132,8 @@ The template takes a conservative default stance for EU-friendly B2B billing:
 - invoices, receipts, and tax documents should be issued by the billing provider, not from Django admin
 - the default happy path is provider-hosted checkout and provider-managed billing records
 
+The tenancy `Team` model now includes optional `billing_country`, `vat_number`, and `vat_validated_at` fields so generated projects can capture VAT identity early. A small service-layer VIES check can validate and persist that identity, but Polar remains responsible for actual tax calculation and provider-issued billing documents.
+
 ### What this means in practice
 
 - if a business buyer is VAT-exempt or reverse charge applies, rely on Polar to handle that during checkout

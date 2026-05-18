@@ -28,6 +28,25 @@ class Team(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(_("Name"), max_length=255)
     slug = models.SlugField(_("Slug"), unique=True)
+    billing_country = models.CharField(
+        _("Billing country"),
+        max_length=2,
+        null=True,
+        blank=True,
+        help_text=_("Two-letter billing country code used for VAT identity capture."),
+    )
+    vat_number = models.CharField(
+        _("VAT number"),
+        max_length=32,
+        null=True,
+        blank=True,
+        help_text=_("Team VAT number without spaces. Validation is optional and service-driven."),
+    )
+    vat_validated_at = models.DateTimeField(
+        _("VAT validated at"),
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
