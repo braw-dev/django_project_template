@@ -7,6 +7,10 @@ from django.urls import reverse
 from ninja import NinjaAPI, Schema
 
 from {{ project_name }}.billing import selectors, services
+from {{ project_name }}.core.reauth import (
+    REAUTHENTICATION_REQUIRED_ERROR,
+    did_recently_reauthenticate,
+)
 from {{ project_name }}.tenancy import models as tenancy_models
 from {{ project_name }}.tenancy.permissions import user_has_team_perm
 from {{ project_name }}.tokens import api as tokens_api
@@ -183,6 +187,8 @@ def create_customer_portal(
         return ErrorResponse(error="Authentication required"), 403
     if not user_has_team_perm(request_user, "tenancy.manage_team_billing", team):
         return ErrorResponse(error="Permission denied"), 403
+    if not did_recently_reauthenticate(request):
+        return 403, ErrorResponse(error=REAUTHENTICATION_REQUIRED_ERROR)
 
     try:
         billing_provider = services.get_billing_provider()

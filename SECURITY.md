@@ -231,7 +231,21 @@ Billing in the template is team-owned. Billing API endpoints require:
 
 By default that permission is owner-only.
 
+The template also requires **recent reauthentication** for the hosted billing portal session endpoint. A recent primary authentication or reauthentication remains valid for 10 minutes by default.
+
 Billing webhooks use provider signature verification and persist provider event IDs so duplicate deliveries are ignored safely.
+
+## Sensitive action reauthentication
+
+The template uses a short recent-reauthentication window for a narrow set of existing session-authenticated API actions.
+
+Today that applies to:
+
+- API token creation
+- API token revocation
+- hosted billing portal session creation
+
+The timeout is 10 minutes by default via `ACCOUNT_REAUTHENTICATION_TIMEOUT`.
 
 ## When adding new tenant-owned code
 

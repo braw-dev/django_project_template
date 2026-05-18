@@ -399,9 +399,15 @@ class TestBillingApi:
         provider = MagicMock()
         provider.get_customer_portal_url.return_value = "https://polar.sh/portal/test"
 
-        with patch(
-            "{{ project_name }}.core.api.views_v1.services.get_billing_provider",
-            return_value=provider,
+        with (
+            patch(
+                "{{ project_name }}.core.api.views_v1.services.get_billing_provider",
+                return_value=provider,
+            ),
+            patch(
+                "{{ project_name }}.core.api.views_v1.did_recently_reauthenticate",
+                return_value=True,
+            ),
         ):
             response = client.post(
                 "/api/v1/billing/portal/",
@@ -411,3 +417,15 @@ class TestBillingApi:
 
         assert response.status_code == 200
         assert response.json() == {"portal_url": "https://polar.sh/portal/test"}
+
+    def test_portal_endpoint_requires_recent_reauthentication(self, client, owner, team):
+        client.force_login(owner)
+
+        response = client.post(
+            "/api/v1/billing/portal/",
+            data=json.dumps({"team_id": str(team.id)}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 403
+        assert response.json() == {"error": "reauthentication_required"}

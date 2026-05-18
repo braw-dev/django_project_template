@@ -1,0 +1,26 @@
+"""Recent-reauthentication helpers for session-authenticated sensitive actions."""
+
+from __future__ import annotations
+
+import time
+
+from allauth.account import app_settings as account_settings
+from allauth.account.authentication import get_authentication_records
+
+REAUTHENTICATION_REQUIRED_ERROR = "reauthentication_required"
+
+
+def did_recently_reauthenticate(request) -> bool:
+    user = getattr(request, "user", None)
+    if user is None or not user.is_authenticated:
+        return False
+
+    methods = get_authentication_records(request)
+    if not methods:
+        return False
+
+    authenticated_at = methods[-1].get("at")
+    if not isinstance(authenticated_at, int | float):
+        return False
+
+    return time.time() - authenticated_at < account_settings.REAUTHENTICATION_TIMEOUT

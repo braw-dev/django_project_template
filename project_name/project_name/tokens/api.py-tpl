@@ -7,6 +7,10 @@ from ninja import Router, Schema
 from ninja.errors import HttpError
 from ninja.security import django_auth
 
+from {{ project_name }}.core.reauth import (
+    REAUTHENTICATION_REQUIRED_ERROR,
+    did_recently_reauthenticate,
+)
 from {{ project_name }}.tenancy.permissions import user_has_team_perm
 
 from . import selectors, services
@@ -62,6 +66,8 @@ def list_tokens(request, team_slug: str):
 def create_token(request, team_slug: str, payload: ApiTokenCreateRequest):
     if request.team is None:
         raise HttpError(404, "Team not found")
+    if not did_recently_reauthenticate(request):
+        raise HttpError(403, REAUTHENTICATION_REQUIRED_ERROR)
     try:
         result = services.create_api_token(
             team=request.team,
@@ -92,6 +98,8 @@ def create_token(request, team_slug: str, payload: ApiTokenCreateRequest):
 def revoke_token(request, team_slug: str, token_id: str):
     if request.team is None:
         raise HttpError(404, "Team not found")
+    if not did_recently_reauthenticate(request):
+        raise HttpError(403, REAUTHENTICATION_REQUIRED_ERROR)
     token = selectors.get_token(team=request.team, token_id=token_id)
     if token is None:
         raise HttpError(404, "Token not found")
