@@ -21,11 +21,16 @@ mkcert:
 # Link the AI folders
 ai-link:
     @mkdir -p .cursor .claude
-    @rm -rf .cursor/commands .cursor/rules .claude/commands .claude/rules
+    @rm -rf .cursor/commands .cursor/rules .claude/commands .claude/rules .claude/docs .claude/CLAUDE.md
     @stow --dir=ai --target=.cursor commands
     @stow --dir=ai --target=.cursor rules
     @stow --dir=ai --target=.claude commands
     @stow --dir=ai --target=.claude rules
+    @stow --dir=ai --target=.claude docs
+    @ln -s ../ai/docs/CLAUDE.md .claude/CLAUDE.md
+
+ai-check:
+    @uv run python dev/check_ai_links.py
 
 ###############################################
 ## Testing related targets

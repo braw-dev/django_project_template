@@ -31,7 +31,7 @@ For the fuller "before deploy / before customers / before launch" list, use `{{ 
 - [ ] Search for `REPLACE_ME:` and update accordingly.
 - [ ] Delete `specs` directory and `.specify/memory`.
 - [ ] Establish the [SpecKit project principals](https://github.com/github/spec-kit?tab=readme-ov-file#2-establish-project-principles) in AI agent of choice (Cursor and Claude support included).
-- [ ] Run `just ai-link` to link `ai/` directory to claude and cursor.
+- [ ] Run `just ai-link` to link the canonical `ai/` instructions into Claude and Cursor.
 - [ ] Review `settings.py` settings
 - [ ] Run database migrations `just migrate`
 - [ ] Create a superuser with `just createsuperuser` if you want admin access straight away

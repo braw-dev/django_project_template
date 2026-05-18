@@ -222,7 +222,9 @@ This template includes both public marketing pages and protected app pages in th
 
 ## 5. AI Agent-Specific Instructions
 
-This repository includes detailed instructions for different AI coding assistants:
+This repository includes detailed instructions for different AI coding assistants.
+
+The canonical shared instruction text lives in `ai/docs/`. `.claude/CLAUDE.md` and `.claude/docs/` are symlinked to that source, while `.cursor/rules/` keeps tool-specific rule wrappers that point back to the same canonical docs.
 
 ### For Claude Code
 
