@@ -33,7 +33,7 @@ This document is intentionally practical. It is not the full architecture guide.
 - [ ] Set `SENTRY_DSN`
 - [ ] Build the frontend once with `just build-frontend`
 - [ ] Run `just collectstatic`
-- [ ] Run a basic health check with `just manage check` and the `/api/v1/health` endpoint
+- [ ] Run a basic health check with `just manage check`, `/api/v1/health`, and `/api/v1/health/live`
 
 ## 3. Before sharing with anyone outside development
 

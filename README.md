@@ -100,7 +100,7 @@ When adding new authenticated product UI, prefer extending `app_base.html` unles
 - **Payments**: Polar-first billing foundation behind a lightweight provider interface, with hosted checkout/portal flows, local customer/product/subscription/entitlement models, verified idempotent webhooks, a thin provider-backed pricing-page helper, locale-aware pricing display for EUR/CHF/GBP/USD, and a default European stance of showing prices excluding VAT with final tax calculated at checkout. The local billing tables are for product access and support workflows, not a substitute for provider-issued billing documents or accounting records.
 - **i18n**: Django gettext workflow plus an AI-assisted helper for filling untranslated `.po` entries, and a React-island bridge that reads the active Django-selected locale from `<html lang>`.
 - **Deployment**: Production-oriented container scaffolding via Dockerfiles and Compose manifests, with an opinionated docs default of Hetzner VPS + rootless Podman + `systemd --user` + root-managed Caddy + Bunny.net; final deployment wiring is still project-specific.
-- **Observability**: Sentry for exceptions, health checks, and structured request-performance logs that work well with Grafana Alloy + Grafana Cloud.
+- **Observability**: Sentry for exceptions, split liveness/readiness health checks, and structured request-performance logs that work well with Grafana Alloy + Grafana Cloud.
 
 ## Built-in Features
 

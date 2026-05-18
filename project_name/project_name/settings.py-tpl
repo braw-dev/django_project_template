@@ -846,6 +846,7 @@ if TESTING:
             "LOCATION": "test-cache",
         }
     }
+    CELERY_BROKER_URL = "memory://"
 
 structlog.configure(
     processors=[

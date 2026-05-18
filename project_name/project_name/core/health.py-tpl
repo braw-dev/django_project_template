@@ -1,8 +1,36 @@
+from dataclasses import dataclass
+
+from django.conf import settings
+from django.http import JsonResponse
+from django.views import View
+from health_check.base import HealthCheck
+from health_check.exceptions import ServiceUnavailable
 from health_check.views import HealthCheckView
+from kombu import Connection
+from kombu.exceptions import KombuError
+
+
+@dataclass
+class CeleryBroker(HealthCheck):
+    broker_url: str = settings.CELERY_BROKER_URL
+
+    def run(self):
+        try:
+            with Connection(self.broker_url).clone() as connection:
+                connection.ensure_connection(max_retries=1)
+        except (KombuError, OSError) as exc:
+            raise ServiceUnavailable("Celery broker is unavailable") from exc
+
+
+class LivenessCheckView(View):
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({"status": "ok"})
 
 
 class ReadinessCheckView(HealthCheckView):
     checks = (
         "health_check.checks.Database",
         "health_check.checks.Cache",
+        ("health_check.checks.Storage", {"alias": "default"}),
+        CeleryBroker,
     )

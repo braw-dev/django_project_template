@@ -172,7 +172,7 @@ If you ship the JSON logs to Grafana Cloud via Alloy, the first useful dashboard
 - DB time contribution per request
 - 4xx / 5xx rates
 - exception count from Sentry
-- uptime from the health check endpoint and host metrics
+- uptime from `/api/v1/health` and `/api/v1/health/live`, plus host metrics
 
 That is enough to spot availability issues, performance regressions, and the slow endpoints worth improving.
 
