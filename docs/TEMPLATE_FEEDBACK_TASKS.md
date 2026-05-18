@@ -42,8 +42,6 @@ None
 
 ## P3 — useful later
 
-- **`/.well-known/security.txt` route.** Trivial, points at the security contact mentioned in `SECURITY.md`, and signals maturity in vendor questionnaires.
-
 - **Per-project cost telemetry.** `MOTIVATION.md` describes a BI dashboard with revenue/expenses/profit per project. Today nothing in the template emits cost-side data. A small `core/costs.py` module that consumes Hetzner + Bunny + Scaleway billing APIs and writes a daily `CostSnapshot` row is enough to start; the dashboard itself can live outside the template.
 
 - **OpenTelemetry exporter, opt-in.** The structlog setup is good. An optional OTEL bridge (gated behind an env var, off by default) would let any single product graduate to traces without re-architecting logging.
