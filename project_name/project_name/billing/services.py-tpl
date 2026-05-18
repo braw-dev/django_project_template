@@ -15,6 +15,7 @@ from polar_sdk import Polar
 from standardwebhooks import Webhook
 from standardwebhooks.webhooks import WebhookVerificationError
 
+from {{ project_name }}.core.analytics import track_plausible_event
 from {{ project_name }}.tenancy import models as tenancy_models
 
 from . import models
@@ -291,6 +292,12 @@ class PolarBillingProvider(BillingProvider):
                 external_product_id=str(data["product_id"]),
             ).first()
 
+        existing_subscription = SubscriptionModel.all_objects.filter(
+            provider=self.code,
+            external_subscription_id=external_subscription_id,
+        ).first()
+        previous_status = getattr(existing_subscription, "status", "")
+
         subscription, _ = SubscriptionModel.all_objects.update_or_create(
             provider=self.code,
             external_subscription_id=external_subscription_id,
@@ -329,7 +336,36 @@ class PolarBillingProvider(BillingProvider):
             subscription=subscription,
             benefit_data=benefit_data,
         )
+        self._track_subscription_conversion(
+            team=team,
+            subscription=subscription,
+            previous_status=previous_status,
+        )
         return subscription
+
+    def _track_subscription_conversion(
+        self,
+        *,
+        team: tenancy_models.Team,
+        subscription: models.Subscription,
+        previous_status: str,
+    ) -> None:
+        if (
+            subscription.status == models.SubscriptionStatus.TRIALING
+            and previous_status != subscription.status
+        ):
+            track_plausible_event(
+                event_name="Trial started",
+                props={"team_id": str(team.id), "provider": self.code},
+            )
+        if (
+            subscription.status == models.SubscriptionStatus.ACTIVE
+            and previous_status != subscription.status
+        ):
+            track_plausible_event(
+                event_name="Subscription active",
+                props={"team_id": str(team.id), "provider": self.code},
+            )
 
     def create_checkout_url(
         self,

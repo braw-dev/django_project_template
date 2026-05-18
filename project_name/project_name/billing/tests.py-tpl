@@ -124,7 +124,10 @@ class TestPolarBillingProvider:
 
 @pytest.mark.django_db
 class TestPolarWebhookSync:
-    def test_subscription_created_syncs_customer_product_subscription_and_entitlements(self, team):
+    @patch("{{ project_name }}.billing.services.track_plausible_event")
+    def test_subscription_created_syncs_customer_product_subscription_and_entitlements(
+        self, mock_track_plausible_event, team
+    ):
         provider = services.PolarBillingProvider()
         event = services.VerifiedWebhookEvent(
             provider=models.BillingProviderChoices.POLAR,
@@ -185,6 +188,8 @@ class TestPolarWebhookSync:
             "priority-support",
         ]
         assert all(entitlement.is_active for entitlement in entitlements)
+        mock_track_plausible_event.assert_called_once()
+        assert mock_track_plausible_event.call_args.kwargs["event_name"] == "Subscription active"
 
     def test_subscription_canceled_deactivates_existing_entitlements(self, team):
         provider = services.PolarBillingProvider()
@@ -250,6 +255,45 @@ class TestPolarWebhookSync:
         assert subscription.status == models.SubscriptionStatus.CANCELED
         assert entitlement.is_active is False
         assert entitlement.expires_at is not None
+
+    @patch("{{ project_name }}.billing.services.track_plausible_event")
+    def test_subscription_trialing_tracks_trial_started(self, mock_track_plausible_event, team):
+        provider = services.PolarBillingProvider()
+        event = services.VerifiedWebhookEvent(
+            provider=models.BillingProviderChoices.POLAR,
+            event_id="evt_trialing",
+            event_type="subscription.created",
+            payload={},
+            data={
+                "id": "sub_trial",
+                "customer_id": "cust_trial",
+                "product_id": "prod_trial",
+                "status": "trialing",
+                "current_period_start": "2026-01-01T00:00:00Z",
+                "current_period_end": "2026-02-01T00:00:00Z",
+                "metadata": {"team_id": str(team.id)},
+                "customer": {
+                    "id": "cust_trial",
+                    "external_id": str(team.id),
+                    "metadata": {"team_id": str(team.id)},
+                },
+                "product": {
+                    "id": "prod_trial",
+                    "name": "Starter",
+                    "is_recurring": True,
+                    "benefits": [{"id": "analytics", "name": "Analytics"}],
+                    "metadata": {},
+                },
+            },
+        )
+
+        status = provider.handle_webhook_event(event=event)
+
+        assert status == models.WebhookEvent.ProcessingStatus.PROCESSED
+        subscription = models.Subscription.all_objects.get(team=team)
+        assert subscription.status == models.SubscriptionStatus.TRIALING
+        mock_track_plausible_event.assert_called_once()
+        assert mock_track_plausible_event.call_args.kwargs["event_name"] == "Trial started"
 
 
 @pytest.mark.django_db

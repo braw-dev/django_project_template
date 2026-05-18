@@ -1,9 +1,10 @@
-from allauth.account.signals import user_logged_in
+from allauth.account.signals import user_logged_in, user_signed_up
 from allauth.mfa.models import Authenticator
 from allauth.mfa.signals import authenticator_removed, authenticator_reset
 from django.dispatch import receiver
 from hijack.signals import hijack_ended, hijack_started
 
+from .analytics import track_plausible_event
 from .audit import record_audit_event
 from .models import AuditEventType
 
@@ -39,6 +40,11 @@ def record_user_logged_in(sender, request, user, **kwargs):
         request=request,
         metadata={"origin": "allauth_account"},
     )
+
+
+@receiver(user_signed_up)
+def track_signup_conversion(sender, request, user, **kwargs):
+    track_plausible_event(event_name="Signup", request=request)
 
 
 @receiver(authenticator_removed)

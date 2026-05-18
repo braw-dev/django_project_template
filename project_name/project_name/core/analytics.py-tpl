@@ -1,0 +1,69 @@
+import logging
+from collections.abc import Mapping
+
+import httpx
+from django.conf import settings
+from django.contrib.sites.models import Site
+
+from .network import get_client_ip
+
+logger = logging.getLogger(__name__)
+
+
+def _get_event_url(*, request=None, url: str | None = None) -> str:
+    if url:
+        return url
+    if request is not None:
+        return request.build_absolute_uri("/")
+
+    protocol = "http" if getattr(settings, "USE_HTTP", False) else "https"
+    domain = Site.objects.get_current().domain
+    return f"{protocol}://{domain}/"
+
+
+def track_plausible_event(
+    *,
+    event_name: str,
+    request=None,
+    url: str | None = None,
+    props: Mapping[str, str] | None = None,
+) -> bool:
+    domain = getattr(settings, "PLAUSIBLE_DOMAIN", "").strip()
+    api_host = getattr(settings, "PLAUSIBLE_API_HOST", "").rstrip("/")
+    if not domain or not api_host:
+        return False
+
+    headers = {"Content-Type": "application/json"}
+    if request is not None:
+        user_agent = request.META.get("HTTP_USER_AGENT", "").strip()
+        if user_agent:
+            headers["User-Agent"] = user_agent
+        client_ip = get_client_ip(request)
+        if client_ip:
+            headers["X-Forwarded-For"] = client_ip
+
+    payload = {
+        "domain": domain,
+        "name": event_name,
+        "url": _get_event_url(request=request, url=url),
+    }
+    if props:
+        payload["props"] = dict(props)
+
+    try:
+        response = httpx.post(
+            f"{api_host}/api/event",
+            json=payload,
+            headers=headers,
+            timeout=5.0,
+        )
+        response.raise_for_status()
+    except Exception:
+        logger.warning(
+            "Failed to send Plausible event",
+            extra={"event_name": event_name},
+            exc_info=True,
+        )
+        return False
+
+    return True

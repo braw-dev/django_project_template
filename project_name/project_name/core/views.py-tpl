@@ -106,7 +106,7 @@ def newsletter_confirm(request, token: str):
     confirmation_error = None
     subscription_label = _("subscription")
     try:
-        signup = confirm_newsletter_signup(token=token)
+        signup = confirm_newsletter_signup(token=token, request=request)
     except ValueError as exc:
         confirmation_error = str(exc)
     else:

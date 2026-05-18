@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from {{ project_name }}.core.analytics import track_plausible_event
 from {{ project_name }}.users.emails import send_transactional_email
 
 from . import models
@@ -98,7 +99,7 @@ def send_newsletter_confirmation_email(signup: models.NewsletterSignup, request)
     return True
 
 
-def confirm_newsletter_signup(*, token: str) -> models.NewsletterSignup:
+def confirm_newsletter_signup(*, token: str, request=None) -> models.NewsletterSignup:
     max_age = getattr(settings, "NEWSLETTER_CONFIRMATION_EXPIRY_HOURS", 72) * 3600
     try:
         payload = signing.loads(
@@ -122,4 +123,9 @@ def confirm_newsletter_signup(*, token: str) -> models.NewsletterSignup:
     if signup.confirmed_at is None:
         signup.confirmed_at = timezone.now()
         signup.save(update_fields=["confirmed_at"])
+        track_plausible_event(
+            event_name="Newsletter confirmed",
+            request=request,
+            props={"purpose": signup.purpose},
+        )
     return signup

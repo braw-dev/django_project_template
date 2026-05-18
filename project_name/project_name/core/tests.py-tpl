@@ -143,7 +143,8 @@ class NewsletterTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 0)
         self.assertEqual(signup.confirmation_email_sent_at, sent_at)
 
-    def test_newsletter_confirmation_marks_signup_confirmed(self):
+    @patch("{{ project_name }}.core.newsletter.track_plausible_event")
+    def test_newsletter_confirmation_marks_signup_confirmed(self, mock_track_plausible_event):
         signup = core_models.NewsletterSignup.objects.create(
             email=self.email,
             consented_at=timezone.now(),
@@ -156,6 +157,11 @@ class NewsletterTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(signup.confirmed_at)
         self.assertContains(response, "Your newsletter subscription has been confirmed.")
+        mock_track_plausible_event.assert_called_once()
+        self.assertEqual(
+            mock_track_plausible_event.call_args.kwargs["event_name"],
+            "Newsletter confirmed",
+        )
 
     def test_newsletter_confirmation_handles_invalid_token(self):
         response = self.client.get(reverse("newsletter:confirm", kwargs={"token": "invalid"}))
