@@ -24,8 +24,6 @@ The gaps below are the deltas that, in my view, would meaningfully raise the EU 
 
 ## P0 — fix first
 
-- **Restrict `SECURE_PROXY_SSL_HEADER` trust and document the proxy contract.** `settings.py-tpl` unconditionally trusts `HTTP_X_FORWARDED_PROTO`, and `core/audit.py-tpl` reads `HTTP_X_FORWARDED_FOR` directly when recording audit events. If a generated project is ever exposed without the documented Caddy in front (a realistic mistake for a solo founder), both the security middleware and audit IPs are spoofable. Add a small `client_ip` helper that only honours `X-Forwarded-For` when `IS_PRODUCTION` and the immediate peer is in a documented trusted-proxy list, default the list to empty, and have the privacy/audit modules call it. Document the proxy contract in `SECURITY.md` and `DEPLOYMENT.md`.
-
 - **Add automated dependency updates and a secrets scan to CI.** There is no `.github/dependabot.yml` / `renovate.json`, and `.github/workflows/ci.yml` runs no secret-leak step. For a portfolio of long-running SaaS sites with a single maintainer, both are foundational - missing them is the kind of thing a TDD reviewer flags immediately. Add Renovate (weekly, grouped, pip + npm + github-actions + docker) and a `gitleaks` step in CI. Optionally add `pip-audit`/`uv tool run pip-audit` as a non-blocking job.
 
 ## P1 — important for EU B2B readiness
