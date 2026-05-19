@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import cast, Any
+from typing import Any, cast
 
 from django.conf import settings
 from django.core import signing
@@ -76,7 +76,9 @@ def build_newsletter_confirmation_url(signup: models.NewsletterSignup, request) 
 def send_newsletter_confirmation_email(signup: models.NewsletterSignup, request) -> bool:
     cooldown_minutes = getattr(settings, "NEWSLETTER_CONFIRMATION_RESEND_COOLDOWN_MINUTES", 15)
     if signup.confirmation_email_sent_at is not None:
-        resend_after = cast(Any, signup.confirmation_email_sent_at) + timedelta(minutes=cooldown_minutes)
+        resend_after = cast(Any, signup.confirmation_email_sent_at) + timedelta(
+            minutes=cooldown_minutes
+        )
         if resend_after > timezone.now():
             return False
 

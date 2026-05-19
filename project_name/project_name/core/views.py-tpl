@@ -1,4 +1,5 @@
 from typing import cast
+
 from allauth.core import ratelimit
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
