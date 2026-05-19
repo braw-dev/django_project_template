@@ -18,14 +18,14 @@ pre-commit:
         - "*.py-tpl"
       exclude:
         - "**/migrations/*.py"
-    djlint-reformat:
-      run: uv run djlint --reformat --format-css {staged_files}
-      stage_fixed: true
-      glob:
-        - "*.html"
-        - "*.html-tpl"
-    djlint-django:
-      run: uv run djlint --lint {staged_files}
+    # djlint-reformat:
+    #   run: uv run djlint --reformat --format-css {staged_files}
+    #   stage_fixed: true
+    #   glob:
+    #     - "*.html"
+    #     - "*.html-tpl"
+    format-django-templates:
+      run: uv run djade {staged_files}
       stage_fixed: true
       glob:
         - "*.html"
