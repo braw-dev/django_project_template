@@ -47,11 +47,6 @@ ignore = [
 [tool.ruff.lint.isort]
 forced-separate = ["{{ project_name }}"]
 
-[tool.djlint]
-profile = "django"
-ignore = "H030,H031,H021"
-custom_blocks = "element,slot,setvar"
-
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "{{ project_name }}.settings"
 pythonpath = ["{{ project_name }}"]
@@ -111,7 +106,6 @@ dev = [
     "coverage",
     "django-coverage-plugin",
     "django-debug-toolbar",
-    "djlint",
     "factory-boy",
     "playwright",
     "pytest",
