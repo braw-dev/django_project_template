@@ -171,6 +171,13 @@
           environment:
             DJANGO_SUPERUSER_PASSWORD: admin
 
+    - name: Test the project
+      block:
+        - name: Run unit tests
+          ansible.builtin.command:
+            cmd: just test-fast
+            chdir: "{{ project_dir }}"
+
     - name: Open the directory
       block:
         - name: Check if open command exists
