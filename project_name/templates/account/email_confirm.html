@@ -1,10 +1,9 @@
 {% extends "account/base_entrance.html" %}
-{% load i18n %}
-{% load account %}
-{% load allauth %}
+{% load account allauth i18n %}
 {% block head_title %}
     {% trans "Confirm Email Address" %}
 {% endblock head_title %}
+
 {% block content %}
     {% element h1 %}
         {% trans "Confirm Email Address" %}
@@ -13,7 +12,7 @@
         {% user_display confirmation.email_address.user as user_display %}
         {% if can_confirm %}
             {% element p %}
-                {% blocktrans with confirmation.email_address.email as email %}Please confirm that <a href="mailto:{{ email }}">{{ email }}</a> is an email address for user {{ user_display }}.{% endblocktrans %}
+                {% blocktrans with email=confirmation.email_address.email %}Please confirm that <a href="mailto:{{ email }}">{{ email }}</a> is an email address for user {{ user_display }}.{% endblocktrans %}
             {% endelement %}
             {% url 'account_confirm_email' confirmation.key as action_url %}
             {% element form method="post" action=action_url %}

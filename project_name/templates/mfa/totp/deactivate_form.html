@@ -1,9 +1,9 @@
 {% extends "mfa/totp/base.html" %}
-{% load i18n %}
-{% load allauth %}
+{% load allauth i18n %}
 {% block head_title %}
     {% trans "Deactivate Authenticator App" %}
 {% endblock head_title %}
+
 {% block content %}
     {% element h1 %}
         {% trans "Deactivate Authenticator App" %}

@@ -11,9 +11,10 @@ Provides:
 
 Usage:
     {% extends "pages/base_page.html" %}
-    {% block page_content %}
+
+{% block page_content %}
         Your custom content here
-    {% endblock %}
+    {% endblock page_content %}
 {% endcomment %}
 {% block extra_head %}
     {{ block.super }}
@@ -30,6 +31,7 @@ Usage:
         {% endfor %}
     </ul>
 {% endblock extra_head %}
+
 {% block body %}
     <main class="min-h-screen">
         {% block page_header %}

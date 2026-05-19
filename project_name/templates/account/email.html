@@ -3,6 +3,7 @@
 {% block head_title %}
     {% trans "Email Addresses" %}
 {% endblock head_title %}
+
 {% block content %}
     {% element h1 %}
         {% trans "Email Addresses" %}
@@ -73,6 +74,7 @@
         {% endelement %}
     {% endif %}
 {% endblock content %}
+
 {% block extra_body %}
     <script nonce="{{ csp_nonce }}">
 (function() {

@@ -1,8 +1,5 @@
 {% extends "mfa/webauthn/base.html" %}
-{% load i18n %}
-{% load static %}
-{% load allauth %}
-{% load humanize %}
+{% load allauth humanize i18n static %}
 {% block content %}
     {% element h1 %}
         {% trans "Security Keys" %}

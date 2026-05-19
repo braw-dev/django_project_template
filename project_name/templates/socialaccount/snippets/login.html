@@ -1,6 +1,4 @@
-{% load i18n %}
-{% load allauth %}
-{% load socialaccount %}
+{% load allauth i18n socialaccount %}
 {% get_providers as socialaccount_providers %}
 {% if socialaccount_providers %}
     {% if not SOCIALACCOUNT_ONLY %}

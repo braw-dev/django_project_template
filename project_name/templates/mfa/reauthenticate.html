@@ -1,6 +1,5 @@
 {% extends "account/base_reauthenticate.html" %}
-{% load i18n %}
-{% load allauth %}
+{% load allauth i18n %}
 {% block reauthenticate_content %}
     {% element p %}
         {% blocktranslate %}Enter an authenticator code:{% endblocktranslate %}

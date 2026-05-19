@@ -1,10 +1,9 @@
 {% extends "mfa/base_entrance.html" %}
-{% load i18n %}
-{% load allauth %}
-{% load allauth static %}
+{% load allauth i18n static %}
 {% block head_title %}
     {% trans "Sign In" %}
 {% endblock head_title %}
+
 {% block content %}
     {% element h1 %}
         {% trans "Two-Factor Authentication" %}
