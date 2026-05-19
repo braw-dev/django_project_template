@@ -79,7 +79,7 @@ def main():
                     "ENVIRONMENT=production": "ENVIRONMENT=development",
                     "SEND_EMAILS=True": "SEND_EMAILS=False",
                     "LOG_LEVEL=ERROR": "LOG_LEVEL=DEBUG",
-                    "DB_DEFAULT_URL=postgis://{{ project_name }}:{{ project_name }}@localhost:5432/{{ project_name }}?pool=True&server_side_binding=True": "DB_DEFAULT_URL=sqlite:///db.sqlite3",
+                    "DB_DEFAULT_URL=postgis://{{ project_name }}:{{ project_name }}@localhost:5432/{{ project_name }}?pool=True&server_side_binding=True": "DB_DEFAULT_URL=sqlite:///db.sqlite3",  # noqa: E501
                 }
                 for old, new in replacements.items():
                     text = text.replace(old, new)
@@ -105,19 +105,6 @@ def main():
                 print("uv sync failed, continuing anyway...")
 
             # 3. Check for lint/format issues
-            lint_proc = subprocess.run(
-                ["uv", "run", "ruff", "check", "--no-fix"],
-                cwd=project_path,
-                capture_output=True,
-                text=True,
-            )
-            format_proc = subprocess.run(
-                ["uv", "run", "ruff", "format", "--check"],
-                cwd=project_path,
-                capture_output=True,
-                text=True,
-            )
-
             format_diff = run(
                 ["uv", "run", "ruff", "format", "--diff"], cwd=project_path, check=False
             ).stdout
@@ -145,7 +132,7 @@ def main():
 
             # Instruct the agent:
             print(
-                "\nAGENT ACTION REQUIRED: Map the above diffs back to the template files in the root repo."
+                "\nAGENT ACTION REQUIRED: Map the above diffs back to the template files in the root repo."  # noqa: E501
             )
             print("Then this script will be re-run by the agent in the next iteration to verify.")
 
