@@ -6,6 +6,7 @@ from uuid import UUID
 
 from django.http import HttpRequest
 from ninja import NinjaAPI, Schema
+from ninja.responses import Status
 
 from {{ project_name }}.billing import webhooks
 
@@ -27,7 +28,7 @@ class WebhookResponse(Schema):
     "/polar",
     response={200: WebhookResponse, 400: WebhookResponse, 500: WebhookResponse},
 )
-def polar_webhook(request: HttpRequest) -> WebhookResponse | tuple[WebhookResponse, int]:
+def polar_webhook(request: HttpRequest) -> WebhookResponse | Status:
     """Handle the configured billing provider webhook events.
 
     Verifies webhook signature and dispatches to appropriate handler.
@@ -42,14 +43,14 @@ def polar_webhook(request: HttpRequest) -> WebhookResponse | tuple[WebhookRespon
         return WebhookResponse(status=status)
     except webhooks.WebhookVerificationError as e:
         logger.error("Webhook signature verification failed", extra={"error": str(e)})
-        return WebhookResponse(status="error"), 400
+        return Status(400, WebhookResponse(status="error"))
     except Exception as e:
         logger.error(
             "Error processing webhook",
             extra={"error": str(e)},
             exc_info=True,
         )
-        return WebhookResponse(status="error"), 500
+        return Status(500, WebhookResponse(status="error"))
 
 
 # Pydantic schemas for billing endpoints

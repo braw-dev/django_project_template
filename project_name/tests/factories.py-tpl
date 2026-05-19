@@ -1,10 +1,10 @@
 from datetime import timedelta
 
 import factory
-from django.contrib.auth import get_user_model
-from django.utils import timezone
 from {{ project_name }}.billing import models as billing_models
 from {{ project_name }}.tenancy import models as tenancy_models
+from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 User = get_user_model()
 
