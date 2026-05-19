@@ -7,14 +7,14 @@ from ninja import Router, Schema
 from ninja.errors import HttpError
 from ninja.security import django_auth
 
+from . import selectors, services
+from .auth import ApiTokenAuth
+
 from {{ project_name }}.core.reauth import (
     REAUTHENTICATION_REQUIRED_ERROR,
     did_recently_reauthenticate,
 )
 from {{ project_name }}.tenancy.permissions import user_has_team_perm
-
-from . import selectors, services
-from .auth import ApiTokenAuth
 
 management_router = Router(tags=["tokens"])
 auth_router = Router(tags=["tokens"])

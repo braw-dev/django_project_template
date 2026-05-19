@@ -13,11 +13,6 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from {{ project_name }}.core.models import AuditEvent, AuditEventType, NewsletterSignup
-from {{ project_name }}.tenancy import services as tenancy_services
-from {{ project_name }}.tenancy.models import TeamInvitation, TeamMembership, TeamRole
-from {{ project_name }}.tokens.models import ApiToken, hash_token_secret
-
 from .admin import UserAdmin
 from .privacy import (
     PrivacyOperationError,
@@ -26,6 +21,11 @@ from .privacy import (
     finalize_user_data_deletion,
 )
 from .tasks import delete_users_pending_deletion
+
+from {{ project_name }}.core.models import AuditEvent, AuditEventType, NewsletterSignup
+from {{ project_name }}.tenancy import services as tenancy_services
+from {{ project_name }}.tenancy.models import TeamInvitation, TeamMembership, TeamRole
+from {{ project_name }}.tokens.models import ApiToken, hash_token_secret
 
 User = get_user_model()
 

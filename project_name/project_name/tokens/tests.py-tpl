@@ -6,9 +6,9 @@ from unittest.mock import patch
 import pytest
 from django.utils import timezone
 
-from {{ project_name }}.core.models import AuditEvent, AuditEventType
-
 from . import auth, models, services
+
+from {{ project_name }}.core.models import AuditEvent, AuditEventType
 
 
 @pytest.mark.django_db
@@ -67,6 +67,7 @@ class TestTokenApi:
     def test_owner_can_list_and_create_tokens(self, client, team, owner):
         client.force_login(owner)
 
+        # fmt: off
         with patch(
             "{{ project_name }}.tokens.api.did_recently_reauthenticate", return_value=True
         ):
@@ -75,6 +76,7 @@ class TestTokenApi:
                 data={"name": "Deploy", "scopes": ["read:projects"]},
                 content_type="application/json",
             )
+        # fmt: on
         assert create_response.status_code == 201
         payload = create_response.json()
         assert payload["name"] == "Deploy"
@@ -88,10 +90,13 @@ class TestTokenApi:
         result = services.create_api_token(team=team, user=owner, name="Deploy")
         client.force_login(admin_user)
 
+        # fmt: off
         with patch(
             "{{ project_name }}.tokens.api.did_recently_reauthenticate", return_value=True
         ):
+
             response = client.delete(f"/api/v1/teams/{team.slug}/tokens/{result.token.token_id}/")
+        # fmt: on
 
         assert response.status_code == 204
         result.token.refresh_from_db()

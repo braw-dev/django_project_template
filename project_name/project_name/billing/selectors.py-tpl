@@ -5,9 +5,9 @@ from typing import Any, cast
 from django.db.models import Q
 from django.utils import timezone
 
-from {{ project_name }}.tenancy import models as tenancy_models
-
 from . import models
+
+from {{ project_name }}.tenancy import models as tenancy_models
 
 # TODO: Remove these workarounds when ty supports Django's dynamic model attributes.
 EntitlementModel = cast(Any, models.Entitlement)

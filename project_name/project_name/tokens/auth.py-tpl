@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from django.contrib.auth.hashers import check_password, make_password
 from ninja.security import HttpBearer
 
-from {{ project_name }}.tenancy.context import set_current_team_id, set_postgres_current_team_id
-
 from . import models
+
+from {{ project_name }}.tenancy.context import set_current_team_id, set_postgres_current_team_id
 
 TOKEN_RE = re.compile(
     r"^(?P<prefix>[a-z]{2,8})_(?P<environment>live|test)_(?P<lookup_id>[A-Za-z0-9]{16})(?P<secret>[A-Za-z0-9_-]{32,})$"

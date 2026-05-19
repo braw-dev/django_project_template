@@ -11,11 +11,11 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from . import models, permissions
+
 from {{ project_name }}.core.audit import record_audit_event
 from {{ project_name }}.core.models import AuditEventType
 from {{ project_name }}.users.emails import send_transactional_email
-
-from . import models, permissions
 
 INVITATION_TOKEN_SALT = "tenancy.team-invitation"
 VIES_CHECK_VAT_URL = "https://ec.europa.eu/taxation_customs/vies/services/checkVatService"

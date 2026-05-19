@@ -13,14 +13,14 @@ else:
         return []
 
 
+from . import views
+
 from {{ project_name }}.core import views as core_views
 from {{ project_name }}.core.api import api_v1, webhooks_api
 from {{ project_name }}.core.health import LivenessCheckView, ReadinessCheckView
 from {{ project_name }}.pages.sitemaps import PageSitemap
 from {{ project_name }}.tenancy import views as tenancy_views
 from {{ project_name }}.users.decorators import mfa_required
-
-from . import views
 
 sitemaps = {
     "pages": PageSitemap,

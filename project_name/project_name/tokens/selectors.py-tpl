@@ -2,9 +2,9 @@
 
 from typing import Any, cast
 
-from {{ project_name }}.tenancy import models as tenancy_models
-
 from . import models
+
+from {{ project_name }}.tenancy import models as tenancy_models
 
 ApiTokenModel = cast(Any, models.ApiToken)
 

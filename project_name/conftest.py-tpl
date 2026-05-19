@@ -1,11 +1,12 @@
 import pytest
-from {{ project_name }}.tenancy import models as tenancy_models
 from tests.factories import (
     SubscriptionFactory,
     TeamFactory,
     TeamMembershipFactory,
     UserFactory,
 )
+
+from {{ project_name }}.tenancy import models as tenancy_models
 
 
 @pytest.fixture

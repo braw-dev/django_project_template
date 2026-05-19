@@ -4,11 +4,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, cast
 
+from . import models
+
 from {{ project_name }}.core.audit import record_audit_event
 from {{ project_name }}.core.models import AuditEventType
 from {{ project_name }}.tenancy.permissions import user_has_team_perm
-
-from . import models
 
 
 @dataclass

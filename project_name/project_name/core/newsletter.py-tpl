@@ -7,10 +7,10 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from . import models
+
 from {{ project_name }}.core.analytics import track_plausible_event
 from {{ project_name }}.users.emails import send_transactional_email
-
-from . import models
 
 NEWSLETTER_CONFIRMATION_TOKEN_SALT = "core.newsletter-confirmation"
 

@@ -15,10 +15,10 @@ from polar_sdk import Polar
 from standardwebhooks import Webhook
 from standardwebhooks.webhooks import WebhookVerificationError
 
+from . import models
+
 from {{ project_name }}.core.analytics import track_plausible_event
 from {{ project_name }}.tenancy import models as tenancy_models
-
-from . import models
 
 logger = logging.getLogger(__name__)
 
