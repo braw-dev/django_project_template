@@ -32,13 +32,7 @@ None
 
 ## P2 — important for product quality and repeatability
 
-- **Backup, restore, and a _tested_ restore drill using borg + borgmatic + Hetzner Storage Box.** `DEPLOYMENT.md` honestly says backups are not scaffolded. For a portfolio of unattended SaaS products, scaffold encrypted, deduplicated, append-only backups using `borg` driven by `borgmatic`, with a Hetzner Storage Box as the off-site repository (SSH/SFTP target, cheap, EU-located). Concretely:
-  - Ship a `borgmatic.yaml` (or `config.yaml` under `/etc/borgmatic.d/`) template in the generated project with: repository pointing at `ssh://<user>@<box>.your-storagebox.de:23/./repo`, `repokey-blake2` encryption, sensible `keep_daily`/`keep_weekly`/`keep_monthly` retention, a `before_backup` hook that runs `pg_dump --format=custom` to a staging path (or uses borgmatic's built-in `postgresql_databases:` hook), and `checks: [repository, archives]` running on a weekly cadence.
-  - Add a `just db-backup` recipe that invokes `borgmatic create --verbosity 1 --stats` and a `just db-backup-check` recipe that runs `borgmatic check`.
-  - Add a `just db-restore-drill` recipe that: pulls the latest archive into a throwaway directory via `borgmatic extract --archive latest`, restores the `pg_dump` into a disposable Postgres container, runs `manage.py migrate --check` and a smoke query, then tears the container down. The recipe must exit non-zero on any step failure so it can be wired to a cron/systemd timer and Sentry cron monitor.
-  - Provide a systemd `borgmatic.service` + `borgmatic.timer` unit pair (daily) and a separate `borgmatic-restore-drill.timer` (weekly) under `deploy/systemd/`.
-  - Store the borg passphrase and Storage Box SSH key path in env vars (`BORG_PASSPHRASE`, `BORG_RSH`) loaded from the existing secrets mechanism; never in the repo.
-  - Document in `docs/backups.md`: how to provision a Hetzner Storage Box, how to initialise the repo (`borgmatic init --encryption repokey-blake2`), retention policy, passphrase rotation, the weekly restore-drill cadence, and how to recover end-to-end from a total host loss. Data loss is the only failure mode `MOTIVATION.md` explicitly calls out as unacceptable.
+None
 
 ## P3 — useful later
 
