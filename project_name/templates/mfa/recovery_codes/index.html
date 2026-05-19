@@ -11,10 +11,8 @@
         {% slot label %}
             {% translate "Unused codes" %}
         {% endslot %}
-        {% comment %} djlint:off {% endcomment %}
     {% slot value %}{% for code in unused_codes %}{% if forloop.counter0 %}
 {% endif %}{{ code }}{% endfor %}{% endslot %}
-{% comment %} djlint:on {% endcomment %}
 {% endelement %}
 {% if unused_codes %}
 {% url 'mfa_download_recovery_codes' as download_url %}
