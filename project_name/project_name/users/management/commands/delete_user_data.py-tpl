@@ -29,7 +29,7 @@ class Command(BaseCommand):
 
         try:
             user = get_user_by_identifier(identifier)
-        except User.DoesNotExist as exc:
+        except getattr(User, 'DoesNotExist', Exception) as exc:
             raise CommandError(f"User not found: {identifier}") from exc
 
         try:

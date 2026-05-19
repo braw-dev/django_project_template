@@ -109,8 +109,8 @@ def validate_team_vat_number(
     if not is_valid:
         raise ValueError(_("VAT number is not valid according to VIES."))
 
-    team.billing_country = normalized_country
-    team.vat_number = normalized_vat_number
+    team.billing_country = cast(Any, normalized_country)
+    team.vat_number = cast(Any, normalized_vat_number)
     team.vat_validated_at = timezone.now()
     team.save(update_fields=["billing_country", "vat_number", "vat_validated_at", "updated_at"])
     record_audit_event(
@@ -220,7 +220,7 @@ def send_invitation_email(invitation: models.TeamInvitation, request) -> None:
     send_transactional_email(
         subject=subject,
         template_prefix="tenancy/email/team_invitation",
-        recipient_list=[invitation.email],
+        recipient_list=[cast(str, invitation.email)],
         context={
             "accept_url": accept_url,
             "invitation": invitation,

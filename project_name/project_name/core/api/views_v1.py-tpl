@@ -188,7 +188,7 @@ def create_customer_portal(
     if not user_has_team_perm(request_user, "tenancy.manage_team_billing", team):
         return ErrorResponse(error="Permission denied"), 403
     if not did_recently_reauthenticate(request):
-        return 403, ErrorResponse(error=REAUTHENTICATION_REQUIRED_ERROR)
+        return ErrorResponse(error=REAUTHENTICATION_REQUIRED_ERROR), 403
 
     try:
         billing_provider = services.get_billing_provider()

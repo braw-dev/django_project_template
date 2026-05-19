@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import cast, Any
 
 from django.conf import settings
 from django.core import signing
@@ -59,7 +60,7 @@ def create_pending_newsletter_signup(
 def get_newsletter_confirmation_token(signup: models.NewsletterSignup) -> str:
     return signing.dumps(
         {
-            "newsletter_signup_id": signup.id,
+            "newsletter_signup_id": cast(Any, signup).id,
             "email": signup.email,
             "purpose": signup.purpose,
         },
@@ -75,22 +76,22 @@ def build_newsletter_confirmation_url(signup: models.NewsletterSignup, request) 
 def send_newsletter_confirmation_email(signup: models.NewsletterSignup, request) -> bool:
     cooldown_minutes = getattr(settings, "NEWSLETTER_CONFIRMATION_RESEND_COOLDOWN_MINUTES", 15)
     if signup.confirmation_email_sent_at is not None:
-        resend_after = signup.confirmation_email_sent_at + timedelta(minutes=cooldown_minutes)
+        resend_after = cast(Any, signup.confirmation_email_sent_at) + timedelta(minutes=cooldown_minutes)
         if resend_after > timezone.now():
             return False
 
     confirmation_url = build_newsletter_confirmation_url(signup, request)
     subject = _("Confirm your %(subscription_label)s subscription") % {
-        "subscription_label": get_newsletter_subscription_label(signup.purpose)
+        "subscription_label": get_newsletter_subscription_label(cast(str, signup.purpose))
     }
     send_transactional_email(
         subject=subject,
         template_prefix="core/email/newsletter_confirmation",
-        recipient_list=[signup.email],
+        recipient_list=[cast(str, signup.email)],
         context={
             "confirmation_url": confirmation_url,
             "signup": signup,
-            "subscription_label": get_newsletter_subscription_label(signup.purpose),
+            "subscription_label": get_newsletter_subscription_label(cast(str, signup.purpose)),
         },
         from_email=settings.DEFAULT_FROM_EMAIL,
     )

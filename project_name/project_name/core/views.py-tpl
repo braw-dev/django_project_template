@@ -1,3 +1,4 @@
+from typing import cast
 from allauth.core import ratelimit
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
@@ -110,7 +111,7 @@ def newsletter_confirm(request, token: str):
     except ValueError as exc:
         confirmation_error = str(exc)
     else:
-        subscription_label = get_newsletter_subscription_label(signup.purpose)
+        subscription_label = get_newsletter_subscription_label(cast(str, signup.purpose))
 
     meta = Meta(
         title=(
