@@ -23,7 +23,7 @@ class TeamRole(models.TextChoices):
 
 
 class Team(models.Model):
-    """Top-level tenant/workspace for the application."""
+    """Top-level shared container for the application."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(_("Name"), max_length=255)
@@ -103,7 +103,12 @@ class TeamMembership(TenantScopedModel):
         verbose_name_plural = _("Team Memberships")
         ordering = ["team__name", "user__email"]
         constraints = [
-            models.UniqueConstraint(fields=["team", "user"], name="unique_team_membership")
+            models.UniqueConstraint(fields=["team", "user"], name="unique_team_membership"),
+            models.UniqueConstraint(
+                fields=["team"],
+                condition=models.Q(role=TeamRole.OWNER),
+                name="unique_team_owner",
+            ),
         ]
 
     @property

@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import pytest
 from django.contrib.auth.models import AnonymousUser
+from django.db import IntegrityError
 from django.http import Http404, HttpResponse
 from django.test import RequestFactory
 from django.utils import timezone
@@ -157,6 +158,25 @@ class TestTeamServices:
         assert len(mailoutbox[0].alternatives) == 1
         assert mailoutbox[0].alternatives[0].mimetype == "text/html"
         assert "Accept your invitation here:" in mailoutbox[0].body
+
+    def test_team_cannot_have_two_owner_memberships(self, team, outsider):
+        with pytest.raises(IntegrityError):
+            models.TeamMembership.all_objects.create(
+                team=team,
+                user=outsider,
+                role=models.TeamRole.OWNER,
+            )
+
+    def test_different_teams_can_have_different_owners(self, outsider):
+        another_team = models.Team.objects.create(name="Gamma", slug="gamma")
+
+        membership = models.TeamMembership.all_objects.create(
+            team=another_team,
+            user=outsider,
+            role=models.TeamRole.OWNER,
+        )
+
+        assert membership.role == models.TeamRole.OWNER
 
 
 @pytest.mark.django_db
