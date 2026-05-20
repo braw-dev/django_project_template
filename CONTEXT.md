@@ -114,9 +114,9 @@ _Avoid_: Tenant-scoped, workspace-owned, account-owned
   billing.
 - **Tenant** may be used informally when discussing architecture, but the canonical domain term is
   **Team**.
-- The current code permits multiple `owner` memberships for a **Team**, but the domain language now
-  says a **Team** has exactly one **Owner**. The glossary is the intended model; the implementation
-  does not yet enforce it.
+- The current code now enforces at most one `owner` membership per **Team**, but it does not yet
+  guarantee that every **Team** always has an **Owner** across every future role-change or removal
+  path. The glossary remains the intended model.
 
 ## Example dialogue
 
