@@ -92,7 +92,7 @@ For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 - **Privacy ops**: Operator-run user data export/delete hooks exposed through Django admin actions
   and management commands.
 - **Configuration**: Typed `pydantic-settings` setup with fast failure on missing required config.
-- **Structure**: Team-first multi-tenancy with memberships, invitations, and tenant-scoped models.
+- **Structure**: Team-first multi-tenancy with memberships, invitations, and team-owned models.
 - **Stack**: Django + Django Ninja API, PostgreSQL/PostGIS via `DB_DEFAULT_URL`, SQLite in tests,
   and a Redis-compatible cache via `CACHE_DEFAULT_URL`.
 - **Testing**: `pytest` + `pytest-django` for backend tests, Django browser tests, and Playwright
@@ -156,7 +156,7 @@ needs marketing-site footer or third-party scripts.
 
 This project includes a built-in multi-tenancy foundation for B2B SaaS products:
 
-- **Teams**: Top-level tenants/workspaces/accounts
+- **Teams**: Top-level shared containers for memberships, billing, and team-owned data
 - **TeamMembership**: Fixed roles (`owner`, `admin`, `member`)
 - **TenantScopedModel**: Abstract base for team-owned models
 - **Active Team Middleware**: Resolves `/t/{team_slug}/` requests

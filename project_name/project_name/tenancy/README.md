@@ -4,15 +4,16 @@ This app provides the default multi-tenancy model for generated projects.
 
 ## Core concepts
 
-- **Team**: the tenant/workspace/account boundary
-- **TeamMembership**: links a user to a team as `owner`, `admin`, or `member`
-- **TeamInvitation**: email-delivered invitation redeemed via a signed token
+- **Team**: the top-level shared container for memberships, billing, and team-owned data
+- **TeamMembership**: links an account to a team as `owner`, `admin`, or `member`
+- **TeamInvitation**: email-delivered invitation for a specific email address, redeemed via a signed
+  token
 - **TenantScopedModel**: abstract base for models that must belong to a team
-- **ApiToken**: example tenant-scoped model showing the explicit auth-time unscoped lookup
+- **ApiToken**: example team-scoped model showing the explicit auth-time unscoped lookup
 
 ## Safe defaults
 
-- tenant-owned models must inherit from `TenantScopedModel`
+- team-owned models must inherit from `TenantScopedModel`
 - request team context is resolved from `/t/{team_slug}/`
 - use `user_has_team_perm(user, perm, team)` for authorization
 - scoped managers are convenience only, not a security boundary
