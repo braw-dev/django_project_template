@@ -34,7 +34,8 @@ _Avoid_: Account, user, team owner
 The single **Account** with ultimate authority over a **Team**. Every **Team** must have exactly one
 **Owner**, and ownership may be transferred but not shared. Billing authority belongs to the
 **Owner** by default. When ownership is transferred, the previous **Owner** becomes an **Admin** by
-default.
+default. Outside team creation, the **Owner** role should only be assigned through an explicit
+ownership-transfer flow.
 
 _Avoid_: Co-owner, primary admin
 
@@ -59,7 +60,8 @@ _Avoid_: Guest, admin, owner
 A pending request for a specific email address to join a **Team** in a specified role. A
 **Team Invitation** is not a **Team Membership**; it may be accepted, revoked, or expire. By
 default, it may only be accepted by an **Account** using the invited email address, and acceptance
-creates a **Team Membership** in the invited role.
+creates a **Team Membership** in the invited role. In the default model, invitations may create
+**Admin** or **Member** memberships, but not **Owner** memberships.
 
 _Avoid_: Pending member, provisional membership
 
@@ -114,9 +116,10 @@ _Avoid_: Tenant-scoped, workspace-owned, account-owned
   billing.
 - **Tenant** may be used informally when discussing architecture, but the canonical domain term is
   **Team**.
-- The current code now enforces at most one `owner` membership per **Team**, but it does not yet
-  guarantee that every **Team** always has an **Owner** across every future role-change or removal
-  path. The glossary remains the intended model.
+- The current code now enforces at most one `owner` membership per **Team**, and member-management
+  flows no longer assign the `owner` role. It does not yet guarantee that every **Team** always has
+  an **Owner** across every future role-change or removal path. The glossary remains the intended
+  model.
 
 ## Example dialogue
 
@@ -151,6 +154,9 @@ _Avoid_: Tenant-scoped, workspace-owned, account-owned
 - **Developer:** Is the role chosen before or after acceptance?
 - **Domain expert:** Before. The **Team Invitation** carries the invited role, and acceptance
   creates a **Team Membership** in that role.
+- **Developer:** Can I invite someone as **Owner**?
+- **Domain expert:** No. In the default model, ownership is special. Invitations create **Admin**
+  or **Member** memberships; ownership must be transferred explicitly.
 - **Developer:** Can Alice have different roles in different teams?
 - **Domain expert:** Yes. Roles belong to the **Team Membership**, not to the **Account** globally.
 - **Developer:** Which team does a request act on?

@@ -74,6 +74,23 @@ class TestTeamServices:
                 user=outsider,
             )
 
+    def test_accept_invitation_rejects_owner_role(self, owner, outsider, team):
+        invitation = models.TeamInvitation.all_objects.create(
+            team=team,
+            email=outsider.email,
+            role=models.TeamRole.OWNER,
+            invited_by=owner,
+            expires_at=timezone.now() + timedelta(days=1),
+        )
+
+        with pytest.raises(ValueError, match="Owner role can only be assigned"):
+            services.accept_invitation_from_token(
+                token=services.get_invitation_token(invitation),
+                user=outsider,
+            )
+
+        assert not models.TeamMembership.all_objects.filter(team=team, user=outsider).exists()
+
     def test_add_user_to_team_records_audit_event(self, owner, outsider, team):
         membership = services.add_user_to_team(
             actor=owner,
@@ -87,6 +104,17 @@ class TestTeamServices:
         assert audit_event.subject_user == outsider
         assert audit_event.team == team
         assert audit_event.metadata["role"] == membership.role
+
+    def test_add_user_to_team_rejects_owner_role(self, owner, outsider, team):
+        with pytest.raises(ValueError, match="Owner role can only be assigned"):
+            services.add_user_to_team(
+                actor=owner,
+                team=team,
+                user=outsider,
+                role=models.TeamRole.OWNER,
+            )
+
+        assert not models.TeamMembership.all_objects.filter(team=team, user=outsider).exists()
 
     def test_validate_team_vat_number_updates_team_and_records_audit_event(self, owner, team):
         with pytest.MonkeyPatch.context() as mp:
@@ -158,6 +186,20 @@ class TestTeamServices:
         assert len(mailoutbox[0].alternatives) == 1
         assert mailoutbox[0].alternatives[0].mimetype == "text/html"
         assert "Accept your invitation here:" in mailoutbox[0].body
+
+    def test_create_invitation_rejects_owner_role(self, owner, team):
+        with pytest.raises(ValueError, match="Owner role can only be assigned"):
+            services.create_invitation(
+                actor=owner,
+                team=team,
+                email="invitee@example.com",
+                role=models.TeamRole.OWNER,
+            )
+
+        assert not models.TeamInvitation.all_objects.filter(
+            team=team,
+            email="invitee@example.com",
+        ).exists()
 
     def test_team_cannot_have_two_owner_memberships(self, team, outsider):
         with pytest.raises(IntegrityError):

@@ -133,6 +133,10 @@ def add_user_to_team(*, actor, team: models.Team, user, role: str) -> models.Tea
     """Add a user to a team after verifying member-management permission."""
     if not permissions.user_has_team_perm(actor, "tenancy.manage_team_members", team):
         raise ValueError(_("You do not have permission to manage team members."))
+    if role == models.TeamRole.OWNER:
+        raise ValueError(
+            _("Owner role can only be assigned when creating a team or transferring ownership.")
+        )
 
     membership, created = TeamMembershipModel.all_objects.get_or_create(
         team=team,
@@ -161,6 +165,10 @@ def create_invitation(*, actor, team: models.Team, email: str, role: str) -> mod
     """Create a team invitation after verifying member-management permission."""
     if not permissions.user_has_team_perm(actor, "tenancy.manage_team_members", team):
         raise ValueError(_("You do not have permission to manage team members."))
+    if role == models.TeamRole.OWNER:
+        raise ValueError(
+            _("Owner role can only be assigned when creating a team or transferring ownership.")
+        )
 
     normalized_email = _normalize_email(email)
     now = timezone.now()
@@ -254,6 +262,10 @@ def accept_invitation_from_token(*, token: str, user) -> models.TeamMembership:
         raise ValueError(_("This invitation has expired."))
     if _normalize_email(user.email) != _normalize_email(invitation.email):
         raise ValueError(_("This invitation was sent to a different email address."))
+    if invitation.role == models.TeamRole.OWNER:
+        raise ValueError(
+            _("Owner role can only be assigned when creating a team or transferring ownership.")
+        )
 
     membership = TeamMembershipModel.all_objects.get_or_create(
         team=invitation.team,
