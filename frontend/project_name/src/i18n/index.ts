@@ -12,7 +12,7 @@ export function ensureI18n() {
 
   void i18n.use(initReactI18next).init({
     fallbackLng: DEFAULT_LOCALE,
-    initImmediate: false,
+    initAsync: false,
     interpolation: {
       escapeValue: false,
     },
