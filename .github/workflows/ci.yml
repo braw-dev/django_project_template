@@ -80,9 +80,9 @@ jobs:
               working-directory: ${{ env.GENERATED_PROJECT_DIR }}
               run: uv run ruff format --check .
 
-            - name: djlint
+            - name: djade
               working-directory: ${{ env.GENERATED_PROJECT_DIR }}
-              run: uv run djlint $GENERATED_PROJECT_NAME/templates --check
+              run: uv run djade $GENERATED_PROJECT_NAME/templates --check
 
             - name: ty
               working-directory: ${{ env.GENERATED_PROJECT_DIR }}
