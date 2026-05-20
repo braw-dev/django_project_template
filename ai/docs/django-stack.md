@@ -1,6 +1,7 @@
 # Django Stack Conventions
 
-This project uses a specific Django stack and architectural patterns. Follow these conventions for consistency across all projects.
+This project uses a specific Django stack and architectural patterns. Follow these conventions for
+consistency across all projects.
 
 ## Architecture Overview
 
@@ -20,16 +21,16 @@ This project uses a specific Django stack and architectural patterns. Follow the
 
 ## Core Dependencies
 
-| Package | Purpose | When to Use |
-|---------|---------|-------------|
-| `django-allauth` | Authentication (email, social, MFA) | Always (for auth) |
-| `django-ninja` | REST API framework | API endpoints |
-| `django-guardian` | Row-level permissions | Object-level permissions |
-| `django-environ` | Environment configuration | Settings management |
-| `django-cotton` | HTML components | Reusable UI components |
-| `celery` + `dragonfly` | Background tasks | Async operations |
-| `dragonfly` (redis alternative) | Caching | Cache expensive operations |
-| `nh3` | HTML sanitization | User-submitted HTML |
+| Package                         | Purpose                             | When to Use                |
+| ------------------------------- | ----------------------------------- | -------------------------- |
+| `django-allauth`                | Authentication (email, social, MFA) | Always (for auth)          |
+| `django-ninja`                  | REST API framework                  | API endpoints              |
+| `django-guardian`               | Row-level permissions               | Object-level permissions   |
+| `django-environ`                | Environment configuration           | Settings management        |
+| `django-cotton`                 | HTML components                     | Reusable UI components     |
+| `celery` + `dragonfly`          | Background tasks                    | Async operations           |
+| `dragonfly` (redis alternative) | Caching                             | Cache expensive operations |
+| `nh3`                           | HTML sanitization                   | User-submitted HTML        |
 
 ## Django Principles
 

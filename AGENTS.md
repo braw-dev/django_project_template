@@ -1,15 +1,17 @@
 # AI Agent Guide
 
-This documentation is intended for AI agents working on this repository. This repository is a **Django Project Template**.
+This documentation is intended for AI agents working on this repository. This repository is a
+**Django Project Template**.
 
 ## 1. Context & Architecture
 
-This is NOT a standard Django project. It is a **template** used to generate new Django projects via `django-admin startproject`.
+This is NOT a standard Django project. It is a **template** used to generate new Django projects via
+`django-admin startproject`.
 
 - **Root Directory**: Contains the template structure.
 - **`project_name/`**: The source code for the generated Django project.
 - **`frontend/project_name/`**: The frontend (React/Vite) source.
-- **`dev/`**: Tools for developing and testing *this template* (excluded in generated projects).
+- **`dev/`**: Tools for developing and testing _this template_ (excluded in generated projects).
 - **`Justfile`**: The command runner for both the template and the generated project.
 
 ### Core Technologies
@@ -30,9 +32,12 @@ If you are modifying the template itself (fixing bugs, adding features to the ba
 ### ⚠️ Critical: Template Variables
 
 - The string `{{ project_name }}` is a Django template variable.
-- **DO NOT** replace `{{ project_name }}` with a real name unless explicitly asked to hardcode a value.
-- **DO NOT** fix "syntax errors" that are actually Django template tags (e.g., `{% templatetag openvariable %}`).
-- When adding new files, ensure they use the correct directory structure (`project_name/project_name/...`).
+- **DO NOT** replace `{{ project_name }}` with a real name unless explicitly asked to hardcode a
+  value.
+- **DO NOT** fix "syntax errors" that are actually Django template tags (e.g.,
+  `{% templatetag openvariable %}`).
+- When adding new files, ensure they use the correct directory structure
+  (`project_name/project_name/...`).
 
 ### Testing the Template
 
@@ -64,7 +69,8 @@ To verify that the template generates a valid project:
 
 ### Generated-project verification workflow
 
-When changing the template, do not stop after editing template files. Always verify a freshly generated project.
+When changing the template, do not stop after editing template files. Always verify a freshly
+generated project.
 
 #### Preferred verification order
 
@@ -121,11 +127,14 @@ just test-unit
 
 - The template repository itself is not the generated project.
 - `.py-tpl` and template-tag syntax can hide problems that only appear after generation.
-- Ruff and pytest results on the generated project are the source of truth for whether template output is actually usable.
+- Ruff and pytest results on the generated project are the source of truth for whether template
+  output is actually usable.
 
 #### If the Ansible smoke test is broken
 
-If `uv run ansible-playbook ./dev/01-test-project-template.yaml` fails for unrelated reasons, do not stop there. Generate a project manually with the workflow above and verify the generated project directly.
+If `uv run ansible-playbook ./dev/01-test-project-template.yaml` fails for unrelated reasons, do not
+stop there. Generate a project manually with the workflow above and verify the generated project
+directly.
 
 ### Backporting generated-project lint/format fixes
 
@@ -133,7 +142,8 @@ If `uv run ruff check` or `uv run ruff format --check` fails in the generated pr
 
 1. **Treat the generated project output as the truth**.
 2. Identify the generated file that Ruff is complaining about.
-3. Map that file back to the template source file (usually the matching `*.py-tpl`, template, or migration file in this repo).
+3. Map that file back to the template source file (usually the matching `*.py-tpl`, template, or
+   migration file in this repo).
 4. Apply the smallest equivalent edit to the template file, not the generated project.
 5. Generate a fresh project again and rerun:
    - `uv run ruff check`
@@ -144,9 +154,12 @@ If `uv run ruff check` or `uv run ruff format --check` fails in the generated pr
 
 - Use `uv run ruff format --diff /path/to/generated/file.py` to see Ruff's exact desired rewrite.
 - Mirror that diff back into the template file as literally as possible.
-- If Ruff's formatter produces invalid Python for generated code, prefer a tiny local `# fmt: off` / `# fmt: on` block around the affected code instead of broad formatting suppression.
-- Do not assume a template file is correct just because the repository copy looks formatted. Only the generated file matters.
-- After every fix, regenerate from scratch. Do not keep patching an old generated directory and assume the template is now correct.
+- If Ruff's formatter produces invalid Python for generated code, prefer a tiny local `# fmt: off` /
+  `# fmt: on` block around the affected code instead of broad formatting suppression.
+- Do not assume a template file is correct just because the repository copy looks formatted. Only
+  the generated file matters.
+- After every fix, regenerate from scratch. Do not keep patching an old generated directory and
+  assume the template is now correct.
 
 ---
 
@@ -156,20 +169,23 @@ Understand the purpose of the project in [`/docs/PRODUCT_OVERVIEW.md`](/docs/PRO
 
 Clean up any code or documents that reference working on the template itself.
 
-If you are reading this file inside a project *generated* from this template (i.e., `project_name` has been replaced by a real name):
+If you are reading this file inside a project _generated_ from this template (i.e., `project_name`
+has been replaced by a real name):
 
 ### Development Workflow
 
 Always use `just` commands to ensure environment consistency.
 
-If you are helping set up a freshly generated project, read and follow `docs/NEW_PROJECT_CHECKLIST.md` early. Treat it as the canonical short checklist for first-run, pre-deploy, and pre-customer setup work.
+If you are helping set up a freshly generated project, read and follow
+`docs/NEW_PROJECT_CHECKLIST.md` early. Treat it as the canonical short checklist for first-run,
+pre-deploy, and pre-customer setup work.
 
 - **Setup**: `just install-dev` (sets up venv, installs python/node deps, hooks).
 - **Start Server**: `just runserver` (runs Django + Vite).
 - **Tests**:
-  - Unit/backend: `just test-unit`
-  - E2E/browser: `just playwright-install` then `just test-e2e`
-  - Fast (watch mode): `just test-fast-watch`
+    - Unit/backend: `just test-unit`
+    - E2E/browser: `just playwright-install` then `just test-e2e`
+    - Fast (watch mode): `just test-fast-watch`
 - **Linting**: `just format` (runs Ruff).
 - **Database**: `just migrate`, `just reset-db`.
 
@@ -177,7 +193,8 @@ If you are helping set up a freshly generated project, read and follow `docs/NEW
 
 - `{{ project_name }}/`: Django app code (settings, urls, wsgi).
 - `{{ project_name }}/tests/e2e`: Typescript + Playwright end-to-end tests.
-- `{{ project_name }}/tests/`: browser-style Django/Playwright tests, excluded from plain `pytest` by default via the `browser` marker.
+- `{{ project_name }}/tests/`: browser-style Django/Playwright tests, excluded from plain `pytest`
+  by default via the `browser` marker.
 - `frontend/`: React application.
 - `templates/`: Django HTML templates (mostly for auth/accounts).
 - `static/`: Static assets.
@@ -187,15 +204,19 @@ If you are helping set up a freshly generated project, read and follow `docs/NEW
 - Use `{{ project_name }}.users.emails.send_transactional_email(...)` for new product emails.
 - Create matching `*.txt` and `*.html` templates and keep them small.
 - Reuse the shared wrappers in `templates/email/base.txt` and `templates/email/base.html`.
-- See `docs/transactional-email.md` in generated projects before adding new invitation, billing, or security emails.
+- See `docs/transactional-email.md` in generated projects before adding new invitation, billing, or
+  security emails.
 
 ### Public vs Protected Routes
 
-This template includes both public marketing pages and protected app pages in the same Django project.
+This template includes both public marketing pages and protected app pages in the same Django
+project.
 
 - Public pages should remain public by default.
-- Protected app routes should opt into `login_required`, `mfa_required`, or similar decorators/mixins explicitly.
-- Use middleware for request context such as active team resolution, not for blanket access enforcement with exception lists.
+- Protected app routes should opt into `login_required`, `mfa_required`, or similar
+  decorators/mixins explicitly.
+- Use middleware for request context such as active team resolution, not for blanket access
+  enforcement with exception lists.
 
 ### Frontend Integration
 
@@ -203,20 +224,25 @@ This template includes both public marketing pages and protected app pages in th
 - **Location**: `frontend/{{ project_name }}/`.
 - **Commands**: managed via `just` (e.g., `install-frontend-dev` is called by `install-dev`).
 - The frontend is intended for **React islands**, not a separate SPA replacing Django templates.
-- Django remains the source of truth for the active language; React islands must derive locale from the rendered document (`<html lang>` / `dir`), not `navigator.language`.
-- For React-island UI strings, use the shared frontend i18n shim under `frontend/{{ project_name }}/src/i18n/` and register mountable islands in `frontend/{{ project_name }}/src/islands/registry.ts`.
+- Django remains the source of truth for the active language; React islands must derive locale from
+  the rendered document (`<html lang>` / `dir`), not `navigator.language`.
+- For React-island UI strings, use the shared frontend i18n shim under
+  `frontend/{{ project_name }}/src/i18n/` and register mountable islands in
+  `frontend/{{ project_name }}/src/islands/registry.ts`.
 
 ---
 
 ## 4. Rules & Conventions
 
-- **File Editing**: Always read the file first. If it contains template tags (`{% templatetag openblock %} ... {% templatetag closeblock %}`), treat it as a template file.
+- **File Editing**: Always read the file first. If it contains template tags
+  (`{% templatetag openblock %} ... {% templatetag closeblock %}`), treat it as a template file.
 - **Dependency Management**:
-  - Python: Edit `pyproject.toml`, then run `uv sync`.
-  - Node: Edit `package.json`, then run `pnpm install`.
+    - Python: Edit `pyproject.toml`, then run `uv sync`.
+    - Node: Edit `package.json`, then run `pnpm install`.
 - **Code Style**: Run `just format` before finishing tasks.
 - **Documentation**: Update `README.md` or `MOTIVATION.md` if architectural changes are made.
-- **Route protection**: When adding a new app route, decide explicitly whether it is public or protected. Do not extend global middleware allowlists for public-page exceptions.
+- **Route protection**: When adding a new app route, decide explicitly whether it is public or
+  protected. Do not extend global middleware allowlists for public-page exceptions.
 
 ---
 
@@ -224,7 +250,9 @@ This template includes both public marketing pages and protected app pages in th
 
 This repository includes detailed instructions for different AI coding assistants.
 
-The canonical shared instruction text lives in `ai/docs/`. `.claude/CLAUDE.md` and `.claude/docs/` are symlinked to that source, while `.cursor/rules/` keeps tool-specific rule wrappers that point back to the same canonical docs.
+The canonical shared instruction text lives in `ai/docs/`. `.claude/CLAUDE.md` and `.claude/docs/`
+are symlinked to that source, while `.cursor/rules/` keeps tool-specific rule wrappers that point
+back to the same canonical docs.
 
 ### For Claude Code
 
@@ -232,11 +260,11 @@ Comprehensive instructions are in the `.claude/` directory:
 
 - **`.claude/CLAUDE.md`**: Main instructions file (start here)
 - **`.claude/docs/`**: Detailed documentation:
-  - `template-development.md`: Template-specific development rules
-  - `django-stack.md`: Django architecture and conventions
-  - `security-simplicity.md`: Security principles and simplicity philosophy
-  - `grug-brain.md`: Grug brain developer philosophy
-  - `internationalisation-first.md`: Guidance on supporting translations from the start
+    - `template-development.md`: Template-specific development rules
+    - `django-stack.md`: Django architecture and conventions
+    - `security-simplicity.md`: Security principles and simplicity philosophy
+    - `grug-brain.md`: Grug brain developer philosophy
+    - `internationalisation-first.md`: Guidance on supporting translations from the start
 
 **Quick Start for Claude Code:**
 

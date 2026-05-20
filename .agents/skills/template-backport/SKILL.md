@@ -1,6 +1,6 @@
 ---
-name: template-backport
 description: Create a test project from the template, run linting and formatting checks, and backport the changes into the template repository. Use when you need to ensure the template generates clean, formatted code.
+name: template-backport
 ---
 
 ## Usage
@@ -16,8 +16,9 @@ compliant with linting and formatting standards (Ruff).
 
 2. The script will generate a project, run `ruff check` and `ruff format --check`, and output the
    diffs.
-3. **Analyze the diffs**: Match the generated file paths (e.g., `BACKPORT_TEST_PROJECT/app/models.py`)
-   to their source template files (e.g., `project_name/app/models.py` or `project_name/app/models.py-tpl`).
+3. **Analyze the diffs**: Match the generated file paths (e.g.,
+   `BACKPORT_TEST_PROJECT/app/models.py`) to their source template files (e.g.,
+   `project_name/app/models.py` or `project_name/app/models.py-tpl`).
 4. **Apply changes**: Manually apply the minimal equivalent changes to the template files.
    **DO NOT** replace `{{ project_name }}` or other template variables with hardcoded values.
 5. **Verify**: Run the script again. It will repeat the process until no differences are found.

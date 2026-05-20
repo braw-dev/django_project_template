@@ -1,12 +1,14 @@
 # Security & Simplicity Principles
 
-This project balances **security by default** with **radical simplicity** to enable a solo developer or small team to maintain a portfolio of SaaS projects.
+This project balances **security by default** with **radical simplicity** to enable a solo developer
+or small team to maintain a portfolio of SaaS projects.
 
 ## Core Philosophy
 
 **Security is non-negotiable. Complexity is the enemy. Boring technology wins.**
 
-Every security decision should make the system simpler, not more complex. Every simplification should maintain or improve security.
+Every security decision should make the system simpler, not more complex. Every simplification
+should maintain or improve security.
 
 ## Security Principles
 
@@ -271,15 +273,15 @@ For a company of one, monolith is always the answer.
 
 Before adding a package, check if Django has it built-in.
 
-| Need | Django Built-In | Don't Add |
-|------|----------------|-----------|
-| Admin interface | `django.contrib.admin` | Custom admin framework |
-| Forms | `django.forms` | Form library |
-| ORM | `django.db.models` | SQLAlchemy |
-| Auth | `django.contrib.auth` + `allauth` | Custom auth system |
-| Validation | `django.core.validators` | Validation library |
-| Email | `django.core.mail` | Email library |
-| Pagination | `django.core.paginator` | Pagination library |
+| Need            | Django Built-In                   | Don't Add              |
+| --------------- | --------------------------------- | ---------------------- |
+| Admin interface | `django.contrib.admin`            | Custom admin framework |
+| Forms           | `django.forms`                    | Form library           |
+| ORM             | `django.db.models`                | SQLAlchemy             |
+| Auth            | `django.contrib.auth` + `allauth` | Custom auth system     |
+| Validation      | `django.core.validators`          | Validation library     |
+| Email           | `django.core.mail`                | Email library          |
+| Pagination      | `django.core.paginator`           | Pagination library     |
 
 ### 4. Standardization
 

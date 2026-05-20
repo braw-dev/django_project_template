@@ -2,24 +2,26 @@
 
 Use this checklist when you generate a new project from this template.
 
-This document is intentionally practical. It is not the full architecture guide. It is the short list of things to do before you forget them.
+This document is intentionally practical. It is not the full architecture guide. It is the short
+list of things to do before you forget them.
 
 ## 1. Immediately after generation
 
 - [ ] Copy `{{ project_name }}/.env.dist` to `{{ project_name }}/.env`
 - [ ] For local development, change these defaults in `{{ project_name }}/.env`:
-  - [ ] `DEBUG=True`
-  - [ ] `ENVIRONMENT=development`
-  - [ ] `SEND_EMAILS=False`
-  - [ ] `LOG_LEVEL=INFO`
-  - [ ] `DB_DEFAULT_URL=sqlite:///db.sqlite3`
-  - [ ] `CACHE_DEFAULT_URL=locmemcache://`
+    - [ ] `DEBUG=True`
+    - [ ] `ENVIRONMENT=development`
+    - [ ] `SEND_EMAILS=False`
+    - [ ] `LOG_LEVEL=INFO`
+    - [ ] `DB_DEFAULT_URL=sqlite:///db.sqlite3`
+    - [ ] `CACHE_DEFAULT_URL=locmemcache://`
 - [ ] Run `just install-dev`
 - [ ] Run `just migrate`
 - [ ] Run `just test-unit`
 - [ ] Fill in `docs/PRODUCT_OVERVIEW.md`
 - [ ] Search for `REPLACE_ME:` and replace every placeholder before sharing the app more widely
-- [ ] Review `README.md`, `DEPLOYMENT.md`, and `SECURITY.md` once so you know what the template already assumes
+- [ ] Review `README.md`, `DEPLOYMENT.md`, and `SECURITY.md` once so you know what the template
+      already assumes
 
 ## 2. Before the first deploy
 
@@ -39,8 +41,10 @@ This document is intentionally practical. It is not the full architecture guide.
 
 - [ ] Create a superuser with `just createsuperuser`
 - [ ] Verify login, logout, email verification, and MFA setup flows
-- [ ] Verify the built-in language switcher and, if you use React islands, confirm they follow the same selected language
-- [ ] Confirm security notification emails and reauthentication-sensitive actions behave the way you expect
+- [ ] Verify the built-in language switcher and, if you use React islands, confirm they follow the
+      same selected language
+- [ ] Confirm security notification emails and reauthentication-sensitive actions behave the way you
+      expect
 - [ ] Review whether support hijack should stay enabled in this project
 
 ## 4. Before charging money
@@ -50,14 +54,18 @@ This document is intentionally practical. It is not the full architecture guide.
 - [ ] Test checkout end to end
 - [ ] Test the billing portal flow end to end
 - [ ] Test webhook delivery and confirm local billing state updates correctly
-- [ ] Review your pricing copy, VAT stance, and customer-facing billing wording before exposing pricing publicly
+- [ ] Review your pricing copy, VAT stance, and customer-facing billing wording before exposing
+      pricing publicly
 
 ## 5. Before first customer access
 
-- [ ] Replace the seeded Privacy, Terms, Security, Subprocessors, Contact, and support FAQ placeholder content
-- [ ] Verify that your trust pages describe your real providers, regions, subprocessors, backup posture, and support process
+- [ ] Replace the seeded Privacy, Terms, Security, Subprocessors, Contact, and support FAQ
+      placeholder content
+- [ ] Verify that your trust pages describe your real providers, regions, subprocessors, backup
+      posture, and support process
 - [ ] Decide how backups will work and document the restore process you will actually follow
-- [ ] Decide how privacy export/delete should behave for your app-specific data before using those workflows in production
+- [ ] Decide how privacy export/delete should behave for your app-specific data before using those
+      workflows in production
 - [ ] Decide whether Plausible and Chatwoot will be enabled, and verify consent behavior if they are
 - [ ] Do one end-to-end smoke test as a real user from signup/login through the main product flow
 
@@ -74,4 +82,6 @@ This document is intentionally practical. It is not the full architecture guide.
 
 If you are starting a second or third product from this template later, start here first.
 
-The main failure mode is not missing functionality in the template. It is forgetting to replace placeholders, forgetting to document operational choices, or assuming "I'll do that before launch" and then shipping anyway.
+The main failure mode is not missing functionality in the template. It is forgetting to replace
+placeholders, forgetting to document operational choices, or assuming "I'll do that before launch"
+and then shipping anyway.

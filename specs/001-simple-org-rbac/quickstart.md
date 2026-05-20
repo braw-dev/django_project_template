@@ -2,7 +2,8 @@
 
 ## Overview
 
-This feature replaces `django-guardian` with a custom `Organisation -> Team -> User` RBAC system powered by `django-rules`.
+This feature replaces `django-guardian` with a custom `Organisation -> Team -> User` RBAC system
+powered by `django-rules`.
 
 ## Checking Permissions
 

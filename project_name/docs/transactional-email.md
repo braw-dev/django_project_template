@@ -4,7 +4,8 @@ The template includes a small shared foundation for product emails.
 
 ## What to use
 
-Use `{{ project_name }}.users.emails.send_transactional_email(...)` for product emails that should send both plain-text and HTML content.
+Use `{{ project_name }}.users.emails.send_transactional_email(...)` for product emails that should
+send both plain-text and HTML content.
 
 That helper:
 
@@ -57,6 +58,8 @@ That call expects these templates to exist:
 
 - keep subjects in Python close to the call site
 - keep message content in templates
-- prefer a small, explicit context over passing whole model objects unless the template genuinely needs them
+- prefer a small, explicit context over passing whole model objects unless the template genuinely
+  needs them
 - for user-facing copy, mark strings for translation in both text and HTML templates
-- use this helper for new product emails instead of calling `send_mail(...)` directly unless the email is intentionally text-only
+- use this helper for new product emails instead of calling `send_mail(...)` directly unless the
+  email is intentionally text-only

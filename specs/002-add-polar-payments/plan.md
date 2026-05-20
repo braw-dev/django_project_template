@@ -5,7 +5,11 @@
 
 ## Summary
 
-Add production-ready Polar.sh payment boilerplate to the Django template. This includes a `billing` app with subscription models, webhook handling, checkout/portal URL generation, and entitlement checks. The integration uses the official `polar-sdk`, `standardwebhooks` for signature verification, and `django-ninja` for API endpoints. Business logic hooks are stubbed with `NotImplementedError` for project-specific customization.
+Add production-ready Polar.sh payment boilerplate to the Django template. This includes a `billing`
+app with subscription models, webhook handling, checkout/portal URL generation, and entitlement
+checks. The integration uses the official `polar-sdk`, `standardwebhooks` for signature
+verification, and `django-ninja` for API endpoints. Business logic hooks are stubbed with
+`NotImplementedError` for project-specific customization.
 
 ## Technical Context
 
@@ -27,15 +31,15 @@ Add production-ready Polar.sh payment boilerplate to the Django template. This i
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| **I. Grug Brain** | ✅ PASS | Single app, minimal abstraction, stubs for customization |
-| **II. Security First** | ✅ PASS | Webhook signature verification, CSRF exempt only for verified webhooks, secrets in env vars |
-| **III. Boring Technology** | ✅ PASS | Uses existing stack (Django, django-ninja, Pydantic), no new languages/frameworks |
-| **IV. Internationalisation** | ✅ PASS | All user-facing strings wrapped in `gettext_lazy` |
-| **V. MVP & Speed** | ✅ PASS | Provides working foundation, stubs for project-specific logic |
+| Principle                    | Status  | Notes                                                                                       |
+| ---------------------------- | ------- | ------------------------------------------------------------------------------------------- |
+| **I. Grug Brain**            | ✅ PASS | Single app, minimal abstraction, stubs for customization                                    |
+| **II. Security First**       | ✅ PASS | Webhook signature verification, CSRF exempt only for verified webhooks, secrets in env vars |
+| **III. Boring Technology**   | ✅ PASS | Uses existing stack (Django, django-ninja, Pydantic), no new languages/frameworks           |
+| **IV. Internationalisation** | ✅ PASS | All user-facing strings wrapped in `gettext_lazy`                                           |
+| **V. MVP & Speed**           | ✅ PASS | Provides working foundation, stubs for project-specific logic                               |
 
 ## Project Structure
 
@@ -74,12 +78,13 @@ project_name/project_name/
 └── settings.py-tpl                   # MODIFY: Add billing to INSTALLED_APPS
 ```
 
-**Structure Decision**: New `billing` app follows existing app pattern (see `organizations/`). API endpoints added to existing `core/api/` structure using django-ninja.
+**Structure Decision**: New `billing` app follows existing app pattern (see `organizations/`). API
+endpoints added to existing `core/api/` structure using django-ninja.
 
 ## Complexity Tracking
 
 > No violations. All choices align with Constitution.
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| *None* | — | — |
+| --------- | ---------- | ------------------------------------ |
+| _None_    | —          | —                                    |

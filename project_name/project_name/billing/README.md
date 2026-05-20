@@ -4,14 +4,18 @@ Billing and subscription management foundation with Polar.sh as the default prov
 
 ## Overview
 
-This app provides a small billing abstraction so generated projects can start with Polar, while keeping call sites small if you later swap providers.
+This app provides a small billing abstraction so generated projects can start with Polar, while
+keeping call sites small if you later swap providers.
 
 Included by default:
 
 - **Provider interface**: `get_billing_provider()` returns the configured billing provider
-- **Polar implementation**: hosted checkout, hosted customer portal session, product listing, webhook verification
-- **Local billing models**: `Customer`, `Product`, `Subscription`, `Entitlement`, and persisted `WebhookEvent`
-- **Webhook processing**: signature verification, duplicate-event short-circuiting, and local billing sync
+- **Polar implementation**: hosted checkout, hosted customer portal session, product listing,
+  webhook verification
+- **Local billing models**: `Customer`, `Product`, `Subscription`, `Entitlement`, and persisted
+  `WebhookEvent`
+- **Webhook processing**: signature verification, duplicate-event short-circuiting, and local
+  billing sync
 - **Selectors**: helpers for active subscription and entitlement checks
 
 ## Billing vs accounting source of truth
@@ -20,18 +24,24 @@ The template treats billing and accounting as related but different concerns.
 
 Use these sources of truth by default:
 
-- **Polar** for invoices, receipts, credit notes, refunds, subscription charges, tax handling, and provider-issued billing documents
-- **your bank account or payout statements** for cash actually received, provider fees, and reconciliation
-- **your Django database** for operational product state such as which team has an active subscription, which entitlements are active, and which provider IDs are linked to a local team
+- **Polar** for invoices, receipts, credit notes, refunds, subscription charges, tax handling, and
+  provider-issued billing documents
+- **your bank account or payout statements** for cash actually received, provider fees, and
+  reconciliation
+- **your Django database** for operational product state such as which team has an active
+  subscription, which entitlements are active, and which provider IDs are linked to a local team
 
-This means the local billing models in this app are intentionally **not** an accounting ledger. They are for app behaviour and support workflows:
+This means the local billing models in this app are intentionally **not** an accounting ledger. They
+are for app behaviour and support workflows:
 
 - gating paid features from local subscription state
 - rendering billing status in the product UI
 - linking teams to provider-side customer and subscription IDs
 - helping debug webhook processing and support issues
 
-If you later need bookkeeping exports into a specific accounting tool, prefer exporting from Polar first and only add local project-specific reconciliation helpers if they clearly solve a real workflow.
+If you later need bookkeeping exports into a specific accounting tool, prefer exporting from Polar
+first and only add local project-specific reconciliation helpers if they clearly solve a real
+workflow.
 
 ## Configuration
 
@@ -65,7 +75,8 @@ POLAR_API_BASE_URL=https://api.polar.sh
 
 Create the recurring products you want to sell in Polar first.
 
-The template expects real Polar product IDs when creating checkout sessions. Keep those IDs in your pricing/selectors layer rather than scattering them through templates.
+The template expects real Polar product IDs when creating checkout sessions. Keep those IDs in your
+pricing/selectors layer rather than scattering them through templates.
 
 ### 3. Create the webhook endpoint in Polar
 
@@ -97,15 +108,18 @@ Run through one real or test checkout and confirm:
 
 ### 6. Verify duplicate webhook handling
 
-Replay the same webhook event from Polar and confirm the app records it once and ignores the duplicate delivery.
+Replay the same webhook event from Polar and confirm the app records it once and ignores the
+duplicate delivery.
 
 ### 7. Verify the customer portal flow
 
-Call the customer portal endpoint or trigger it from your UI and confirm Polar redirects back to your dashboard return URL.
+Call the customer portal endpoint or trigger it from your UI and confirm Polar redirects back to
+your dashboard return URL.
 
 ### 8. Wire your app to local billing state
 
-Use local selectors such as `has_active_subscription(...)`, `get_active_subscription(...)`, and `has_entitlement(...)` in your app logic.
+Use local selectors such as `has_active_subscription(...)`, `get_active_subscription(...)`, and
+`has_entitlement(...)` in your app logic.
 
 Avoid making live provider API calls during normal feature checks.
 
@@ -117,10 +131,12 @@ The boring default is:
 
 1. export invoices, refunds, and tax documents from Polar
 2. use Polar as the financial source of truth for what was billed
-3. use bank or payout statements as the source of truth for what cash actually arrived and what fees were deducted
+3. use bank or payout statements as the source of truth for what cash actually arrived and what fees
+   were deducted
 4. use local Django billing rows only for access control, support, and troubleshooting
 
-Do not assume that `Subscription` or `WebhookEvent` rows are enough to satisfy accounting, tax filing, or end-of-year bookkeeping requirements.
+Do not assume that `Subscription` or `WebhookEvent` rows are enough to satisfy accounting, tax
+filing, or end-of-year bookkeeping requirements.
 
 ## European tax and billing display default
 
@@ -128,35 +144,52 @@ The template takes a conservative default stance for EU-friendly B2B billing:
 
 - public pricing pages show prices **excluding VAT**
 - final tax is calculated at checkout by the billing provider
-- VAT number collection, reverse-charge handling, and tax calculation should stay with the billing provider where possible
-- invoices, receipts, and tax documents should be issued by the billing provider, not from Django admin
+- VAT number collection, reverse-charge handling, and tax calculation should stay with the billing
+  provider where possible
+- invoices, receipts, and tax documents should be issued by the billing provider, not from Django
+  admin
 - the default happy path is provider-hosted checkout and provider-managed billing records
 
-The tenancy `Team` model now includes optional `billing_country`, `vat_number`, and `vat_validated_at` fields so generated projects can capture VAT identity early. A small service-layer VIES check can validate and persist that identity, but Polar remains responsible for actual tax calculation and provider-issued billing documents.
+The tenancy `Team` model now includes optional `billing_country`, `vat_number`, and
+`vat_validated_at` fields so generated projects can capture VAT identity early. A small
+service-layer VIES check can validate and persist that identity, but Polar remains responsible for
+actual tax calculation and provider-issued billing documents.
 
 ## Merchant of record posture for EU customers
 
-Polar is currently the template's default billing provider and is a **US-incorporated merchant of record**.
+Polar is currently the template's default billing provider and is a
+**US-incorporated merchant of record**.
 
-Generated projects using the default Polar flow should document that clearly for procurement, DPA, and vendor-review questionnaires:
+Generated projects using the default Polar flow should document that clearly for procurement, DPA,
+and vendor-review questionnaires:
 
-- **Contracting party for checkout transactions:** the merchant of record is Polar, not your Django app
+- **Contracting party for checkout transactions:** the merchant of record is Polar, not your Django
+  app
 - **Invoices, receipts, and tax documents:** issued by Polar
-- **Product access and support state:** stored in your Django app's local billing tables for entitlement checks and operational workflows
-- **Customer data location:** depends on the providers you actually configure and must be documented per project in your trust pages and subprocessor inventory
-- **Fallback if Polar coverage or fit changes:** treat the billing layer as provider-backed; if Polar becomes unsuitable for a specific market or customer segment, migrate future checkout and billing flows to another supported provider rather than pretending the local Django models are the merchant of record
+- **Product access and support state:** stored in your Django app's local billing tables for
+  entitlement checks and operational workflows
+- **Customer data location:** depends on the providers you actually configure and must be documented
+  per project in your trust pages and subprocessor inventory
+- **Fallback if Polar coverage or fit changes:** treat the billing layer as provider-backed; if
+  Polar becomes unsuitable for a specific market or customer segment, migrate future checkout and
+  billing flows to another supported provider rather than pretending the local Django models are the
+  merchant of record
 
-Do not describe the app itself as the merchant of record unless you have explicitly replaced the default provider-backed flow and updated the legal, tax, and operational documentation accordingly.
+Do not describe the app itself as the merchant of record unless you have explicitly replaced the
+default provider-backed flow and updated the legal, tax, and operational documentation accordingly.
 
 For a generated-project customer-facing explanation, see `docs/billing-eu.md`.
 
 ### What this means in practice
 
-- if a business buyer is VAT-exempt or reverse charge applies, rely on Polar to handle that during checkout
+- if a business buyer is VAT-exempt or reverse charge applies, rely on Polar to handle that during
+  checkout
 - do not try to hardcode country-specific VAT rules into templates or selectors
 - do not scaffold manual invoice issuance or local invoice reconciliation by default
 - do not treat the local billing tables as a finance ledger for bookkeeping or statutory reporting
-- if a generated project later needs offline invoicing, purchase-order workflows, or accounting-tool exports, add that as an explicit project-level extension rather than changing the default template flow
+- if a generated project later needs offline invoicing, purchase-order workflows, or accounting-tool
+  exports, add that as an explicit project-level extension rather than changing the default template
+  flow
 
 ## Usage
 
@@ -201,7 +234,8 @@ checkout_url = billing_provider.create_checkout_url(
 )
 ```
 
-Polar checkout uses the local team UUID as `external_customer_id` and includes `team_id` in checkout metadata.
+Polar checkout uses the local team UUID as `external_customer_id` and includes `team_id` in checkout
+metadata.
 
 ### Generate a hosted customer portal URL
 
@@ -217,9 +251,11 @@ portal_url = billing_provider.get_customer_portal_url(
 
 ### Pricing page helper
 
-The public pricing page uses `{{ project_name }}.selectors.product_list()` as a thin mapping layer from provider products to template cards.
+The public pricing page uses `{{ project_name }}.selectors.product_list()` as a thin mapping layer
+from provider products to template cards.
 
-It includes a small locale-aware currency formatter for EUR, CHF, GBP, and USD using the active request locale.
+It includes a small locale-aware currency formatter for EUR, CHF, GBP, and USD using the active
+request locale.
 
 That helper is the intended override point for generated projects when you want to:
 
@@ -247,7 +283,8 @@ Processing flow:
 4. ignore duplicates safely
 5. sync local `Customer`, `Product`, `Subscription`, and `Entitlement` records
 
-Invalid signatures return `400`. Internal processing failures return `500` so the provider can retry.
+Invalid signatures return `400`. Internal processing failures return `500` so the provider can
+retry.
 
 ## Security
 

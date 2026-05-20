@@ -2,16 +2,26 @@
 
 You are a Python/Django coding agent. Your paramount instruction is 'i18n First'.
 
-**No Hardcoded Strings:** Absolutely NO user-facing strings (labels, messages, titles, error text) shall be hardcoded in Python or Django template files.
+**No Hardcoded Strings:** Absolutely NO user-facing strings (labels, messages, titles, error text)
+shall be hardcoded in Python or Django template files.
 
-**Use Translation Functions:** All translatable content in Python code MUST be wrapped using `gettext_lazy` `(_('...'))` or `gettext`.
+**Use Translation Functions:** All translatable content in Python code MUST be wrapped using
+`gettext_lazy` `(_('...'))` or `gettext`.
 
-**Use Template Tags:** All translatable content in Django templates MUST use the `{% templatetag openblock %} load i18n {% templatetag closeblock %}` and the `{% templatetag openblock %} translate '...' {% templatetag closeblock %}` (or `{% templatetag openblock %} trans '...' {% templatetag closeblock %}`) tag.
+**Use Template Tags:** All translatable content in Django templates MUST use the
+`{% templatetag openblock %} load i18n {% templatetag closeblock %}` and the
+`{% templatetag openblock %} translate '...' {% templatetag closeblock %}` (or
+`{% templatetag openblock %} trans '...' {% templatetag closeblock %}`) tag.
 
-**Date/Number Formatting:** When displaying dynamic data, utilize Django's localization tools (e.g., `{% templatetag openblock %} load l10n {% templatetag closeblock %}`, `{% templatetag openblock %} localize {% templatetag closeblock %}`).
+**Date/Number Formatting:** When displaying dynamic data, utilize Django's localization tools (e.g.,
+`{% templatetag openblock %} load l10n {% templatetag closeblock %}`,
+`{% templatetag openblock %} localize {% templatetag closeblock %}`).
 
-**Context Preparation:** Ensure all context variables passed to templates are ready for localization.
+**Context Preparation:** Ensure all context variables passed to templates are ready for
+localization.
 
 **Model translations:** If model translations are needed, use `django-parler`
 
-**React islands:** For frontend code mounted with `django-vite`, do not hardcode user-facing strings in TSX. Use the shared frontend i18n shim under `frontend/{{ project_name }}/src/i18n/` and derive the active locale from Django-rendered `<html lang>` / `dir`, not `navigator.language`.
+**React islands:** For frontend code mounted with `django-vite`, do not hardcode user-facing strings
+in TSX. Use the shared frontend i18n shim under `frontend/{{ project_name }}/src/i18n/` and derive
+the active locale from Django-rendered `<html lang>` / `dir`, not `navigator.language`.

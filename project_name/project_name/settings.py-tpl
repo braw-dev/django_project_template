@@ -100,7 +100,10 @@ def parse_database_url(database_url: str | SecretStr) -> dict[str, object]:
     if scheme in {"postgres", "postgresql"}:
         engine = "django.db.backends.postgresql"
     elif scheme == "postgis":
-        engine = "django.contrib.gis.db.backends.postgis"
+        if "django.contrib.gis" in sys.modules:
+            engine = "django.contrib.gis.db.backends.postgis"
+        else:
+            engine = "django.db.backends.postgresql"
     elif scheme in {"mysql", "mysql2"}:
         engine = "django.db.backends.mysql"
     else:

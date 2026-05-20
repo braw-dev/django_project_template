@@ -36,4 +36,5 @@ Cotton uses the following naming conventions:
 
 ## Tag Style
 
-- Components can either be self-closing <c-my-component /> or have a closing tag <c-my-component></c-my-component>
+- Components can either be self-closing <c-my-component /> or have a closing tag
+  <c-my-component></c-my-component>

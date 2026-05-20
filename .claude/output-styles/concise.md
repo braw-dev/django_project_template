@@ -1,7 +1,7 @@
 ---
-name: Concise
 description:
   Write short, succinct responses with markdown.
+name: Concise
 ---
 
 # Custom Style Instructions
@@ -19,4 +19,5 @@ highlight important information.
 
 ## Specific Behaviors
 
-Provide a short summary of concepts and actions you have taken. Choose not to explain in details unless asked.
+Provide a short summary of concepts and actions you have taken. Choose not to explain in details
+unless asked.

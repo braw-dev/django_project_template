@@ -1,6 +1,9 @@
 # Production Architecture & Deployment
 
-This template provides a production-oriented starting point, not a finished platform. It includes application settings, container files, and runtime integrations, but you still need to choose and document your own hosting, reverse proxy, backups, and operational processes for each generated product.
+This template provides a production-oriented starting point, not a finished platform. It includes
+application settings, container files, and runtime integrations, but you still need to choose and
+document your own hosting, reverse proxy, backups, and operational processes for each generated
+product.
 
 ## Opinionated default deployment path
 
@@ -10,10 +13,13 @@ If you want one boring sovereignty-friendly default for a generated project, pre
 - **App runtime**: rootless Podman containers managed by per-project `systemd --user` units
 - **Edge proxy + TLS**: one root-managed Caddy on the VPS, configured outside this repo
 - **CDN**: Bunny.net in front of Caddy for static/media and edge caching
-- **Database**: PostgreSQL managed somewhere you trust in-region; provider intentionally undecided here
-- **Cache / broker**: Dragonfly on the same VPS or on a small sister instance in the same private network
+- **Database**: PostgreSQL managed somewhere you trust in-region; provider intentionally undecided
+  here
+- **Cache / broker**: Dragonfly on the same VPS or on a small sister instance in the same private
+  network
 
-This is the default direction the docs assume. It is intentionally optimized for running many small B2B SaaS products cheaply on a small number of machines.
+This is the default direction the docs assume. It is intentionally optimized for running many small
+B2B SaaS products cheaply on a small number of machines.
 
 ### Why this default
 
@@ -21,16 +27,19 @@ This path keeps the moving parts boring and cheap:
 
 - Podman keeps the runtime close to container workflows you already know from Docker/Compose
 - rootless containers reduce blast radius compared with running every app as root
-- `systemd` gives simple restart policy, startup ordering, logs, and boot persistence without introducing Kubernetes yet
+- `systemd` gives simple restart policy, startup ordering, logs, and boot persistence without
+  introducing Kubernetes yet
 - separate Unix users per project give a clean boundary between apps on the same VPS
 - Caddy centralizes certificates and reverse proxying once, instead of per-project TLS config
 - Bunny.net gives a simple CDN layer without changing the Django app architecture
 
-It also leaves a future path open to k3s later because you are still building and shipping container images, not bespoke VM-only processes
+It also leaves a future path open to k3s later because you are still building and shipping container
+images, not bespoke VM-only processes
 
 ## What is scaffolded today
 
-- Django application configuration via `.env` and `.env.local` using [`pydantic-settings`](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
+- Django application configuration via `.env` and `.env.local` using
+  [`pydantic-settings`](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
 - `docker/Dockerfile.dev` and `docker/Dockerfile.prod`
 - `compose.dev.yaml` and `compose.yaml` as starting points
 - Gunicorn app runtime in the production Dockerfile
@@ -64,9 +73,11 @@ If you are running several small products on one Hetzner VPS, prefer a layout li
 - each app user owns only that project's checkout, env files, volumes, and rootless Podman services
 - root owns the shared reverse proxy, firewall, SSH, and system-level hardening
 - root Caddy proxies public traffic to high localhost ports or private container ports for each app
-- Dragonfly may be shared, but document database numbers, credentials, and failure domains clearly if you do that
+- Dragonfly may be shared, but document database numbers, credentials, and failure domains clearly
+  if you do that
 
-This template does **not** generate the Unix users or host-level config for you. The point here is to recommend a repeatable shape, not pretend the repo already automates it.
+This template does **not** generate the Unix users or host-level config for you. The point here is
+to recommend a repeatable shape, not pretend the repo already automates it.
 
 ### Suggested responsibility split
 
@@ -89,7 +100,10 @@ This template does **not** generate the Unix users or host-level config for you.
 
 ## App configuration
 
-[`pydantic-settings`](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) is used to manage configuration in `settings.py`. Copy `.env.dist` to `.env` and update the values as needed. If local overrides are required, put them into `.env.local`. Required settings fail fast during Django startup if they are missing or blank.
+[`pydantic-settings`](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) is used to
+manage configuration in `settings.py`. Copy `.env.dist` to `.env` and update the values as needed.
+If local overrides are required, put them into `.env.local`. Required settings fail fast during
+Django startup if they are missing or blank.
 
 ## Runtime components
 
@@ -97,7 +111,8 @@ This template does **not** generate the Unix users or host-level config for you.
 
 `{{ project_name }}` is a Django application served by Gunicorn in the production Dockerfile.
 
-For the default Hetzner path, treat that production image as the thing your rootless Podman service runs under `systemd --user`.
+For the default Hetzner path, treat that production image as the thing your rootless Podman service
+runs under `systemd --user`.
 
 ### Database
 
@@ -111,32 +126,42 @@ The default `.env.dist` uses PostGIS. Test runs switch to in-memory SQLite autom
 
 #### Migrations
 
-The template includes standard Django migrations. It does **not** scaffold CI/CD migration orchestration. If you adopt zero-downtime migration rules for a product, document and enforce them in that product's delivery process.
+The template includes standard Django migrations. It does **not** scaffold CI/CD migration
+orchestration. If you adopt zero-downtime migration rules for a product, document and enforce them
+in that product's delivery process.
 
 ### Cache and async work
 
-Caching uses Django's cache framework with a Redis-compatible backend when `CACHE_DEFAULT_URL` points at Redis/Dragonfly. Celery is configured to use `CELERY_BROKER_URL` and stores task results in the database via `django-celery-results`.
+Caching uses Django's cache framework with a Redis-compatible backend when `CACHE_DEFAULT_URL`
+points at Redis/Dragonfly. Celery is configured to use `CELERY_BROKER_URL` and stores task results
+in the database via `django-celery-results`.
 
-The included production Compose file uses Dragonfly as the cache service, but the Django settings only require a Redis-compatible URL.
+The included production Compose file uses Dragonfly as the cache service, but the Django settings
+only require a Redis-compatible URL.
 
 For the default deployment path, prefer either:
 
 - Dragonfly on the same VPS for the cheapest setup, or
-- Dragonfly on a small sister instance in the same private network if you want cleaner isolation or independent scaling
+- Dragonfly on a small sister instance in the same private network if you want cleaner isolation or
+  independent scaling
 
-If multiple apps share one Dragonfly instance, treat that as an explicit operational choice and document the blast radius.
+If multiple apps share one Dragonfly instance, treat that as an explicit operational choice and
+document the blast radius.
 
 ### Static and media files
 
 - Static files are served by WhiteNoise.
 - User-uploaded media defaults to local filesystem storage.
-- In production you can switch media storage to an S3-compatible backend via the existing `AWS_*` settings.
+- In production you can switch media storage to an S3-compatible backend via the existing `AWS_*`
+  settings.
 
 For the default Hetzner + Bunny.net path:
 
-- keep WhiteNoise as the application origin for static files unless you have a reason to move away from it
+- keep WhiteNoise as the application origin for static files unless you have a reason to move away
+  from it
 - let Bunny.net cache public static assets at the edge
-- decide explicitly whether media should stay on local disk, move to object storage, or be fronted by Bunny Storage/CDN in a generated project
+- decide explicitly whether media should stay on local disk, move to object storage, or be fronted
+  by Bunny Storage/CDN in a generated project
 
 ### Logging, errors, and performance signals
 
@@ -146,10 +171,10 @@ The template currently supports:
 - rotating JSON log files under `logs/`
 - optional Sentry error reporting via `SENTRY_DSN`
 - one structured request-performance log event per request, including:
-  - request duration
-  - DB query count
-  - total DB time
-  - slow-request / slow-DB flags
+    - request duration
+    - DB query count
+    - total DB time
+    - slow-request / slow-DB flags
 
 This is the supported observability path for generated projects:
 
@@ -160,7 +185,8 @@ This is the supported observability path for generated projects:
 
 The template does **not** currently scaffold distributed tracing or require OpenTelemetry.
 
-If you want more, add it in a generated project deliberately. The default here is to start with logs, health checks, and exceptions, then derive the dashboards that actually matter.
+If you want more, add it in a generated project deliberately. The default here is to start with
+logs, health checks, and exceptions, then derive the dashboards that actually matter.
 
 ### Suggested first dashboards
 
@@ -174,7 +200,8 @@ If you ship the JSON logs to Grafana Cloud via Alloy, the first useful dashboard
 - exception count from Sentry
 - uptime from `/api/v1/health` and `/api/v1/health/live`, plus host metrics
 
-That is enough to spot availability issues, performance regressions, and the slow endpoints worth improving.
+That is enough to spot availability issues, performance regressions, and the slow endpoints worth
+improving.
 
 ## Reverse proxy and edge
 
@@ -185,25 +212,30 @@ This repo does not include the final reverse-proxy config. For the default path,
 - Bunny.net sits in front of Caddy where CDN or edge caching is useful
 - app containers do not bind directly to the public internet unless you have a specific reason
 
-That split keeps product repos focused on application concerns while the host handles ingress and certificates centrally.
+That split keeps product repos focused on application concerns while the host handles ingress and
+certificates centrally.
 
 ### Proxy header contract
 
-Generated projects trust proxy headers only when the connecting peer is listed in `TRUSTED_PROXY_IPS`.
+Generated projects trust proxy headers only when the connecting peer is listed in
+`TRUSTED_PROXY_IPS`.
 
-For the default Caddy-on-the-same-host shape, keep the app private and set `TRUSTED_PROXY_IPS` to the address or CIDR that Caddy uses when proxying to Django. Examples:
+For the default Caddy-on-the-same-host shape, keep the app private and set `TRUSTED_PROXY_IPS` to
+the address or CIDR that Caddy uses when proxying to Django. Examples:
 
 - `TRUSTED_PROXY_IPS=127.0.0.1`
 - `TRUSTED_PROXY_IPS=10.0.0.0/8`
 - `TRUSTED_PROXY_IPS=127.0.0.1,10.0.0.0/8`
 
-Leave it empty if Django is not behind a trusted reverse proxy yet. In that state, forwarded headers are ignored and `SECURE_PROXY_SSL_HEADER` is not enabled.
+Leave it empty if Django is not behind a trusted reverse proxy yet. In that state, forwarded headers
+are ignored and `SECURE_PROXY_SSL_HEADER` is not enabled.
 
 ## Security-related deployment notes
 
 ### Authentication
 
-[`django-allauth`](https://docs.allauth.org/en/latest/introduction/index.html) is configured for local accounts with:
+[`django-allauth`](https://docs.allauth.org/en/latest/introduction/index.html) is configured for
+local accounts with:
 
 - email as the login identifier
 - mandatory email verification
@@ -213,7 +245,8 @@ Leave it empty if Django is not behind a trusted reverse proxy yet. In that stat
 
 ### Authorization
 
-Team-scoped authorization is handled by the template's own tenancy and permission helpers built on top of `rules`. `django-guardian` is not part of the current implementation.
+Team-scoped authorization is handled by the template's own tenancy and permission helpers built on
+top of `rules`. `django-guardian` is not part of the current implementation.
 
 ### Password hashing
 
@@ -221,7 +254,9 @@ Passwords are hashed with Argon2id by default.
 
 ### Subresource Integrity
 
-[SRI](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) SHA-512 hashes are added to static JS and CSS resources via [`django-sri`](https://github.com/RealOrangeOne/django-sri).
+[SRI](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) SHA-512 hashes
+are added to static JS and CSS resources via
+[`django-sri`](https://github.com/RealOrangeOne/django-sri).
 
 ## Practical rollout order for a new generated project
 
@@ -241,4 +276,6 @@ If you are deploying a new product with this default path, the boring order is:
 
 ## Security contact
 
-The template does not provision a real disclosure process or mailbox. Replace any placeholder security contact details in a generated product with your own support/security contact information and incident process.
+The template does not provision a real disclosure process or mailbox. Replace any placeholder
+security contact details in a generated product with your own support/security contact information
+and incident process.

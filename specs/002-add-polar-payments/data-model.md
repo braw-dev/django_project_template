@@ -9,20 +9,20 @@
 
 Links a Polar subscription to a local Organization.
 
-| Field | Type | Constraints | Description |
-|-------|------|-------------|-------------|
-| `id` | UUID | PK, auto | Primary key |
-| `organisation` | FK(Organisation) | NOT NULL, CASCADE | The organization this subscription belongs to |
-| `polar_subscription_id` | CharField(255) | UNIQUE, NOT NULL | Polar's subscription ID |
-| `polar_customer_id` | CharField(255) | NOT NULL | Polar's customer ID |
-| `polar_product_id` | CharField(255) | NOT NULL | Polar's product ID |
-| `status` | CharField(50) | NOT NULL | Subscription status (see enum below) |
-| `current_period_start` | DateTimeField | NULL | Start of current billing period |
-| `current_period_end` | DateTimeField | NULL | End of current billing period |
-| `cancel_at_period_end` | BooleanField | DEFAULT False | Will cancel at period end |
-| `canceled_at` | DateTimeField | NULL | When the subscription was canceled |
-| `created_at` | DateTimeField | auto_now_add | Record creation timestamp |
-| `updated_at` | DateTimeField | auto_now | Record update timestamp |
+| Field                   | Type             | Constraints       | Description                                   |
+| ----------------------- | ---------------- | ----------------- | --------------------------------------------- |
+| `id`                    | UUID             | PK, auto          | Primary key                                   |
+| `organisation`          | FK(Organisation) | NOT NULL, CASCADE | The organization this subscription belongs to |
+| `polar_subscription_id` | CharField(255)   | UNIQUE, NOT NULL  | Polar's subscription ID                       |
+| `polar_customer_id`     | CharField(255)   | NOT NULL          | Polar's customer ID                           |
+| `polar_product_id`      | CharField(255)   | NOT NULL          | Polar's product ID                            |
+| `status`                | CharField(50)    | NOT NULL          | Subscription status (see enum below)          |
+| `current_period_start`  | DateTimeField    | NULL              | Start of current billing period               |
+| `current_period_end`    | DateTimeField    | NULL              | End of current billing period                 |
+| `cancel_at_period_end`  | BooleanField     | DEFAULT False     | Will cancel at period end                     |
+| `canceled_at`           | DateTimeField    | NULL              | When the subscription was canceled            |
+| `created_at`            | DateTimeField    | auto_now_add      | Record creation timestamp                     |
+| `updated_at`            | DateTimeField    | auto_now          | Record update timestamp                       |
 
 #### Status Enum
 
@@ -52,10 +52,10 @@ class SubscriptionStatus(models.TextChoices):
 
 ## Indexes
 
-| Index | Fields | Purpose |
-|-------|--------|---------|
+| Index                     | Fields                      | Purpose                 |
+| ------------------------- | --------------------------- | ----------------------- |
 | `subscription_org_status` | `organisation_id`, `status` | Fast entitlement checks |
-| `subscription_polar_id` | `polar_subscription_id` | Webhook lookups |
+| `subscription_polar_id`   | `polar_subscription_id`     | Webhook lookups         |
 
 ## Validation Rules
 

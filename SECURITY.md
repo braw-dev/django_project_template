@@ -38,14 +38,17 @@ That guarantees a required `team_id` on the model.
 
 ### 2. Request team context
 
-`ActiveTeamMiddleware` inspects `/t/{team_slug}/...` and `/api/v1/teams/{team_slug}/...` routes and sets:
+`ActiveTeamMiddleware` inspects `/t/{team_slug}/...` and `/api/v1/teams/{team_slug}/...` routes and
+sets:
 
 - `request.team`
 - `request.team_membership`
 
 For authenticated users, non-members are denied with `404` to reduce tenant enumeration.
 
-For bearer-token API requests, the auth class sets `request.team` directly after token verification. That is deliberate: Django middleware runs before Django Ninja auth handlers, so token-auth team resolution cannot live only in middleware.
+For bearer-token API requests, the auth class sets `request.team` directly after token verification.
+That is deliberate: Django middleware runs before Django Ninja auth handlers, so token-auth team
+resolution cannot live only in middleware.
 
 ### 3. Explicit permission checks
 
@@ -76,13 +79,16 @@ def create_project(*, actor, team, name):
     return Project.all_objects.create(team=team, name=name)
 ```
 
-Use `all_objects` for security-critical code so ambient request context does not change what the query means.
+Use `all_objects` for security-critical code so ambient request context does not change what the
+query means.
 
 ## TenantScopedManager gotchas
 
-`TenantScopedManager` automatically filters by the active request team **when a team context exists**.
+`TenantScopedManager` automatically filters by the active request team
+**when a team context exists**.
 
-That helps reduce accidental leaks, but it is **not sufficient for security** because Django ORM code can bypass it:
+That helps reduce accidental leaks, but it is **not sufficient for security** because Django ORM
+code can bypass it:
 
 - `all_objects`
 - reverse relations
@@ -127,7 +133,8 @@ Validation checks at acceptance time:
 - invitation was not already accepted
 - authenticated user email matches invitation email
 
-The token payload includes a stored `token_key`, so rotating or replacing the invitation invalidates older links.
+The token payload includes a stored `token_key`, so rotating or replacing the invitation invalidates
+older links.
 
 ## Postgres Row Level Security (optional)
 
@@ -170,20 +177,24 @@ Pay attention to:
 - superuser/database-owner connections
 - PgBouncer transaction pooling
 
-If using PgBouncer transaction pooling, prefer explicit transaction scoping with `SET LOCAL` or do not assume session state survives across statements.
+If using PgBouncer transaction pooling, prefer explicit transaction scoping with `SET LOCAL` or do
+not assume session state survives across statements.
 
 ## Support access
 
-`django-hijack` is enabled in the template and currently uses `hijack.permissions.superusers_and_staff`.
+`django-hijack` is enabled in the template and currently uses
+`hijack.permissions.superusers_and_staff`.
 
-That means staff users and superusers can impersonate other users if you keep the feature enabled in a generated project.
+That means staff users and superusers can impersonate other users if you keep the feature enabled in
+a generated project.
 
 The template now records append-only `AuditEvent` rows for:
 
 - `support.hijack_started`
 - `support.hijack_ended`
 
-Each event stores the actor, target user, timestamp, and available request metadata such as IP address and user agent.
+Each event stores the actor, target user, timestamp, and available request metadata such as IP
+address and user agent.
 
 The same audit trail also records the built-in privacy operations:
 
@@ -203,9 +214,14 @@ And the template now uses the same pattern for other security-sensitive service-
 - `users.mfa_authenticator_removed`
 - `users.mfa_recovery_codes_regenerated`
 
-The audit log is intentionally read-only in Django admin. The preferred pattern is to write audit rows inside the service-layer functions that own the change, so future security-sensitive mutations follow the same shape.
+The audit log is intentionally read-only in Django admin. The preferred pattern is to write audit
+rows inside the service-layer functions that own the change, so future security-sensitive mutations
+follow the same shape.
 
-At the ORM level, audit events also reject both instance deletion and queryset deletion unless an explicit internal `_allow_delete=True` escape hatch is used. The intended deletion path is the `just audit-prune` management command, which records its own `audit.retention_pruned` event before removing old rows.
+At the ORM level, audit events also reject both instance deletion and queryset deletion unless an
+explicit internal `_allow_delete=True` escape hatch is used. The intended deletion path is the
+`just audit-prune` management command, which records its own `audit.retention_pruned` event before
+removing old rows.
 
 Retention is controlled by `AUDIT_EVENT_RETENTION_DAYS`.
 
@@ -218,32 +234,42 @@ The template sends small transactional security emails for a narrow allowlist of
 - MFA authenticator removal
 - recovery code regeneration
 
-These notifications are enabled by default and can be disabled per user via the `preferences["security_event_emails_enabled"]` flag.
+These notifications are enabled by default and can be disabled per user via the
+`preferences["security_event_emails_enabled"]` flag.
 
-The default implementation sends these emails inline from a notification signal subscriber. It intentionally uses robust signal dispatch so a mail delivery failure does not block the underlying security-sensitive action. Projects that need retries or higher volume can move the notification function behind Celery later without changing the audit event model.
+The default implementation sends these emails inline from a notification signal subscriber. It
+intentionally uses robust signal dispatch so a mail delivery failure does not block the underlying
+security-sensitive action. Projects that need retries or higher volume can move the notification
+function behind Celery later without changing the audit event model.
 
 ## Public form rate limiting
 
-The template reuses allauth's cache-backed rate limiting for public account flows and also applies the same `429.html` response path to newsletter signup submissions.
+The template reuses allauth's cache-backed rate limiting for public account flows and also applies
+the same `429.html` response path to newsletter signup submissions.
 
-By default newsletter signup POSTs are limited by `ACCOUNT_RATE_LIMITS["newsletter_signup"] = "20/m/ip,5/m/key"`.
+By default newsletter signup POSTs are limited by
+`ACCOUNT_RATE_LIMITS["newsletter_signup"] = "20/m/ip,5/m/key"`.
 
 ## Reverse proxy trust contract
 
-In production, the template only trusts `X-Forwarded-Proto` and `X-Forwarded-For` when **both** of these are true:
+In production, the template only trusts `X-Forwarded-Proto` and `X-Forwarded-For` when **both** of
+these are true:
 
 - `TRUSTED_PROXY_IPS` is set to one or more explicit proxy IPs or CIDR ranges
 - the immediate peer (`REMOTE_ADDR`) is in that trusted list
 
-Default behavior is safer: `TRUSTED_PROXY_IPS` is empty, so forwarded headers are ignored and audit IPs fall back to `REMOTE_ADDR`.
+Default behavior is safer: `TRUSTED_PROXY_IPS` is empty, so forwarded headers are ignored and audit
+IPs fall back to `REMOTE_ADDR`.
 
-This means a generated project must not rely on spoofable client-supplied forwarding headers unless you have put a real reverse proxy in front of Django and documented its source addresses.
+This means a generated project must not rely on spoofable client-supplied forwarding headers unless
+you have put a real reverse proxy in front of Django and documented its source addresses.
 
 Recommended contract:
 
 - bind the app only to localhost or a private interface
 - put Caddy in front of it as the only public ingress
-- set `TRUSTED_PROXY_IPS` to the exact Caddy source IPs or private-network CIDRs that will reach Django
+- set `TRUSTED_PROXY_IPS` to the exact Caddy source IPs or private-network CIDRs that will reach
+  Django
 - do not expose Gunicorn directly to the public internet
 - if the proxy path changes, update `TRUSTED_PROXY_IPS` before enabling HTTPS redirect assumptions
 
@@ -257,13 +283,17 @@ Billing in the template is team-owned. Billing API endpoints require:
 
 By default that permission is owner-only.
 
-The template also requires **recent reauthentication** for the hosted billing portal session endpoint. A recent primary authentication or reauthentication remains valid for 10 minutes by default.
+The template also requires **recent reauthentication** for the hosted billing portal session
+endpoint. A recent primary authentication or reauthentication remains valid for 10 minutes by
+default.
 
-Billing webhooks use provider signature verification and persist provider event IDs so duplicate deliveries are ignored safely.
+Billing webhooks use provider signature verification and persist provider event IDs so duplicate
+deliveries are ignored safely.
 
 ## Sensitive action reauthentication
 
-The template uses a short recent-reauthentication window for a narrow set of existing session-authenticated API actions.
+The template uses a short recent-reauthentication window for a narrow set of existing
+session-authenticated API actions.
 
 Today that applies to:
 

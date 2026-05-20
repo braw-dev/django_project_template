@@ -16,18 +16,22 @@ Sync Impact Report:
 
 ### I. Grug Brain (Simplicity)
 
-Complexity is the enemy. Fight it always. Simple code that works beats clever code that might work. If you can't explain it simply, it's too complex.
+Complexity is the enemy. Fight it always. Simple code that works beats clever code that might work.
+If you can't explain it simply, it's too complex.
 
-- **Say No**: To features unless they serve users; to abstractions until needed 3 times; to new dependencies unless they save significant time.
+- **Say No**: To features unless they serve users; to abstractions until needed 3 times; to new
+  dependencies unless they save significant time.
 - **Code is Liability**: Delete code whenever possible. The best code is no code.
 - **Debugging > Cleverness**: Explicit beats implicit. Boring beats clever.
 
 ### II. Security First
 
-Security by default. This enables a solo developer to maintain a portfolio of SaaS projects securely.
+Security by default. This enables a solo developer to maintain a portfolio of SaaS projects
+securely.
 
 - **Authentication**: Use `django-allauth`. Never write custom authentication code.
-- **Data Handling**: Minimize data collection. Sanitize user content with `nh3`. Store secrets in environment variables.
+- **Data Handling**: Minimize data collection. Sanitize user content with `nh3`. Store secrets in
+  environment variables.
 - **Validation**: Validate at boundaries. Trust internal code.
 - **Verification**: Human review required for auth, permissions, payment logic, and PII handling.
 
@@ -36,15 +40,19 @@ Security by default. This enables a solo developer to maintain a portfolio of Sa
 Stick to the defined stack: Django, Python, React/Vite (optional), Tailwind CSS, PostgreSQL/SQLite.
 
 - **Consistency**: Consistency across projects beats "best tool for the job".
-- **No New Stacks**: Don't introduce new languages or frameworks lightly. Learning and maintenance costs compound.
-- **Use Built-ins**: Prefer Django's built-in solutions and the ORM over third-party packages or raw SQL.
+- **No New Stacks**: Don't introduce new languages or frameworks lightly. Learning and maintenance
+  costs compound.
+- **Use Built-ins**: Prefer Django's built-in solutions and the ORM over third-party packages or raw
+  SQL.
 
 ### IV. Internationalisation First
 
 Support translations from the start to avoid technical debt later.
 
-- **No Hardcoded Strings**: Absolutely NO user-facing strings shall be hardcoded in Python or templates.
-- **Use Translation Tools**: Wrap strings in `gettext_lazy` / `_()` or `{% templatetag openblock %} translate {% templatetag closeblock %}` tags.
+- **No Hardcoded Strings**: Absolutely NO user-facing strings shall be hardcoded in Python or
+  templates.
+- **Use Translation Tools**: Wrap strings in `gettext_lazy` / `_()` or
+  `{% templatetag openblock %} translate {% templatetag closeblock %}` tags.
 - **Localization**: Use Django's localization tools for dates and numbers.
 
 ### V. MVP & Speed
@@ -68,14 +76,16 @@ Follow the defined Django stack architecture (`django-stack.mdc`).
 
 ## Development Workflow
 
-- **Operational Excellence**: Use `Justfile` for all commands (`just install-dev`, `just test-unit`, `just format`).
+- **Operational Excellence**: Use `Justfile` for all commands (`just install-dev`, `just test-unit`,
+  `just format`).
 - **Testing**: Test-First mentality. Use `pytest` for unit tests and `playwright` for E2E.
 - **Quality Gates**: `ruff` for linting/formatting is enforced via `lefthook`.
 - **Documentation**: Update `README.md` or `MOTIVATION.md` if architectural changes are made.
 
 ## Governance
 
-- **Supremacy**: This Constitution supersedes other documentation practices unless explicitly amended.
+- **Supremacy**: This Constitution supersedes other documentation practices unless explicitly
+  amended.
 - **Amendments**: Changes to principles require a Pull Request, justification, and version bump.
 - **Compliance**: All PRs must verify compliance with these principles.
 - **Reference**: See `ai/rules/` for detailed runtime guidance.

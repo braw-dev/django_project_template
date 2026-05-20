@@ -1,9 +1,10 @@
 # Grug Brain Developer Philosophy
 
-This project follows the **Grug Brain Developer** philosophy: ruthless simplicity for a company of one.
+This project follows the **Grug Brain Developer** philosophy: ruthless simplicity for a company of
+one.
 
-> "Grug brain developer not so smart, but grug brain developer try make up for by no over think things."
-> — [grugbrain.dev](https://grugbrain.dev/)
+> "Grug brain developer not so smart, but grug brain developer try make up for by no over think
+> things." — [grugbrain.dev](https://grugbrain.dev/)
 
 ## Core Philosophy
 

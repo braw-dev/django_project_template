@@ -19,11 +19,11 @@ Receives and processes webhook events from Polar.sh.
 
 **Headers** (Required for signature verification):
 
-| Header | Description |
-|--------|-------------|
-| `webhook-id` | Unique webhook delivery ID |
+| Header              | Description                |
+| ------------------- | -------------------------- |
+| `webhook-id`        | Unique webhook delivery ID |
 | `webhook-timestamp` | Unix timestamp of delivery |
-| `webhook-signature` | HMAC signature |
+| `webhook-signature` | HMAC signature             |
 
 **Body**: JSON payload from Polar (varies by event type)
 
@@ -48,24 +48,25 @@ Receives and processes webhook events from Polar.sh.
 
 #### Responses
 
-| Status | Condition | Body |
-|--------|-----------|------|
-| `200 OK` | Event processed successfully | `{"status": "ok"}` |
-| `200 OK` | Event ignored (unknown type) | `{"status": "ignored"}` |
-| `200 OK` | Organisation not found (logged) | `{"status": "ok"}` |
-| `400 Bad Request` | Invalid signature | `{"error": "Invalid signature"}` |
-| `400 Bad Request` | Missing required headers | `{"error": "Missing headers"}` |
+| Status            | Condition                       | Body                             |
+| ----------------- | ------------------------------- | -------------------------------- |
+| `200 OK`          | Event processed successfully    | `{"status": "ok"}`               |
+| `200 OK`          | Event ignored (unknown type)    | `{"status": "ignored"}`          |
+| `200 OK`          | Organisation not found (logged) | `{"status": "ok"}`               |
+| `400 Bad Request` | Invalid signature               | `{"error": "Invalid signature"}` |
+| `400 Bad Request` | Missing required headers        | `{"error": "Missing headers"}`   |
 
-**Note**: We return 200 even for "unfixable" errors (like missing organization) to prevent Polar from retrying indefinitely.
+**Note**: We return 200 even for "unfixable" errors (like missing organization) to prevent Polar
+from retrying indefinitely.
 
 #### Supported Event Types
 
-| Event | Action |
-|-------|--------|
-| `subscription.created` | Create local Subscription |
-| `subscription.updated` | Update Subscription fields |
-| `subscription.revoked` | Set status to "revoked" |
-| `subscription.canceled` | Set status to "canceled" |
+| Event                   | Action                     |
+| ----------------------- | -------------------------- |
+| `subscription.created`  | Create local Subscription  |
+| `subscription.updated`  | Update Subscription fields |
+| `subscription.revoked`  | Set status to "revoked"    |
+| `subscription.canceled` | Set status to "canceled"   |
 
 ---
 
@@ -130,9 +131,9 @@ Get the current subscription for an organisation.
 
 Query parameters:
 
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `organisation_id` | UUID | Yes | Organisation to check |
+| Param             | Type | Required | Description           |
+| ----------------- | ---- | -------- | --------------------- |
+| `organisation_id` | UUID | Yes      | Organisation to check |
 
 #### Response
 

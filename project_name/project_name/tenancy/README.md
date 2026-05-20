@@ -48,4 +48,5 @@ def create_project(*, actor, team, name):
 `Project.objects.all()` will auto-filter when an active team context exists, but Django
 ORM APIs can bypass that manager. Treat it as convenience only.
 
-See `{{ project_name }}/tokens/README.md` for the API token example and `SECURITY.md` for the full security model and Postgres RLS guidance.
+See `{{ project_name }}/tokens/README.md` for the API token example and `SECURITY.md` for the full
+security model and Postgres RLS guidance.

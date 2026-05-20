@@ -7,7 +7,9 @@
 
 ## Summary
 
-Successfully replaced `django-guardian` with a custom, lightweight Organization -> Team -> User RBAC system powered by `django-rules`. The implementation follows Grug Brain simplicity principles and provides a clean, extensible permission model.
+Successfully replaced `django-guardian` with a custom, lightweight Organization -> Team -> User RBAC
+system powered by `django-rules`. The implementation follows Grug Brain simplicity principles and
+provides a clean, extensible permission model.
 
 ## What Was Built
 
@@ -16,43 +18,46 @@ Successfully replaced `django-guardian` with a custom, lightweight Organization 
 Created a complete Django app at `project_name/project_name/organizations/` with:
 
 - **Models**:
-  - `Organisation`: Top-level tenant
-  - `Team`: Sub-group within org
-  - `Role`: Permission container (JSONField for flexibility)
-  - `OrganisationMember`: User-Org-Role linkage
-  - `TeamMember`: User-Team-Role linkage
+    - `Organisation`: Top-level tenant
+    - `Team`: Sub-group within org
+    - `Role`: Permission container (JSONField for flexibility)
+    - `OrganisationMember`: User-Org-Role linkage
+    - `TeamMember`: User-Team-Role linkage
 
 - **Business Logic** (`services.py`):
-  - Organization management (create, add/remove members, update roles)
-  - Team management (create, add/remove members, update roles)
-  - User queries (get orgs, teams, teams in org)
-  - Cascading removal (removing org member removes from all teams)
+    - Organization management (create, add/remove members, update roles)
+    - Team management (create, add/remove members, update roles)
+    - User queries (get orgs, teams, teams in org)
+    - Cascading removal (removing org member removes from all teams)
 
 - **Permission System** (`predicates.py` + `rules.py`):
-  - Org-level predicates: `is_org_member`, `is_org_admin`, `has_org_permission`
-  - Team-level predicates: `is_team_member`, `is_team_admin`, `is_org_admin_for_team`, `has_team_permission`
-  - Rules registered with django-rules for `view_organisation`, `change_organisation`, `delete_organisation`, `view_team`, `change_team`, `delete_team`
-  - Cascading: Org Admins automatically access all teams
+    - Org-level predicates: `is_org_member`, `is_org_admin`, `has_org_permission`
+    - Team-level predicates: `is_team_member`, `is_team_admin`, `is_org_admin_for_team`,
+    `has_team_permission`
+    - Rules registered with django-rules for `view_organisation`, `change_organisation`,
+    `delete_organisation`, `view_team`, `change_team`, `delete_team`
+    - Cascading: Org Admins automatically access all teams
 
 - **Access Control**:
-  - `decorators.py`: `@require_permission`, `@require_org_permission`, `@require_team_permission`
-  - Raises `Http404` on denied access (prevents data leakage)
-  - `middleware.py`: Catches `PermissionError` and converts to `Http404`
+    - `decorators.py`: `@require_permission`, `@require_org_permission`, `@require_team_permission`
+    - Raises `Http404` on denied access (prevents data leakage)
+    - `middleware.py`: Catches `PermissionError` and converts to `Http404`
 
 - **UI Integration** (`templatetags/org_permissions.py`):
-  - `{% templatetag openblock %} has_org_perm {% templatetag closeblock %}` template tag
-  - `{% templatetag openblock %} has_team_perm {% templatetag closeblock %}` template tag
-  - `{% templatetag openvariable %} org|user_org_role:user {% templatetag closevariable %}` filter
-  - `{% templatetag openvariable %} team|user_team_role:user {% templatetag closevariable %}` filter
+    - `{% templatetag openblock %} has_org_perm {% templatetag closeblock %}` template tag
+    - `{% templatetag openblock %} has_team_perm {% templatetag closeblock %}` template tag
+    - `{% templatetag openvariable %} org|user_org_role:user {% templatetag closevariable %}` filter
+    - `{% templatetag openvariable %} team|user_team_role:user {% templatetag closevariable %}`
+    filter
 
 - **Testing** (`tests.py`):
-  - 20+ unit tests covering:
-    - Organization creation and membership
-    - Team creation and management
-    - Permission checks (all roles)
-    - Cascading admin permissions
-    - Cascading member removal
-    - Error cases
+    - 20+ unit tests covering:
+        - Organization creation and membership
+        - Team creation and management
+        - Permission checks (all roles)
+        - Cascading admin permissions
+        - Cascading member removal
+        - Error cases
 
 ### 2. Data Migrations
 
@@ -79,15 +84,15 @@ Created initial migration with global roles:
 ### 4. Documentation
 
 - **Developer Guide**: `project_name/project_name/organizations/README.md`
-  - Architecture overview
-  - Usage examples (Python, templates, services)
-  - Permission model
-  - Security features
-  - Middleware info
+    - Architecture overview
+    - Usage examples (Python, templates, services)
+    - Permission model
+    - Security features
+    - Middleware info
 
 - **Product Overview**: Updated `docs/PRODUCT_OVERVIEW.md`
-  - Added section describing RBAC system
-  - Referenced developer guide for details
+    - Added section describing RBAC system
+    - Referenced developer guide for details
 
 ## Design Principles Applied
 
@@ -170,13 +175,13 @@ if rules.has_perm('organizations.change_team', user, team):
 
 ## What Replaces django-guardian
 
-| Old (django-guardian) | New (organizations) |
-|----------------------|-------------------|
-| `guardian.assign_perm()` | `services.add_user_to_organisation()` / `services.add_user_to_team()` |
+| Old (django-guardian)    | New (organizations)                                                             |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| `guardian.assign_perm()` | `services.add_user_to_organisation()` / `services.add_user_to_team()`           |
 | `guardian.remove_perm()` | `services.remove_user_from_organisation()` / `services.remove_user_from_team()` |
-| Per-object permissions | Org/Team role-based permissions |
-| Complex M2M tables | Simple Role with JSONField |
-| `guardian.shortcuts` | `organizations.services` functions |
+| Per-object permissions   | Org/Team role-based permissions                                                 |
+| Complex M2M tables       | Simple Role with JSONField                                                      |
+| `guardian.shortcuts`     | `organizations.services` functions                                              |
 
 ## Testing
 
@@ -202,8 +207,9 @@ All 26 tasks completed and validated:
 
 ✅ **SC-001**: Application functions without `django-guardian` installed  
 ✅ **SC-002**: Users can be assigned to Organisations and Teams with distinct roles  
-✅ **SC-003**: Permission checks return correct results for all 3 roles at both Org and Team levels  
-✅ **SC-004**: Organisation creation assigns the creator as Admin  
+✅ **SC-003**: Permission checks return correct results for all 3 roles at both
+Org and Team levels  
+✅ **SC-004**: Organisation creation assigns the creator as Admin
 
 ---
 

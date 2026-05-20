@@ -18,9 +18,9 @@ Use the official `polar-sdk` Python package for all Polar API interactions.
 
 ### Alternatives Considered
 
-| Alternative | Rejected Because |
-|-------------|------------------|
-| Raw `httpx` calls | More code, no type safety, must handle auth manually |
+| Alternative         | Rejected Because                                        |
+| ------------------- | ------------------------------------------------------- |
+| Raw `httpx` calls   | More code, no type safety, must handle auth manually    |
 | Third-party wrapper | Unnecessary layer, polar-sdk is official and maintained |
 
 ### Usage Pattern
@@ -72,12 +72,12 @@ Handle the core subscription lifecycle events only. Additional events can be add
 
 ### Core Events
 
-| Event | Action |
-|-------|--------|
-| `subscription.created` | Create local Subscription record |
-| `subscription.updated` | Update status, period_end, cancel_at_period_end |
-| `subscription.revoked` | Set status to 'revoked' |
-| `subscription.canceled` | Set status to 'canceled' |
+| Event                   | Action                                          |
+| ----------------------- | ----------------------------------------------- |
+| `subscription.created`  | Create local Subscription record                |
+| `subscription.updated`  | Update status, period_end, cancel_at_period_end |
+| `subscription.revoked`  | Set status to 'revoked'                         |
+| `subscription.canceled` | Set status to 'canceled'                        |
 
 ### Extensibility Pattern
 
@@ -132,7 +132,9 @@ url = polar.checkouts.custom_create(
 
 ### Note on Customer Portal
 
-Polar.sh handles subscription management differently than Stripe. Customers receive email links for managing their subscriptions. The SDK doesn't expose a "customer portal URL" endpoint. For template purposes, we'll stub this as `NotImplementedError` with documentation.
+Polar.sh handles subscription management differently than Stripe. Customers receive email links for
+managing their subscriptions. The SDK doesn't expose a "customer portal URL" endpoint. For template
+purposes, we'll stub this as `NotImplementedError` with documentation.
 
 ## 5. Linking Subscriptions to Organizations
 
@@ -213,7 +215,8 @@ All Polar configuration via environment variables using the existing `pydantic-s
 ### Rationale
 
 - Settings.py already uses a typed settings model loaded from the environment
-- Polar settings already defined: `POLAR_ACCESS_TOKEN`, `POLAR_ORGANIZATION_ID`, `POLAR_WEBHOOK_SECRET`, `POLAR_API_BASE_URL`
+- Polar settings already defined: `POLAR_ACCESS_TOKEN`, `POLAR_ORGANIZATION_ID`,
+  `POLAR_WEBHOOK_SECRET`, `POLAR_API_BASE_URL`
 - Secrets never in code
 
 ### Existing Configuration (no changes needed)

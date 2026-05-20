@@ -1,6 +1,7 @@
 # Template Development Guide
 
-This guide is for working on the **Django Project Template itself**, not on projects generated from it.
+This guide is for working on the **Django Project Template itself**, not on projects generated from
+it.
 
 ## Critical: Recognize Template Context
 
@@ -289,10 +290,10 @@ Update `README.md` and add to `--exclude` list:
 
 ## Template Variables Reference
 
-| Variable | Usage | Example |
-|----------|-------|---------|
-| `{{ project_name }}` | Project name in code | `'{{ project_name }}.urls'` |
-| `{% templatetag openvariable %}` | Literal `{{` in templates | For django-cotton components |
+| Variable                          | Usage                     | Example                      |
+| --------------------------------- | ------------------------- | ---------------------------- |
+| `{{ project_name }}`              | Project name in code      | `'{{ project_name }}.urls'`  |
+| `{% templatetag openvariable %}`  | Literal `{{` in templates | For django-cotton components |
 | `{% templatetag closevariable %}` | Literal `}}` in templates | For django-cotton components |
 
 ## Debugging Template Issues

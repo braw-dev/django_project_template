@@ -1,10 +1,12 @@
 # Claude Code Instructions
 
-This file provides core instructions for Claude Code when working on this Django Project Template and projects generated from it.
+This file provides core instructions for Claude Code when working on this Django Project Template
+and projects generated from it.
 
 ## Overview
 
-You are working with a **Django Project Template** designed for a company of one building a portfolio of SaaS projects. The primary goals are:
+You are working with a **Django Project Template** designed for a company of one building a
+portfolio of SaaS projects. The primary goals are:
 
 1. **Security by default** - Never compromise on security
 2. **Simplicity above all** - Grug brain philosophy (see docs/grug-brain.md)

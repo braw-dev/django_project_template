@@ -10,7 +10,8 @@ This template uses Django as the source of truth for the active language.
 - the React island runtime reads `document.documentElement.lang` and `document.documentElement.dir`
 - `i18next` uses that document language when islands mount
 
-This means the server-rendered Django templates and the client-rendered React islands stay on the same language without a separate frontend language selector.
+This means the server-rendered Django templates and the client-rendered React islands stay on the
+same language without a separate frontend language selector.
 
 ## What ships in the template
 
@@ -18,7 +19,9 @@ This means the server-rendered Django templates and the client-rendered React is
 - `frontend/{{ project_name }}/src/islands/registry.ts` - React island registry
 - `frontend/{{ project_name }}/src/main.tsx` - island bootstrap
 - `templates/base.html` - loads the Vite entry bundle for islands
-- `{% templatetag openblock %} load core {% templatetag closeblock %}` / `{% templatetag openblock %} react_island ... {% templatetag closeblock %}` - helper to render island roots from Django templates
+- `{% templatetag openblock %} load core {% templatetag closeblock %}` /
+  `{% templatetag openblock %} react_island ... {% templatetag closeblock %}` - helper to render
+  island roots from Django templates
 
 ## Adding a new React island
 
@@ -65,4 +68,5 @@ Add translations to the locale JSON files in `frontend/{{ project_name }}/src/i1
 
 - Django gettext catalogs and React JSON catalogs are separate; the template does not auto-sync them
 - do not use `navigator.language` as the source of truth for islands
-- do not add a second independent frontend language switcher unless you also wire it back to Django's language selection flow
+- do not add a second independent frontend language switcher unless you also wire it back to
+  Django's language selection flow

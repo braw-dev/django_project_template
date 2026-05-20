@@ -118,9 +118,9 @@ just test-unit billing
 
 ### Scenario 2: Subscription Canceled
 
-**Given**: An organisation with an active subscription
-**When**: User cancels in Polar, `subscription.updated` webhook received with `cancel_at_period_end=true`
-**Then**: Local Subscription updated, access continues until period end
+**Given**: An organisation with an active subscription **When**: User cancels in Polar,
+`subscription.updated` webhook received with `cancel_at_period_end=true` **Then**: Local
+Subscription updated, access continues until period end
 
 ### Scenario 3: Subscription Revoked (Payment Failed)
 
@@ -136,7 +136,8 @@ just test-unit billing
 
 ## Customizing Business Logic
 
-The billing app includes hook functions that raise `NotImplementedError`. Override these in your project:
+The billing app includes hook functions that raise `NotImplementedError`. Override these in your
+project:
 
 ```python
 # In your app's billing_hooks.py or similar

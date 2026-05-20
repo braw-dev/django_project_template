@@ -2,14 +2,16 @@
 
 ## Context
 
-We are replacing `django-guardian` with a custom, simpler RBAC system using `Organisation -> Team -> User` hierarchy and `django-rules`.
+We are replacing `django-guardian` with a custom, simpler RBAC system using
+`Organisation -> Team -> User` hierarchy and `django-rules`.
 
 ## Technical Decisions
 
 ### 1. Data Model Structure
 
-**Decision**: Create a new app `organizations` to house the RBAC models.
-**Rationale**: Keeps auth/org logic separate from `users` (which focuses on authentication and profile) and `core` (business logic).
+**Decision**: Create a new app `organizations` to house the RBAC models. **Rationale**: Keeps
+auth/org logic separate from `users` (which focuses on authentication and profile) and `core`
+(business logic).
 
 **Entities**:
 
@@ -24,9 +26,8 @@ We are replacing `django-guardian` with a custom, simpler RBAC system using `Org
 
 ### 2. Permissions Storage
 
-**Decision**: `JSONField` in `Role` model.
-**Rationale**: Flexible, allows "grug brain" simple boolean checks (e.g., `{"can_edit": true}`). Easy to extend without schema migrations.
-**Pattern**:
+**Decision**: `JSONField` in `Role` model. **Rationale**: Flexible, allows "grug brain" simple
+boolean checks (e.g., `{"can_edit": true}`). Easy to extend without schema migrations. **Pattern**:
 
 ```python
 class Role(models.Model):
@@ -46,20 +47,24 @@ class Role(models.Model):
 
 **Decision**:
 
-- Custom Middleware to catch `PermissionDenied` and render appropriate error (or 404 to prevent enumeration).
+- Custom Middleware to catch `PermissionDenied` and render appropriate error (or 404 to prevent
+  enumeration).
 - Custom Decorator `@require_permission(perm)` that uses `django-rules`.
 **Rationale**: specific requirement to "verify permissions (404 if not authorized)".
 
 ### 5. Template Tags
 
-**Decision**: Custom template tag `{% templatetag openblock %} has_perm 'action' obj {% templatetag closeblock %}` wrapping `rules.has_perm`.
+**Decision**: Custom template tag
+`{% templatetag openblock %} has_perm 'action' obj {% templatetag closeblock %}` wrapping
+`rules.has_perm`.
 
 ## Unknowns & Clarifications (Resolved)
 
 - **Clarification**: "Contextual saas roles so don't use django groups".
-  - **Resolution**: We will explicitly NOT use `auth.Group`. Our `Role` model effectively replaces it for this context.
+    - **Resolution**: We will explicitly NOT use `auth.Group`. Our `Role` model effectively replaces
+      it for this context.
 - **Clarification**: "Global System Role".
-  - **Resolution**: `Role` with `organization=None` is global.
+    - **Resolution**: `Role` with `organization=None` is global.
 
 ## Dependencies
 
@@ -68,4 +73,5 @@ class Role(models.Model):
 
 ## Migration Strategy
 
-Since this is a template, we just modify the template files. No runtime migration needed for existing data (as it's a template for new projects).
+Since this is a template, we just modify the template files. No runtime migration needed for
+existing data (as it's a template for new projects).
