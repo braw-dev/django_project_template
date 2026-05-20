@@ -82,7 +82,7 @@ jobs:
 
             - name: djade
               working-directory: ${{ env.GENERATED_PROJECT_DIR }}
-              run: uv run djade $GENERATED_PROJECT_NAME/templates --check
+              run: git ls-files -z -- '*.html' | xargs -0r uv run djade --check
 
             - name: ty
               working-directory: ${{ env.GENERATED_PROJECT_DIR }}
