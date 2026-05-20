@@ -14,6 +14,7 @@ EXCLUDES = [
     ".ruff_cache",
     ".rumdl_cache",
     "dev",
+    "dist",
     ".venv",
     "db.sqlite3",
     "node_modules",

@@ -171,6 +171,7 @@ uv run django-admin startproject \
     --name Justfile \
     --exclude '.ruff_cache' \
     --exclude '.venv' \
+    --exclude 'dist' \
     --exclude 'node_modules' \
     --exclude 'dev' \
     --exclude 'tmp' \
@@ -283,6 +284,7 @@ Update `README.md` and add to `--exclude` list:
 ```bash
 --exclude 'dev' \
 --exclude 'tmp' \
+--exclude 'dist' \
 --exclude '.venv' \
 --exclude 'node_modules' \
 --exclude '.ruff_cache'

@@ -73,6 +73,7 @@
             --exclude '.ruff_cache'
             --exclude '.rumdl_cache'
             --exclude 'dev'
+            --exclude 'dist'
             --exclude '.venv'
             --exclude 'db.sqlite3'
             --exclude 'node_modules'

@@ -17,6 +17,7 @@ uv run django-admin startproject \
     --exclude '.ruff_cache' \
     --exclude '.rumdl_cache' \
     --exclude '.venv' \
+    --exclude 'dist' \
     --exclude 'node_modules' \
     --exclude 'db.sqlite3' \
     --exclude 'dev' \

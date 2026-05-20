@@ -93,6 +93,7 @@ uv run django-admin startproject \
     --exclude '.ruff_cache' \
     --exclude '.rumdl_cache' \
     --exclude '.venv' \
+    --exclude 'dist' \
     --exclude 'dev' \
     --exclude 'db.sqlite3' \
     --exclude 'node_modules' \
@@ -279,7 +280,7 @@ Comprehensive instructions are in the `.claude/` directory:
 Instructions are in the `.cursor/rules/` directory. Key files:
 
 - `grug-brain.mdc`: Simplicity philosophy
-- `security-simplicity.mdc`: Security and simplicity principles  
+- `security-simplicity.mdc`: Security and simplicity principles
 - `django-stack.mdc`: Django conventions
 - `template-development.mdc`: Template development rules
 
