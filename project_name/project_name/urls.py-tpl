@@ -56,6 +56,11 @@ protected_team_urls = [
         login_required(mfa_required(views.dashboard)),
         name="team_dashboard",
     ),
+    path(
+        "t/<slug:team_slug>/ownership/transfer",
+        login_required(mfa_required(tenancy_views.transfer_team_ownership)),
+        name="transfer_team_ownership",
+    ),
 ]
 
 public_urls = [

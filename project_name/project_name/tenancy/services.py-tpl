@@ -7,6 +7,7 @@ from xml.etree import ElementTree
 import httpx
 from django.conf import settings
 from django.core import signing
+from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -15,6 +16,7 @@ from . import models, permissions
 
 from {{ project_name }}.core.audit import record_audit_event
 from {{ project_name }}.core.models import AuditEventType
+from {{ project_name }}.core.reauth import did_recently_reauthenticate
 from {{ project_name }}.users.emails import send_transactional_email
 
 INVITATION_TOKEN_SALT = "tenancy.team-invitation"
@@ -154,6 +156,69 @@ def add_user_to_team(*, actor, team: models.Team, user, role: str) -> models.Tea
         metadata={"role": membership.role},
     )
     return membership
+
+
+def transfer_team_ownership(
+    *,
+    actor,
+    team: models.Team,
+    new_owner,
+    request=None,
+) -> models.TeamMembership:
+    """Transfer team ownership to a different existing team member."""
+    if not permissions.user_has_team_perm(actor, "tenancy.transfer_team_ownership", team):
+        raise ValueError(_("You do not have permission to transfer team ownership."))
+    if (
+        request is None
+        or not hasattr(request, "session")
+        or not did_recently_reauthenticate(request)
+    ):
+        raise ValueError(_("Please reauthenticate before transferring team ownership."))
+    if actor == new_owner:
+        raise ValueError(_("Ownership can only be transferred to a different team member."))
+
+    with transaction.atomic():
+        current_owner_membership = (
+            TeamMembershipModel.all_objects.select_for_update()
+            .filter(
+                team=team,
+                user=actor,
+                role=models.TeamRole.OWNER,
+            )
+            .first()
+        )
+        if current_owner_membership is None:
+            raise ValueError(_("Only the current owner can transfer team ownership."))
+
+        new_owner_membership = (
+            TeamMembershipModel.all_objects.select_for_update()
+            .filter(
+                team=team,
+                user=new_owner,
+            )
+            .first()
+        )
+        if new_owner_membership is None:
+            raise ValueError(_("New owner must already be a member of this team."))
+
+        current_owner_membership.role = models.TeamRole.ADMIN
+        current_owner_membership.save(update_fields=["role", "updated_at"])
+
+        new_owner_membership.role = models.TeamRole.OWNER
+        new_owner_membership.save(update_fields=["role", "updated_at"])
+
+    record_audit_event(
+        event_type=AuditEventType.TENANCY_OWNERSHIP_TRANSFERRED,
+        actor=actor,
+        subject_user=new_owner,
+        team=team,
+        request=request,
+        metadata={
+            "previous_owner": actor.email,
+            "new_owner": new_owner.email,
+        },
+    )
+    return new_owner_membership
 
 
 def get_user_teams(user):

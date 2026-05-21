@@ -1,9 +1,12 @@
 from typing import Any, cast
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.translation import gettext as _
+from django.views.decorators.http import require_POST
 
 from . import services
 
@@ -19,4 +22,41 @@ def accept_team_invitation(request, token):
     membership_model = cast(Any, membership)
     team = membership_model.team
     messages.success(request, _("You joined %(team_name)s.") % {"team_name": team.name})
+    return redirect("team_dashboard", team_slug=team.slug)
+
+
+@require_POST
+def transfer_team_ownership(request, team_slug):
+    team = getattr(request, "team", None)
+    if team is None:
+        raise Http404()
+
+    user_id = request.POST.get("user_id")
+    try:
+        new_owner = get_user_model().objects.filter(pk=user_id).first()
+    except ValueError:
+        new_owner = None
+    if new_owner is None:
+        messages.error(request, _("Selected team member not found."))
+        return redirect("team_dashboard", team_slug=team.slug)
+
+    try:
+        services.transfer_team_ownership(
+            actor=request.user,
+            team=team,
+            new_owner=new_owner,
+            request=request,
+        )
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("team_dashboard", team_slug=team.slug)
+
+    messages.success(
+        request,
+        _("%(user_email)s is now the owner of %(team_name)s.")
+        % {
+            "user_email": new_owner.email,
+            "team_name": team.name,
+        },
+    )
     return redirect("team_dashboard", team_slug=team.slug)

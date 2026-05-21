@@ -35,7 +35,8 @@ The single **Account** with ultimate authority over a **Team**. Every **Team** m
 **Owner**, and ownership may be transferred but not shared. Billing authority belongs to the
 **Owner** by default. When ownership is transferred, the previous **Owner** becomes an **Admin** by
 default. Outside team creation, the **Owner** role should only be assigned through an explicit
-ownership-transfer flow.
+ownership-transfer flow to a different existing **Team Member**, with recent reauthentication by the
+current **Owner**.
 
 _Avoid_: Co-owner, primary admin
 
@@ -137,6 +138,11 @@ _Avoid_: Tenant-scoped, workspace-owned, account-owned
 - **Developer:** What happens to the old **Owner** after a transfer?
 - **Domain expert:** They become an **Admin** by default, unless a future product changes that
   policy explicitly.
+- **Developer:** Can I transfer ownership to myself?
+- **Domain expert:** No. Ownership transfer must target a different existing **Team Member**.
+- **Developer:** Does ownership transfer need reauthentication?
+- **Domain expert:** Yes. It is a sensitive action, so the current **Owner** must reauthenticate
+  recently before transferring ownership.
 - **Developer:** What can an **Admin** do?
 - **Domain expert:** Run most day-to-day team operations, but not become or replace the **Owner**
   automatically.

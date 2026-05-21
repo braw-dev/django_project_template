@@ -1,12 +1,17 @@
 """Tests for team-first tenancy."""
 
 from datetime import timedelta
+from unittest.mock import patch
 
 import pytest
+from allauth.account.models import EmailAddress
+from allauth.mfa.models import Authenticator
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages import get_messages
 from django.db import IntegrityError
 from django.http import Http404, HttpResponse
 from django.test import RequestFactory
+from django.urls import reverse
 from django.utils import timezone
 
 from {{ project_name }}.billing import models as billing_models
@@ -115,6 +120,89 @@ class TestTeamServices:
             )
 
         assert not models.TeamMembership.all_objects.filter(team=team, user=outsider).exists()
+
+    def test_transfer_team_ownership(self, owner, member_user, team, member_membership, rf):
+        request = rf.post("/")
+        request.user = owner
+        request.session = {}
+
+        with patch(
+            "{{ project_name }}.tenancy.services.did_recently_reauthenticate",
+            return_value=True,
+        ):
+            membership = services.transfer_team_ownership(
+                actor=owner,
+                team=team,
+                new_owner=member_user,
+                request=request,
+            )
+
+        membership.refresh_from_db()
+        owner_membership = models.TeamMembership.all_objects.get(team=team, user=owner)
+        assert membership.role == models.TeamRole.OWNER
+        assert owner_membership.role == models.TeamRole.ADMIN
+
+        audit_event = AuditEvent.objects.get(
+            event_type=AuditEventType.TENANCY_OWNERSHIP_TRANSFERRED
+        )
+        assert audit_event.actor == owner
+        assert audit_event.subject_user == member_user
+        assert audit_event.team == team
+        assert audit_event.metadata["previous_owner"] == owner.email
+        assert audit_event.metadata["new_owner"] == member_user.email
+
+    def test_transfer_team_ownership_rejects_self(self, owner, team, rf):
+        request = rf.post("/")
+        request.user = owner
+        request.session = {}
+
+        with (
+            patch(
+                "{{ project_name }}.tenancy.services.did_recently_reauthenticate",
+                return_value=True,
+            ),
+            pytest.raises(ValueError, match="different team member"),
+        ):
+            services.transfer_team_ownership(
+                actor=owner,
+                team=team,
+                new_owner=owner,
+                request=request,
+            )
+
+    def test_transfer_team_ownership_requires_existing_member(self, owner, outsider, team, rf):
+        request = rf.post("/")
+        request.user = owner
+        request.session = {}
+
+        with (
+            patch(
+                "{{ project_name }}.tenancy.services.did_recently_reauthenticate",
+                return_value=True,
+            ),
+            pytest.raises(ValueError, match="must already be a member"),
+        ):
+            services.transfer_team_ownership(
+                actor=owner,
+                team=team,
+                new_owner=outsider,
+                request=request,
+            )
+
+    def test_transfer_team_ownership_requires_recent_reauthentication(
+        self, owner, member_user, team, member_membership, rf
+    ):
+        request = rf.post("/")
+        request.user = owner
+        request.session = {}
+
+        with pytest.raises(ValueError, match="Please reauthenticate"):
+            services.transfer_team_ownership(
+                actor=owner,
+                team=team,
+                new_owner=member_user,
+                request=request,
+            )
 
     def test_validate_team_vat_number_updates_team_and_records_audit_event(self, owner, team):
         with pytest.MonkeyPatch.context() as mp:
@@ -284,6 +372,153 @@ class TestMiddleware:
 
         assert response.status_code == 200
         assert captured["team"] == team
+
+
+@pytest.mark.django_db
+class TestViews:
+    def test_transfer_team_ownership_view_redirects_after_success(
+        self, client, owner, member_user, team, member_membership
+    ):
+        EmailAddress.objects.create(
+            user=owner,
+            email=owner.email,
+            primary=True,
+            verified=True,
+        )
+        Authenticator.objects.create(
+            user=owner,
+            type=Authenticator.Type.TOTP,
+            data={"secret": "totp-secret"},
+        )
+        client.force_login(owner)
+
+        with patch(
+            "{{ project_name }}.tenancy.services.did_recently_reauthenticate",
+            return_value=True,
+        ):
+            response = client.post(
+                reverse("transfer_team_ownership", kwargs={"team_slug": team.slug}),
+                data={"user_id": member_user.pk},
+            )
+
+        assert response.status_code == 302
+        assert response.headers["Location"] == reverse(
+            "team_dashboard",
+            kwargs={"team_slug": team.slug},
+        )
+
+        owner_membership = models.TeamMembership.all_objects.get(team=team, user=owner)
+        member_membership.refresh_from_db()
+        assert owner_membership.role == models.TeamRole.ADMIN
+        assert member_membership.role == models.TeamRole.OWNER
+
+        messages = [message.message for message in get_messages(response.wsgi_request)]
+        assert f"{member_user.email} is now the owner of {team.name}." in messages
+
+    def test_transfer_team_ownership_view_rejects_missing_user(
+        self, client, owner, member_user, team, member_membership
+    ):
+        EmailAddress.objects.create(
+            user=owner,
+            email=owner.email,
+            primary=True,
+            verified=True,
+        )
+        Authenticator.objects.create(
+            user=owner,
+            type=Authenticator.Type.TOTP,
+            data={"secret": "totp-secret"},
+        )
+        client.force_login(owner)
+
+        response = client.post(
+            reverse("transfer_team_ownership", kwargs={"team_slug": team.slug}),
+            data={"user_id": 999999},
+        )
+
+        assert response.status_code == 302
+        assert response.headers["Location"] == reverse(
+            "team_dashboard",
+            kwargs={"team_slug": team.slug},
+        )
+
+        owner_membership = models.TeamMembership.all_objects.get(team=team, user=owner)
+        member_membership.refresh_from_db()
+        assert owner_membership.role == models.TeamRole.OWNER
+        assert member_membership.role == models.TeamRole.MEMBER
+
+        messages = [message.message for message in get_messages(response.wsgi_request)]
+        assert "Selected team member not found." in messages
+
+    def test_transfer_team_ownership_view_rejects_missing_user_id(
+        self, client, owner, member_user, team, member_membership
+    ):
+        EmailAddress.objects.create(
+            user=owner,
+            email=owner.email,
+            primary=True,
+            verified=True,
+        )
+        Authenticator.objects.create(
+            user=owner,
+            type=Authenticator.Type.TOTP,
+            data={"secret": "totp-secret"},
+        )
+        client.force_login(owner)
+
+        response = client.post(
+            reverse("transfer_team_ownership", kwargs={"team_slug": team.slug}),
+            data={},
+        )
+
+        assert response.status_code == 302
+        assert response.headers["Location"] == reverse(
+            "team_dashboard",
+            kwargs={"team_slug": team.slug},
+        )
+
+        owner_membership = models.TeamMembership.all_objects.get(team=team, user=owner)
+        member_membership.refresh_from_db()
+        assert owner_membership.role == models.TeamRole.OWNER
+        assert member_membership.role == models.TeamRole.MEMBER
+
+        messages = [message.message for message in get_messages(response.wsgi_request)]
+        assert "Selected team member not found." in messages
+
+    def test_transfer_team_ownership_view_rejects_invalid_user_id(
+        self, client, owner, member_user, team, member_membership
+    ):
+        EmailAddress.objects.create(
+            user=owner,
+            email=owner.email,
+            primary=True,
+            verified=True,
+        )
+        Authenticator.objects.create(
+            user=owner,
+            type=Authenticator.Type.TOTP,
+            data={"secret": "totp-secret"},
+        )
+        client.force_login(owner)
+
+        response = client.post(
+            reverse("transfer_team_ownership", kwargs={"team_slug": team.slug}),
+            data={"user_id": "abc123"},
+        )
+
+        assert response.status_code == 302
+        assert response.headers["Location"] == reverse(
+            "team_dashboard",
+            kwargs={"team_slug": team.slug},
+        )
+
+        owner_membership = models.TeamMembership.all_objects.get(team=team, user=owner)
+        member_membership.refresh_from_db()
+        assert owner_membership.role == models.TeamRole.OWNER
+        assert member_membership.role == models.TeamRole.MEMBER
+
+        messages = [message.message for message in get_messages(response.wsgi_request)]
+        assert "Selected team member not found." in messages
 
 
 @pytest.mark.django_db
