@@ -852,6 +852,40 @@ class AppShellRenderingTestCase(TestCase):
             reverse("team_dashboard", kwargs={"team_slug": self.second_team.slug}),
         )
 
+    def test_team_settings_page_renders_members_and_billing_summary(self):
+        response = self.client.get(reverse("team_settings", kwargs={"team_slug": self.team.slug}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-testid="member-list"')
+        self.assertContains(response, "Owner")
+        self.assertContains(response, reverse("pricing"))
+
+    def test_team_settings_page_shows_invitations_and_team_switcher(self):
+        from {{ project_name }}.tenancy.models import TeamInvitation
+
+        TeamInvitation.all_objects.create(
+            team=self.second_team,
+            email="invited@example.com",
+            invited_by=self.other_user,
+            expires_at=timezone.now() + timezone.timedelta(days=7),
+        )
+        response = self.client.get(
+            reverse("team_settings", kwargs={"team_slug": self.second_team.slug})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-testid="member-list"')
+        self.assertContains(response, 'data-testid="invitation-list"')
+        self.assertContains(response, "invited@example.com")
+        self.assertContains(response, 'data-testid="team-switcher"')
+
+    def test_team_settings_page_shows_ownership_form_for_owner(self):
+        response = self.client.get(reverse("team_settings", kwargs={"team_slug": self.team.slug}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-testid="member-list"')
+        self.assertContains(response, 'data-testid="ownership-transfer-form"')
+
 
 class InternationalizationTestCase(TestCase):
     def test_newsletter_duplicate_error_is_marked_for_translation(self):

@@ -9,8 +9,27 @@ from . import models
 from {{ project_name }}.users import models as user_models
 
 TeamModel = cast(Any, models.Team)
+MembershipModel = cast(Any, models.TeamMembership)
+InvitationModel = cast(Any, models.TeamInvitation)
 
 
 def get_user_teams(*, user: user_models.User) -> QuerySet[models.Team]:
     """Return all teams the user belongs to."""
     return TeamModel.objects.filter(teammemberships__user=user).distinct()
+
+
+def get_team_members(*, team: models.Team) -> QuerySet[models.TeamMembership]:
+    """Return all active memberships for a team, newest first."""
+    return (
+        MembershipModel.all_objects.filter(team=team).select_related("user").order_by("-created_at")
+    )
+
+
+def get_pending_invitations(*, team: models.Team) -> QuerySet[models.TeamInvitation]:
+    """Return active (non-expired, non-accepted, non-revoked) invitations for a team."""
+    return InvitationModel.all_objects.filter(
+        team=team,
+        accepted_at__isnull=True,
+        revoked_at__isnull=True,
+        expires_at__gt=models.timezone.now(),
+    ).order_by("-created_at")

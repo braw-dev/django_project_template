@@ -1,0 +1,108 @@
+{% extends "app_base.html" %}
+{% load i18n %}
+
+{% block app_title %}
+    {% blocktrans with team_name=team.name %}{{ team_name }} settings{% endblocktrans %}
+{% endblock app_title %}
+
+{% block app_content %}
+    <section class="ui-stack ui-stack--xl">
+        <header class="ui-page-header">
+            <h2>{% blocktrans with team_name=team.name %}{{ team_name }}{% endblocktrans %}</h2>
+            <p class="ui-lede">{% trans "Manage members, roles, and team settings." %}</p>
+        </header>
+        {% include "tenancy/partials/billing_summary.html" %}
+        <section class="ui-stack ui-stack--lg">
+            <div class="ui-page-header">
+                <h3>{% trans "Members" %}</h3>
+                <p class="ui-field__help">{% trans "Current team members and their roles." %}</p>
+            </div>
+            <div class="ui-settings-section ui-card">
+                <div class="ui-card__body">
+                    {% if members %}
+                        <div class="ui-resource-list" data-testid="member-list">
+                            {% for membership in members %}
+                                <div class="ui-identity-row" data-testid="member-{{ membership.user.id }}">
+                                    <div class="ui-stack">
+                                        <strong>{{ membership.user.email }}</strong>
+                                        <span class="ui-field__help">
+                                            {% if membership.role == "owner" %}
+                                                {% trans "Joined as owner" %}
+                                            {% elif membership.role == "admin" %}
+                                                {% trans "Joined as admin" %}
+                                            {% else %}
+                                                {% trans "Team member" %}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <span class="ui-badge
+                                        {% if membership.role == "owner" %}ui-badge--accent
+                                        {% elif membership.role == "admin" %}ui-badge--success
+                                        {% else %}ui-badge{% endif %}">
+                                        {{ membership.get_role_display }}
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="ui-empty-state">
+                            <p>{% trans "No members found." %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+        {% if pending_invitations %}
+            <section class="ui-stack ui-stack--lg">
+                <div class="ui-page-header">
+                    <h3>{% trans "Pending invitations" %}</h3>
+                    <p class="ui-field__help">{% trans "Invitations that have been sent but not yet accepted." %}</p>
+                </div>
+                <div class="ui-settings-section ui-card">
+                    <div class="ui-card__body">
+                        <div class="ui-resource-list" data-testid="invitation-list">
+                            {% for invitation in pending_invitations %}
+                                <div class="ui-identity-row">
+                                    <div class="ui-stack">
+                                        <strong>{{ invitation.email }}</strong>
+                                        <span class="ui-field__help">
+                                            {% blocktrans with role=invitation.get_role_display expires=invitation.expires_at|timeuntil %}Invited as {{ role }} — expires in {{ expires }}{% endblocktrans %}
+                                        </span>
+                                    </div>
+                                    <span class="ui-badge ui-badge--warning">{% trans "Pending" %}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+        {% if has_manage_perm %}
+            <section class="ui-danger-zone ui-card">
+                <div class="ui-card__body ui-stack ui-stack--lg">
+                    <div class="ui-page-header">
+                        <h3>{% trans "Transfer ownership" %}</h3>
+                        <p class="ui-field__help">{% trans "Transfer the owner role to another team member. This cannot be undone without another transfer." %}</p>
+                    </div>
+                    <form method="post"
+                          action="{% url 'transfer_team_ownership' team_slug=team.slug %}"
+                          class="ui-toolbar"
+                          data-testid="ownership-transfer-form">
+                        {% csrf_token %}
+                        <select name="user_id" class="ui-select" required>
+                            <option value="">{% trans "Select a member…" %}</option>
+                            {% for membership in members %}
+                                {% if membership.role != "owner" %}
+                                    <option value="{{ membership.user.id }}">{{ membership.user.email }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="ui-button ui-button--destructive">
+                            {% trans "Transfer ownership" %}
+                        </button>
+                    </form>
+                </div>
+            </section>
+        {% endif %}
+    </section>
+{% endblock app_content %}

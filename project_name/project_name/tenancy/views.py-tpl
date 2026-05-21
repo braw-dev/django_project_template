@@ -4,11 +4,13 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
-from . import services
+from . import models, selectors, services
+
+from {{ project_name }}.billing import selectors as billing_selectors
 
 
 @login_required
@@ -38,7 +40,7 @@ def transfer_team_ownership(request, team_slug):
         new_owner = None
     if new_owner is None:
         messages.error(request, _("Selected team member not found."))
-        return redirect("team_dashboard", team_slug=team.slug)
+        return redirect("team_settings", team_slug=team.slug)
 
     try:
         services.transfer_team_ownership(
@@ -49,7 +51,7 @@ def transfer_team_ownership(request, team_slug):
         )
     except ValueError as exc:
         messages.error(request, str(exc))
-        return redirect("team_dashboard", team_slug=team.slug)
+        return redirect("team_settings", team_slug=team.slug)
 
     messages.success(
         request,
@@ -59,4 +61,32 @@ def transfer_team_ownership(request, team_slug):
             "team_name": team.name,
         },
     )
-    return redirect("team_dashboard", team_slug=team.slug)
+    return redirect("team_settings", team_slug=team.slug)
+
+
+@login_required
+def team_settings(request, team_slug):
+    team = getattr(request, "team", None)
+    if team is None:
+        raise Http404()
+
+    members = selectors.get_team_members(team=team)
+    pending_invitations = selectors.get_pending_invitations(team=team)
+
+    has_manage_perm = request.user.is_superuser or (
+        request.team_membership is not None
+        and request.team_membership.role in [models.TeamRole.OWNER, models.TeamRole.ADMIN]
+    )
+
+    return render(
+        request,
+        "tenancy/team_settings.html",
+        {
+            "team": team,
+            "members": members,
+            "pending_invitations": pending_invitations,
+            "has_manage_perm": has_manage_perm,
+            "has_active_subscription": billing_selectors.has_active_subscription(team=team),
+            "active_subscription": billing_selectors.get_active_subscription(team=team),
+        },
+    )

@@ -87,4 +87,14 @@ test.describe('design foundation', () => {
 
     await expect(page.getByTestId('form-error-summary')).toBeVisible()
   })
+
+  test('authenticated team settings page lists members and billing', async ({ page }) => {
+    test.skip(!teamSlug, 'E2E_TEAM_SLUG is required')
+    await signInWithSeededSession(page)
+
+    await page.goto(`/t/${teamSlug}/settings`)
+
+    await expect(page.getByTestId('member-list')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Billing' })).toBeVisible()
+  })
 })

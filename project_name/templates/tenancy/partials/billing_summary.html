@@ -1,0 +1,42 @@
+{% load i18n %}
+<section class="ui-stack ui-stack--lg">
+    <div class="ui-page-header">
+        <h3>{% trans "Billing" %}</h3>
+        <p class="ui-field__help">{% trans "Subscription and plan details for this team." %}</p>
+    </div>
+    <div class="ui-settings-section ui-card">
+        <div class="ui-card__body ui-detail-summary">
+            <div class="ui-detail-summary__row">
+                <dt class="ui-detail-summary__term">{% trans "Status" %}</dt>
+                <dd>
+                    {% if has_active_subscription %}
+                        <span class="ui-badge ui-badge--success">{% trans "Active" %}</span>
+                    {% else %}
+                        <span class="ui-badge">{% trans "No active plan" %}</span>
+                    {% endif %}
+                </dd>
+            </div>
+            {% if active_subscription %}
+                <div class="ui-detail-summary__row">
+                    <dt class="ui-detail-summary__term">{% trans "Plan" %}</dt>
+                    <dd>{{ active_subscription.external_product_id }}</dd>
+                </div>
+                {% if active_subscription.amount %}
+                    <div class="ui-detail-summary__row">
+                        <dt class="ui-detail-summary__term">{% trans "Amount" %}</dt>
+                        <dd>{{ active_subscription.amount_display }}</dd>
+                    </div>
+                {% endif %}
+            {% endif %}
+            <div class="ui-page-header__actions">
+                <a class="ui-button ui-button--outline" href="{% url 'pricing' %}">
+                    {% if has_active_subscription %}
+                        {% trans "Manage plan" %}
+                    {% else %}
+                        {% trans "Choose a plan" %}
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+</section>

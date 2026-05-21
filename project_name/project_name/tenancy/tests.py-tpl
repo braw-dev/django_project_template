@@ -429,7 +429,7 @@ class TestViews:
 
         assert response.status_code == 302
         assert response.headers["Location"] == reverse(
-            "team_dashboard",
+            "team_settings",
             kwargs={"team_slug": team.slug},
         )
 
@@ -464,7 +464,7 @@ class TestViews:
 
         assert response.status_code == 302
         assert response.headers["Location"] == reverse(
-            "team_dashboard",
+            "team_settings",
             kwargs={"team_slug": team.slug},
         )
 
@@ -499,7 +499,7 @@ class TestViews:
 
         assert response.status_code == 302
         assert response.headers["Location"] == reverse(
-            "team_dashboard",
+            "team_settings",
             kwargs={"team_slug": team.slug},
         )
 
@@ -534,7 +534,7 @@ class TestViews:
 
         assert response.status_code == 302
         assert response.headers["Location"] == reverse(
-            "team_dashboard",
+            "team_settings",
             kwargs={"team_slug": team.slug},
         )
 

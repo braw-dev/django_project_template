@@ -151,16 +151,16 @@ The first pass is done when:
 - [x] Field wrapper pattern
 - [x] Input, textarea, select, checkbox, radio
 - [x] Help text, error text, required/optional affordances
-- [ ] Disabled/read-only styling
-- [ ] Form error summary pattern
+- [x] Disabled/read-only styling
+- [x] Form error summary pattern
 - [x] Search/input-with-actions structural pattern
 
 ### 11. Build overlay and menu primitives
 
 - [x] Accessible dropdown/menu button pattern
-- [ ] Dialog primitive
+- [x] Dialog primitive
 - [x] Drawer/sheet primitive
-- [ ] Destructive confirmation dialog pattern
+- [x] Destructive confirmation dialog pattern
 - [ ] Keyboard/focus handling expectations documented
 
 ### 12. Build list/detail primitives
@@ -294,20 +294,20 @@ Prioritize real shipped pages over a component showcase.
 - [x] KPI/stat cards
 - [x] Dashboard widgets
 - [ ] First-run/onboarding starter screen if useful
-- [ ] Billing/plan summary starter pattern
-- [ ] Invitation/member-management screen pattern
+- [x] Billing/plan summary starter pattern
+- [x] Invitation/member-management screen pattern
 - [ ] Team/domain-specific state examples built on canonical status hierarchy
 - [ ] Billing-state examples built on canonical status hierarchy
 
 ### 22. Domain-native starter screens
 
-- [ ] Member-management starter screen presents Owner/Admin/Member roles clearly
-- [ ] Invitation lifecycle states are presented consistently
-- [ ] Billing/subscription starter surfaces are production-ready defaults but replaceable
+- [x] Member-management starter screen presents Owner/Admin/Member roles clearly
+- [x] Invitation lifecycle states are presented consistently
+- [x] Billing/subscription starter surfaces are production-ready defaults but replaceable
 
 ### Phase 5 verification
 
-- [ ] Starter patterns clearly compose from stable primitives
+- [x] Starter patterns clearly compose from stable primitives
 - [ ] Domain-native starter screens reinforce the glossary language already defined in `CONTEXT.md`
 - [ ] Replaceable patterns are visually useful but not mistaken for immovable primitives
 

@@ -95,6 +95,10 @@
                     <a class="ui-app-nav__link {% if request.resolver_match and request.resolver_match.view_name == 'team_dashboard' %}is-current{% endif %}"
                        href="{% url 'team_dashboard' team_slug=request.team.slug %}">{% trans "Team dashboard" %}</a>
                 </li>
+                <li>
+                    <a class="ui-app-nav__link {% if request.resolver_match and request.resolver_match.view_name == 'team_settings' %}is-current{% endif %}"
+                       href="{% url 'team_settings' team_slug=request.team.slug %}">{% trans "Members & settings" %}</a>
+                </li>
             {% endif %}
             <li>
                 <a class="ui-app-nav__link {% if request.resolver_match and request.resolver_match.view_name == 'pricing' %}is-current{% endif %}"
