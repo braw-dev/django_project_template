@@ -113,6 +113,8 @@
           replacement: "DB_DEFAULT_URL=sqlite:///db.sqlite3"
         - search: "CACHE_DEFAULT_URL="
           replacement: "CACHE_DEFAULT_URL=locmemcache://"
+        - search: "DJANGO_ADMINS="
+          replacement: "DJANGO_ADMINS=ewan@example.com"
 
     - name: Install dependencies
       when: install_project_dependencies
