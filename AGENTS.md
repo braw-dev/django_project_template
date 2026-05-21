@@ -3,6 +3,8 @@
 This documentation is intended for AI agents working on this repository. This repository is a
 **Django Project Template**.
 
+Important: Domain language definitions follow the [CONTEXT.md](CONTEXT.md) specification.
+
 ## 1. Context & Architecture
 
 This is NOT a standard Django project. It is a **template** used to generate new Django projects via
