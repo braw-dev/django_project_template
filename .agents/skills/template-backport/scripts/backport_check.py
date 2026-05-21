@@ -79,8 +79,12 @@ def main():
                     "ENVIRONMENT=production": "ENVIRONMENT=development",
                     "SEND_EMAILS=True": "SEND_EMAILS=False",
                     "LOG_LEVEL=ERROR": "LOG_LEVEL=DEBUG",
-                    "DB_DEFAULT_URL=postgis://{{ project_name }}:{{ project_name }}@localhost:5432/{{ project_name }}?pool=True&server_side_binding=True": "DB_DEFAULT_URL=sqlite:///db.sqlite3",  # noqa: E501
                 }
+                import re
+
+                text = re.sub(r"DB_DEFAULT_URL=.*", "DB_DEFAULT_URL=sqlite:///db.sqlite3", text)
+                text = re.sub(r"CACHE_DEFAULT_URL=.*", "CACHE_DEFAULT_URL=locmemcache://", text)
+
                 for old, new in replacements.items():
                     text = text.replace(old, new)
                 env_file.write_text(text)
@@ -114,7 +118,8 @@ def main():
 
             if not format_diff.strip() and "Would fix" not in lint_diff:
                 print("No lint or format issues found in generated project.")
-                # Run tests to be sure
+                run(["just", "typecheck"], cwd=project_path)
+                print("Typecheck passed.")
                 run(["just", "test-unit"], cwd=project_path)
                 print("Tests passed.")
                 if i == 0:
