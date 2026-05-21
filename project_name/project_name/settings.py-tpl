@@ -657,7 +657,7 @@ SRI_ALGORITHM = "sha512"
 # Internationalization
 # https://docs.djangoproject.com/en/{{ docs_version }}/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "en"
 
 # Will be used by Gemini to know what to create
 # https://docs.djangoproject.com/en/{{ docs_version }}/ref/settings/#languages

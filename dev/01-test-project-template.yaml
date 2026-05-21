@@ -111,6 +111,8 @@
           replacement: "LOG_LEVEL=DEBUG"
         - search: "DB_DEFAULT_URL="
           replacement: "DB_DEFAULT_URL=sqlite:///db.sqlite3"
+        - search: "CACHE_DEFAULT_URL="
+          replacement: "CACHE_DEFAULT_URL=locmemcache://"
 
     - name: Install dependencies
       when: install_project_dependencies
