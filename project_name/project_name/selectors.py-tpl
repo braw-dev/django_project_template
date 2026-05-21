@@ -115,7 +115,7 @@ def _get_price_currency(price: dict[str, Any] | None) -> str:
     return ""
 
 
-def _get_price_label(price: dict[str, Any] | None):
+def _get_price_label(price: dict[str, Any] | None) -> str:
     if not isinstance(price, dict):
         return _("Contact sales")
 
@@ -127,7 +127,7 @@ def _get_price_label(price: dict[str, Any] | None):
     return _("Contact sales")
 
 
-def _format_billing_interval(interval: str, count: int):
+def _format_billing_interval(interval: str, count: int) -> str:
     if interval == "day":
         if count == 1:
             return _("day")

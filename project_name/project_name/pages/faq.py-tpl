@@ -1,9 +1,0 @@
-"""Backward-compatible imports for FAQ selectors."""
-
-from .faq_selectors import get_categorized_faqs, get_faq_entries, get_featured_faqs
-
-__all__ = [
-    "get_categorized_faqs",
-    "get_faq_entries",
-    "get_featured_faqs",
-]
