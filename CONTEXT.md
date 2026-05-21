@@ -52,7 +52,8 @@ _Avoid_: Owner, co-owner
 
 An **Account** that belongs to a **Team** for normal product use without administrative authority
 over the **Team** itself. A **Member** may use Team-owned features that the product exposes to
-ordinary collaborators, but cannot manage Team administration by default.
+ordinary collaborators, but cannot manage Team administration by default. Member-management starter
+screens should present **Owner**, **Admin**, and **Member** roles consistently and distinctly.
 
 _Avoid_: Guest, admin, owner
 
@@ -76,7 +77,8 @@ _Avoid_: Seat, participant record
 ### Active Team
 
 The **Team** currently in scope for a request, route, or API call. The **Active Team** is resolved
-from request context, not from the **Account** alone.
+from request context, not from the **Account** alone. In this template, the app shell should
+provide a canonical control pattern for representing and switching **Active Team** context.
 
 _Avoid_: Current workspace, selected account
 
@@ -110,6 +112,193 @@ Belonging to a specific **Team** rather than to an **Account** personally. Team-
 capabilities follow the Team boundary for access, billing, and request scoping.
 
 _Avoid_: Tenant-scoped, workspace-owned, account-owned
+
+### Design System
+
+The reusable visual language shipped with the template, including design tokens, component
+primitives, and default presentation rules for generated projects. The **Design System** is a
+template-level foundation intended to be usable out of the box and replaceable by downstream
+projects.
+
+_Avoid_: React library, Tailwind kit, theme pack
+
+### UI Primitive
+
+A low-level reusable interface building block such as a button, field, card, alert, or dialog.
+**UI Primitives** are the stable foundation of the **Design System** and are intended to compose
+into larger screens and flows.
+
+_Avoid_: Full page, feature module, marketing section
+
+### Application Shell
+
+A reusable page-level frame such as an auth shell, app shell, or marketing shell that provides
+consistent layout and presentation structure around content. An **Application Shell** uses **UI
+Primitives** but is more opinionated and less fundamental. In this template, marketing, auth, and
+app experiences should share one **Design System** while using distinct shell families, and the app
+shell should use a responsive hybrid navigation model with sidebar-first desktop navigation.
+
+_Avoid_: Primitive, widget, one-off page
+
+### Brand Slot
+
+The shared shell-level presentation for a project's identity, used in places such as navigation,
+auth pages, and footers. A **Brand Slot** should support an optional logo or mark alongside brand
+text, while falling back cleanly to text-only presentation when no custom asset is provided.
+
+_Avoid_: Hardcoded one-off logo usage, image-only brand assumption
+
+### Icon Slot
+
+The defined place within a **UI Primitive**, **Application Shell**, or **Starter Pattern** where an
+icon may appear with consistent sizing, alignment, and accessibility behavior. In this template,
+**Icon Slots** should be part of the **Stable UI API** while the exact icon family remains
+replaceable.
+
+_Avoid_: Ad hoc SVG placement, icon-font-only assumption
+
+### Theme
+
+A project's visual identity expressed through **Design System** tokens such as color, typography,
+radius, and surface treatment. In this template, a **Theme** should support light and dark
+variants by default, and the template may ship a very small number of starter presets while
+keeping downstream token overrides as the main customization path.
+
+_Avoid_: Color mode only, skin pack
+
+### Design Token
+
+A named visual value within the **Design System** used to keep presentation consistent across
+**UI Primitives** and **Application Shells**. In this template, **Design Tokens** should use a
+two-layer model: raw palette tokens plus semantic tokens consumed directly by components.
+
+_Avoid_: One-off CSS value, component config object
+
+### Typography Role
+
+A named text style role within the **Design System**, such as body text or heading text, used to
+keep hierarchy and brand tone consistent. In this template, the default system should distinguish
+between body/UI typography and heading/emphasis typography, with heading typography used
+selectively for marketing and major structural headings rather than dense operational UI.
+
+_Avoid_: One-font-for-everything assumption, decorative one-off type choice
+
+### UI Class
+
+A semantic CSS class exposed as the public styling contract of the **Design System**, such as
+`.ui-button` or `.ui-card`. **UI Classes** should be stable, human-readable, and preferable to
+utility-heavy template markup for default template components.
+
+_Avoid_: Utility soup, framework-private selector
+
+### Starter Pattern
+
+A higher-level reusable UI composition shipped with the template, such as a pricing section,
+sidebar, or dashboard widget, intended to give generated projects a functional starting point.
+**Starter Patterns** are more opinionated and more replaceable than **UI Primitives**.
+
+_Avoid_: Core primitive, permanent product architecture
+
+### Stable UI API
+
+The subset of the **Design System** that downstream projects should be able to rely on as a durable
+public contract, primarily covering **UI Primitives**, layout helpers, and core **Application
+Shells**. The **Stable UI API** should exclude highly product-specific marketing or dashboard
+compositions and should treat accessibility, internationalization, and RTL compatibility as
+required properties rather than optional enhancements.
+
+_Avoid_: Every shipped template snippet, one-off section library
+
+### Default UI Style
+
+The template's out-of-the-box visual stance for generated projects. In this template, the **Default
+UI Style** should be opinionated, polished, and B2B-focused while remaining restrained enough to be
+easily rebranded by downstream projects.
+
+_Avoid_: Bare scaffold, novelty aesthetic
+
+### Theme Override
+
+A downstream project change to **Theme** and **Design Token** values that rebrands the generated UI
+without rewriting component structure. In this template, **Theme Overrides** should cover color,
+typography, radius, shadow, and limited density choices, but not page composition or component
+anatomy.
+
+_Avoid_: Full redesign system, layout rewrite via variables alone
+
+### Theme Selection
+
+The mechanism that chooses which **Theme** variant is active for a rendered interface. In this
+template, **Theme Selection** should be driven by CSS variables and HTML attributes, with minimal
+JavaScript used only when needed for preference persistence.
+
+_Avoid_: Frontend-only boot requirement, framework-owned runtime theme state
+
+### Component Variant
+
+A stable semantic variation of a **UI Primitive** such as primary, secondary, destructive, ghost,
+or success. A **Component Variant** expresses the role of a component, while the active **Theme**
+determines how that variant looks. In this template, negative action intent should prefer
+**destructive** naming, while negative feedback should prefer **error** naming.
+
+_Avoid_: Theme alias, one-off utility class
+
+### UI State
+
+The interactive or semantic condition of a rendered interface element, such as disabled, expanded,
+selected, open, or invalid. In this template, **UI State** should prefer native HTML, ARIA, and
+`data-*` attributes as styling hooks where appropriate rather than inventing class-only state
+markers. Motion used to express **UI State** should respect reduced-motion user preferences.
+
+_Avoid_: Class-only transient state when semantic attributes exist
+
+### Empty State
+
+A structured interface state shown when relevant content, records, or results do not yet exist.
+An **Empty State** should support optional iconography, explanatory text, and clear next actions
+without becoming a product-specific onboarding flow by default.
+
+_Avoid_: Blank screen, onboarding flow by default
+
+### Toast
+
+A transient status message shown briefly without replacing page content, typically for success,
+information, warning, or error feedback. In this template, **Toasts** should remain lightweight and
+should not imply a full notification framework.
+
+_Avoid_: Permanent alert, full inbox or notification center
+
+### Resource List
+
+A structured collection view for app entities that sits between a full data table and a generic
+card grid, typically showing title, metadata, status, and actions in a mobile-friendly layout. A
+**Resource List** should be part of the **Stable UI API** and may optionally support selection.
+
+_Avoid_: Full table replacement for every case, unstructured card soup
+
+### Identity Row
+
+A compact presentation of a person, team, or similar entity using avatar or mark, primary label,
+and supporting metadata. An **Identity Row** should be part of the **Stable UI API** as a common
+building block for navigation, lists, and management screens.
+
+_Avoid_: Rich profile card by default, ad hoc avatar-and-text markup
+
+### Metadata Row
+
+A compact inline presentation of supporting facts such as status, plan, timestamp, or secondary
+labels associated with a primary entity or record. A **Metadata Row** should be part of the stable
+structural design language for lists, summaries, and management views.
+
+_Avoid_: Free-form separator soup, ad hoc muted text strings
+
+### File Row
+
+A structured presentation of a file or attachment showing its primary label, supporting metadata,
+and available actions in a mobile-friendly layout. A **File Row** should be a named stable pattern
+built on the **Resource List** and **Metadata Row** foundations.
+
+_Avoid_: Full document-management workflow by default, ad hoc attachment markup
 
 ## Flagged ambiguities
 
