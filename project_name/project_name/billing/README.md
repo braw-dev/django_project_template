@@ -198,11 +198,11 @@ For a generated-project customer-facing explanation, see `docs/billing-eu.md`.
 ```python
 from {{ project_name }}.billing.selectors import has_active_subscription, has_entitlement
 
-if has_active_subscription(team):
+if has_active_subscription(team=team):
     # Show premium features
     pass
 
-if has_entitlement(team, "analytics"):
+if has_entitlement(team=team, key="analytics"):
     # Enable analytics feature
     pass
 ```
@@ -212,7 +212,7 @@ if has_entitlement(team, "analytics"):
 ```python
 from {{ project_name }}.billing.selectors import get_active_subscription
 
-subscription = get_active_subscription(team)
+subscription = get_active_subscription(team=team)
 if subscription:
     print(f"Plan: {subscription.external_product_id}")
     print(f"Expires: {subscription.current_period_end}")

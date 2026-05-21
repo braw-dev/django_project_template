@@ -268,8 +268,9 @@ The default scope is intentionally narrow:
 - does **not** automatically delete billing, finance, or other records that may be subject to
   statutory retention or business record requirements
 
-Downstream projects should extend `{{ project_name }}/users/privacy.py` as they add app-specific
-personal data and should document their own retention rules before using deletion in production.
+Downstream projects should extend `{{ project_name }}/users/privacy_services.py` and
+`{{ project_name }}/users/privacy_selectors.py` as they add app-specific personal data and should
+document their own retention rules before using deletion in production.
 
 ### Audit trail
 
@@ -365,7 +366,7 @@ Recommended review loop:
 3. initialize git in the generated project root and run `just install-dev`
 4. copy `{{ project_name }}/.env.dist` to `{{ project_name }}/.env` and switch to the documented
    local SQLite + locmem settings
-5. run `just manage check`, `just migrate`, and `just test-unit`
+5. run `just typecheck`, `just manage check`, `just migrate`, and `just test-unit`
 6. if helper commands are documented, verify them in the generated project rather than only in the
    template repo
 7. spot-check seeded pages, support/help links, pricing page behaviour, and footer links in the

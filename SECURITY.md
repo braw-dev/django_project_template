@@ -73,7 +73,11 @@ Mutations should happen through services that accept `actor` and `team`.
 
 ```python
 def create_project(*, actor, team, name):
-    if not user_has_team_perm(actor, "projects.add_project", team):
+    if not user_has_team_perm(
+        user=actor,
+        permission_name="projects.add_project",
+        team=team,
+    ):
         raise ValueError("Not allowed")
 
     return Project.all_objects.create(team=team, name=name)

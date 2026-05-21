@@ -15,7 +15,7 @@ This app provides the default multi-tenancy model for generated projects.
 
 - team-owned models must inherit from `TenantScopedModel`
 - request team context is resolved from `/t/{team_slug}/`
-- use `user_has_team_perm(user, perm, team)` for authorization
+- use `user_has_team_perm(user=user, permission_name=perm, team=team)` for authorization
 - scoped managers are convenience only, not a security boundary
 - security-critical queries should use `all_objects` with explicit team filters
 
@@ -38,7 +38,11 @@ from {{ project_name }}.tenancy.permissions import user_has_team_perm
 
 
 def create_project(*, actor, team, name):
-    if not user_has_team_perm(actor, "projects.add_project", team):
+    if not user_has_team_perm(
+        user=actor,
+        permission_name="projects.add_project",
+        team=team,
+    ):
         raise ValueError("Not allowed")
 
     return Project.all_objects.create(team=team, name=name)
