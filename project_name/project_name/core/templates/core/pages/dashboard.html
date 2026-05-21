@@ -1,5 +1,41 @@
 {% extends "app_base.html" %}
 {% load i18n %}
-{% block body %}
-    <h1>{% trans "Dashboard" %}</h1>
-{% endblock body %}
+{% block app_title %}
+    {% trans "Dashboard" %}
+{% endblock app_title %}
+
+{% block app_content %}
+    <section class="ui-stack ui-stack--xl">
+        <header class="ui-page-header">
+            <h2>{% trans "Overview" %}</h2>
+            <p class="ui-lede">
+                {% if request.team %}
+                    {% blocktrans with team_name=request.team.name %}You are viewing starter app surfaces for {{ team_name }}.{% endblocktrans %}
+                {% else %}
+                    {% trans "You are viewing the account-level starter dashboard shell." %}
+                {% endif %}
+            </p>
+        </header>
+        <div class="ui-feature-grid">
+            <article class="ui-card">
+                <div class="ui-card__body ui-stack">
+                    <h3>{% trans "Billing" %}</h3>
+                    <p class="ui-field__help">{% trans "Billing belongs to the active team context and should be discoverable from app settings." %}</p>
+                    <a class="ui-button ui-button--outline" href="{% url 'pricing' %}">{% trans "Review plans" %}</a>
+                </div>
+            </article>
+            <article class="ui-card">
+                <div class="ui-card__body ui-stack">
+                    <h3>{% trans "Members" %}</h3>
+                    <p class="ui-field__help">{% trans "Use this area as the starting point for invitation and membership-management starter screens." %}</p>
+                    {% if request.team %}
+                        <a class="ui-button ui-button--outline"
+                           href="{% url 'transfer_team_ownership' team_slug=request.team.slug %}">{% trans "Manage team" %}</a>
+                    {% else %}
+                        <span class="ui-badge">{% trans "No active team" %}</span>
+                    {% endif %}
+                </div>
+            </article>
+        </div>
+    </section>
+{% endblock app_content %}

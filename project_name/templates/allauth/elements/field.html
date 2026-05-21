@@ -1,28 +1,25 @@
 {% load allauth %}
 {% if attrs.type == "checkbox" %}
-    <div class="form-control">
-        <label class="label cursor-pointer">
-            <span class="label-text">
-                {% slot label %}
-                {% endslot %}
-            </span>
+    <div class="ui-field">
+        <label class="ui-cluster">
             <input {% if attrs.required %}required{% endif %}
                    name="{{ attrs.name }}"
-                   class="checkbox"
                    id="{{ attrs.id }}"
                    {% if attrs.value is not None %}value="{{ attrs.value }}"{% endif %}
                    {% if attrs.disabled %}disabled{% endif %}
                    type="{{ attrs.type }}">
-        </label>
-    </div>
-{% else %}
-    <label for="{{ attrs.id }}" class="form-control w-full">
-        <div class="label">
-            <span class="label-text">
+            <span class="ui-field__label">
                 {% slot label %}
                 {% endslot %}
             </span>
-        </div>
+        </label>
+    </div>
+{% else %}
+    <label for="{{ attrs.id }}" class="ui-field">
+        <span class="ui-field__label">
+            {% slot label %}
+            {% endslot %}
+        </span>
         {% if attrs.type == "textarea" %}
             <textarea {% if attrs.required %}required{% endif %}
                       {% if attrs.rows %}rows="{{ attrs.rows }}"{% endif %}
@@ -31,7 +28,8 @@
                       {% if attrs.checked %}checked{% endif %}
                       {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
                       {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
-                      {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}>{% slot value %}{% endslot %}</textarea>
+                      {% if attrs.placeholder %}placeholder="{{ attrs.placeholder }}"{% endif %}
+                      class="ui-textarea{% if attrs.errors %} ui-field__error{% endif %}">{% slot value %}{% endslot %}</textarea>
         {% else %}
             <input {% if attrs.required %}required{% endif %}
                    {% if attrs.disabled %}disabled{% endif %}
@@ -43,17 +41,15 @@
                    {% if attrs.autocomplete %}autocomplete="{{ attrs.autocomplete }}"{% endif %}
                    {% if attrs.value is not None %}value="{{ attrs.value }}"{% endif %}
                    type="{{ attrs.type }}"
-                   class="input input-bordered w-full {% if attrs.errors %}input-error{% endif %}">
+                   class="ui-input{% if attrs.errors %} ui-field__error{% endif %}">
         {% endif %}
-        <div class="label not-prose">
-            {% if attrs.errors %}
-                <span class="label-text-alt text-error">{{ attrs.errors }}</span>
-            {% elif slots.help_text %}
-                <span class="label-text-alt">
-                    {% slot help_text %}
-                    {% endslot %}
-                </span>
-            {% endif %}
-        </div>
+        {% if attrs.errors %}
+            <span class="ui-field__help ui-field__error">{{ attrs.errors }}</span>
+        {% elif slots.help_text %}
+            <span class="ui-field__help">
+                {% slot help_text %}
+                {% endslot %}
+            </span>
+        {% endif %}
     </label>
 {% endif %}

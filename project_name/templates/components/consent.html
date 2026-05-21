@@ -1,39 +1,39 @@
 {% load i18n %}
 {% with consent_value=request.COOKIES.optional_tracking_consent %}
     {% if force_show or not consent_value %}
-        <section class="{% if inline %}rounded-xl border border-base-300 bg-base-100 p-4 shadow{% else %}fixed inset-x-4 bottom-4 z-50 mx-auto max-w-3xl rounded-xl border border-base-300 bg-base-100 p-4 shadow-2xl{% endif %}"
+        <section class="{% if inline %}ui-card{% else %}ui-card{% endif %}"
+                 style="{% if not inline %}position:fixed;inset-inline:1rem;bottom:1rem;z-index:50;max-width:60rem;margin-inline:auto;{% endif %}"
                  aria-label="{% trans 'Cookie preferences' %}">
-            <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div class="space-y-2">
-                    <h2 class="text-lg font-semibold">{% trans "Cookie preferences" %}</h2>
+            <div class="ui-card__body ui-cluster ui-cluster--between" style="align-items:flex-end;">
+                <div class="ui-stack" style="max-width:42rem;">
+                    <h2>{% trans "Cookie preferences" %}</h2>
                     {% if consent_value == "accepted" %}
-                        <p class="text-sm text-base-content/80">
+                        <p class="ui-field__help">
                             {% trans "Optional third-party tools are currently allowed for this browser." %}
                         </p>
                     {% elif consent_value == "declined" %}
-                        <p class="text-sm text-base-content/80">
+                        <p class="ui-field__help">
                             {% trans "Only required first-party cookies are currently in use for this browser." %}
                         </p>
                     {% else %}
-                        <p class="text-sm text-base-content/80">
+                        <p class="ui-field__help">
                             {% trans "We only use required first-party cookies by default. Optional third-party tools such as support chat only load after you allow them." %}
-                            <a href="{% url 'pages:page_detail' slug='cookies' %}"
-                               class="link link-primary">{% trans "Read the cookies page" %}</a>
+                            <a href="{% url 'pages:page_detail' slug='cookies' %}">{% trans "Read the cookies page" %}</a>
                         </p>
                     {% endif %}
                 </div>
-                <div class="flex flex-wrap gap-2">
+                <div class="ui-control-group">
                     <form method="post" action="{% url 'consent_update' %}">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ request.get_full_path }}">
                         <input type="hidden" name="choice" value="decline">
-                        <button type="submit" class="btn btn-ghost btn-sm">{% trans "Use only required cookies" %}</button>
+                        <button type="submit" class="ui-button ui-button--ghost">{% trans "Use only required cookies" %}</button>
                     </form>
                     <form method="post" action="{% url 'consent_update' %}">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ request.get_full_path }}">
                         <input type="hidden" name="choice" value="accept">
-                        <button type="submit" class="btn btn-primary btn-sm">{% trans "Allow optional tools" %}</button>
+                        <button type="submit" class="ui-button ui-button--primary">{% trans "Allow optional tools" %}</button>
                     </form>
                 </div>
             </div>

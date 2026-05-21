@@ -1,100 +1,46 @@
 {% load core i18n %}
-<footer class="bg-gray-900" aria-labelledby="footer-heading">
-    <h2 id="footer-heading" class="sr-only">{% trans "Footer" %}</h2>
-    <div class="mx-auto max-w-7xl px-6 pb-8 pt-20 sm:pt-24 lg:px-8 lg:pt-32">
-        <div class="xl:grid xl:grid-cols-3 xl:gap-8">
-            <div class="grid grid-cols-2 gap-8 xl:col-span-2">
-                <div class="md:grid md:grid-cols-2 md:gap-8">
-                    <div>
-                        <h3 class="text-sm font-semibold leading-6 text-white">{% trans "Solutions" %}</h3>
-                        <ul role="list" class="mt-6 space-y-4">
-                            <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Marketing" %}</a>
-                            </li>
-                            <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Analytics" %}</a>
-                            </li>
-                            <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Commerce" %}</a>
-                            </li>
-                            <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Insights" %}</a>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="mt-10 md:mt-0">
-                        <h3 class="text-sm font-semibold leading-6 text-white">{% trans "Support" %}</h3>
-                        <ul role="list" class="mt-6 space-y-4">
-                            <li>
-                                <a href="{% url 'pricing' %}"
-                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Pricing" %}</a>
-                            </li>
-                            <li>
-                                <a href="{% url 'pages:support_index' %}"
-                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Help center" %}</a>
-                            </li>
-                            <li>
-                                <a href="{% url 'pages:page_detail' slug='contact' %}"
-                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Contact" %}</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="md:grid md:grid-cols-2 md:gap-8">
-                    <div>
-                        <h3 class="text-sm font-semibold leading-6 text-white">{% trans "Company" %}</h3>
-                        <ul role="list" class="mt-6 space-y-4">
-                            <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "About" %}</a>
-                            </li>
-                            <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Blog" %}</a>
-                            </li>
-                            <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Jobs" %}</a>
-                            </li>
-                            <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Press" %}</a>
-                            </li>
-                            <li>
-                                <a href="#" class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Partners" %}</a>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="mt-10 md:mt-0">
-                        <h3 class="text-sm font-semibold leading-6 text-white">{% trans "Legal" %}</h3>
-                        <ul role="list" class="mt-6 space-y-4">
-                            <li>
-                                <a href="{% url 'pages:page_detail' slug='privacy' %}"
-                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Privacy" %}</a>
-                            </li>
-                            <li>
-                                <a href="{% url 'pages:page_detail' slug='cookies' %}"
-                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Cookies" %}</a>
-                            </li>
-                            <li>
-                                <a href="{% url 'pages:page_detail' slug='terms' %}"
-                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Terms" %}</a>
-                            </li>
-                            <li>
-                                <a href="{% url 'pages:page_detail' slug='security' %}"
-                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Security" %}</a>
-                            </li>
-                            <li>
-                                <a href="{% url 'pages:page_detail' slug='subprocessors' %}"
-                                   class="text-sm leading-6 text-gray-300 hover:text-white">{% trans "Subprocessors" %}</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-10 xl:mt-0">{% include "core/partials/newsletter/signup.html" %}</div>
+<footer class="ui-footer" aria-labelledby="footer-heading">
+    <h2 id="footer-heading" class="ui-sr-only">{% trans "Footer" %}</h2>
+    <div class="ui-container ui-footer__grid">
+        <div class="ui-stack ui-stack--lg">
+            {% include "partials/brand.html" with href='/' class_name='ui-footer__brand' %}
+            <p>{% trans "Production-oriented Django starter for SaaS products with auth, tenancy, billing, and support flows." %}</p>
         </div>
-        <div class="mt-16 border-t border-white/10 pt-8 sm:mt-20 md:flex md:items-center md:justify-between lg:mt-24">
-            {% project_display_name as project_name %}
-            <p class="mt-8 text-xs leading-5 text-gray-400 md:order-1 md:mt-0">
-                {% blocktrans with project_name=project_name %}© 2024 {{ project_name }}. All rights reserved.{% endblocktrans %}
-            </p>
+        <div class="ui-stack">
+            <h3>{% trans "Product" %}</h3>
+            <ul class="ui-link-list">
+                <li><a href="{% url 'pricing' %}">{% trans "Pricing" %}</a></li>
+                <li><a href="{% url 'pages:support_index' %}">{% trans "Help center" %}</a></li>
+                <li><a href="{% url 'pages:page_detail' slug='contact' %}">{% trans "Contact" %}</a></li>
+            </ul>
         </div>
+        <div class="ui-stack">
+            <h3>{% trans "Trust" %}</h3>
+            <ul class="ui-link-list">
+                <li><a href="{% url 'pages:page_detail' slug='privacy' %}">{% trans "Privacy" %}</a></li>
+                <li><a href="{% url 'pages:page_detail' slug='terms' %}">{% trans "Terms" %}</a></li>
+                <li><a href="{% url 'pages:page_detail' slug='security' %}">{% trans "Security" %}</a></li>
+                <li><a href="{% url 'pages:page_detail' slug='subprocessors' %}">{% trans "Subprocessors" %}</a></li>
+            </ul>
+        </div>
+        <div class="ui-stack">
+            <h3>{% trans "Resources" %}</h3>
+            <ul class="ui-link-list">
+                <li><a href="{% url 'pages:page_detail' slug='cookies' %}">{% trans "Cookies" %}</a></li>
+                <li><a href="{% url 'newsletter:legal_updates_signup' %}">{% trans "Legal updates" %}</a></li>
+            </ul>
+            {% include "core/partials/newsletter/signup.html" %}
+        </div>
+    </div>
+    <div class="ui-container ui-footer__meta">
+        {% project_display_name as project_name %}
+        <p>
+            {% blocktrans with project_name=project_name %}© 2026 {{ project_name }}. All rights reserved.{% endblocktrans %}
+        </p>
+        <ul class="ui-cluster ui-list-reset">
+            <li><a href="{% url 'pages:page_detail' slug='privacy' %}">{% trans "Privacy" %}</a></li>
+            <li><a href="{% url 'pages:page_detail' slug='terms' %}">{% trans "Terms" %}</a></li>
+            <li><a href="{% url 'pages:page_detail' slug='cookies' %}">{% trans "Cookies" %}</a></li>
+        </ul>
     </div>
 </footer>

@@ -1,0 +1,18 @@
+{% load core static %}
+{% project_display_name as brand_name %}
+<a href="{{ href|default:'/' }}" class="ui-brand {% if class_name %}{{ class_name }}{% endif %}">
+    {% if variant == "square" %}
+        <img src="{% static 'brand/img/logo--square.svg' %}"
+             alt=""
+             class="ui-brand__logo"
+             width="40"
+             height="40">
+    {% else %}
+        <img src="{% static 'brand/img/logo--horizontal.svg' %}"
+             alt=""
+             class="ui-brand__logo ui-brand__logo--wide"
+             width="160"
+             height="32">
+    {% endif %}
+    <span class="ui-brand__text">{{ brand_name }}</span>
+</a>

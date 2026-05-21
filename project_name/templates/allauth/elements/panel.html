@@ -1,14 +1,16 @@
 {% load allauth %}
-<section>
-    <h2>
-        {% slot title %}
+<section class="ui-card">
+    <div class="ui-card__body ui-stack">
+        <h2>
+            {% slot title %}
+            {% endslot %}
+        </h2>
+        {% slot body %}
         {% endslot %}
-    </h2>
-    {% slot body %}
-    {% endslot %}
-    {% if slots.actions %}
-        <ul>
-            {% for action in slots.actions %}<li>{{ action }}</li>{% endfor %}
-        </ul>
-    {% endif %}
+        {% if slots.actions %}
+            <div class="ui-control-group">
+                {% for action in slots.actions %}{{ action }}{% endfor %}
+            </div>
+        {% endif %}
+    </div>
 </section>

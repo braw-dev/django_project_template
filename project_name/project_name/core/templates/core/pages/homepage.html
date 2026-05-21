@@ -1,47 +1,35 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% block body %}
-    <div class="hero bg-base-200 min-h-screen">
-        <div class="hero-content flex-col lg:flex-row-reverse">
-            <div class="text-center lg:text-left">
-                <h1 class="text-5xl font-bold">{% trans "Login now!" %}</h1>
-                <p class="py-6">
-                    {% blocktrans %} Provident cupiditate voluptatem et in. Quaerat
-                fugiat ut assumenda excepturi exercitationem quasi. In deleniti
-                eaque aut repudiandae et a id nisi. {% endblocktrans %}
-                </p>
+    <section class="ui-hero ui-page-section">
+        <div class="ui-container ui-hero__layout">
+            <div class="ui-stack ui-stack--xl">
+                <p class="ui-hero__eyebrow">{% trans "Django SaaS template" %}</p>
+                <div class="ui-stack ui-stack--lg">
+                    <h1>{% trans "Ship a credible B2B SaaS foundation faster" %}</h1>
+                    <p class="ui-hero__lede">
+                        {% blocktrans %}Start from a production-oriented baseline with authentication, multi-tenancy, billing, support pages, and a server-rendered-first UI system you can actually rebrand.{% endblocktrans %}
+                    </p>
+                </div>
+                <div class="ui-control-group">
+                    <a href="{% url 'account_signup' %}" class="ui-button ui-button--primary">{% trans "Create an account" %}</a>
+                    <a href="{% url 'pricing' %}" class="ui-button ui-button--outline">{% trans "View pricing" %}</a>
+                    <span class="ui-kbd" aria-label="{% trans 'Keyboard shortcut hint example' %}">⌘K</span>
+                </div>
             </div>
-            <div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
-                <form class="card-body">
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">{% trans "Email" %}</span>
-                        </label>
-                        <input type="email"
-                               placeholder='{% translate "Email" %}'
-                               class="input input-bordered"
-                               required />
-                    </div>
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">{% trans "Password" %}</span>
-                        </label>
-                        <input type="password"
-                               placeholder='{% translate "Password" %}'
-                               class="input input-bordered"
-                               required />
-                        <label class="label">
-                            <a href="#" class="label-text-alt link link-hover">{% trans "Forgot password?" %}</a>
-                        </label>
-                    </div>
-                    <div class="form-control mt-6">
-                        <button class="btn btn-primary">{% trans "Login" %}</button>
-                    </div>
-                </form>
-            </div>
+            <aside class="ui-card" aria-label="{% trans 'What ships by default' %}">
+                <div class="ui-card__body ui-stack ui-stack--lg">
+                    <h2>{% trans "What ships by default" %}</h2>
+                    <ul class="ui-feature-list">
+                        <li>{% trans "Email/password auth plus MFA" %}</li>
+                        <li>{% trans "Team-first tenancy and invitations" %}</li>
+                        <li>{% trans "Provider-backed billing foundation" %}</li>
+                        <li>{% trans "Support, legal, and trust starter pages" %}</li>
+                    </ul>
+                    <a href="{% url 'pages:support_index' %}" class="ui-button ui-button--ghost">{% trans "Browse support pages" %}</a>
+                </div>
+            </aside>
         </div>
-    </div>
-    <a href="{% url 'account_login' %}">{% trans "Login" %}</a>
-    <a href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a>
+    </section>
     {% include "partials/featured_faqs.html" with faqs=featured_faqs %}
 {% endblock body %}

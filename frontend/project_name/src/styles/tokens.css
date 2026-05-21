@@ -1,0 +1,109 @@
+:root {
+    --ui-color-white: oklch(100% 0 0);
+    --ui-color-black: oklch(18% 0.01 264);
+    --ui-color-slate-50: oklch(98.3% 0.003 260);
+    --ui-color-slate-100: oklch(96.8% 0.004 260);
+    --ui-color-slate-200: oklch(92.9% 0.006 255);
+    --ui-color-slate-300: oklch(87% 0.009 255);
+    --ui-color-slate-400: oklch(70.7% 0.015 256);
+    --ui-color-slate-500: oklch(55.4% 0.016 257);
+    --ui-color-slate-600: oklch(44.6% 0.015 257);
+    --ui-color-slate-700: oklch(37.2% 0.014 257);
+    --ui-color-slate-800: oklch(27.8% 0.012 257);
+    --ui-color-slate-900: oklch(21% 0.01 257);
+    --ui-color-blue-500: oklch(62.3% 0.18 255);
+    --ui-color-blue-600: oklch(55.8% 0.2 257);
+    --ui-color-blue-700: oklch(49.1% 0.19 259);
+    --ui-color-green-600: oklch(62% 0.17 150);
+    --ui-color-amber-500: oklch(76% 0.16 78);
+    --ui-color-red-600: oklch(57.5% 0.22 25);
+
+    --ui-font-body: Inter, ui-sans-serif, system-ui, sans-serif;
+    --ui-font-heading: Inter, ui-sans-serif, system-ui, sans-serif;
+
+    --ui-radius-xs: 0.375rem;
+    --ui-radius-sm: 0.5rem;
+    --ui-radius-md: 0.75rem;
+    --ui-radius-lg: 1rem;
+    --ui-radius-xl: 1.5rem;
+    --ui-radius-pill: 999px;
+
+    --ui-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+    --ui-shadow-md: 0 10px 30px rgb(15 23 42 / 0.08);
+    --ui-shadow-lg: 0 24px 48px rgb(15 23 42 / 0.14);
+
+    --ui-space-1: 0.25rem;
+    --ui-space-2: 0.5rem;
+    --ui-space-3: 0.75rem;
+    --ui-space-4: 1rem;
+    --ui-space-5: 1.25rem;
+    --ui-space-6: 1.5rem;
+    --ui-space-8: 2rem;
+    --ui-space-10: 2.5rem;
+    --ui-space-12: 3rem;
+    --ui-space-16: 4rem;
+    --ui-space-20: 5rem;
+
+    --ui-density-scale: 1;
+
+    --ui-width-narrow: 42rem;
+    --ui-width-default: 72rem;
+    --ui-width-wide: 84rem;
+
+    --ui-surface-page: var(--ui-color-white);
+    --ui-surface-panel: var(--ui-color-white);
+    --ui-surface-panel-muted: var(--ui-color-slate-50);
+    --ui-surface-inverse: var(--ui-color-slate-900);
+    --ui-border-subtle: rgb(from var(--ui-color-slate-300) r g b / 0.9);
+    --ui-border-strong: rgb(from var(--ui-color-slate-400) r g b / 1);
+    --ui-text-default: var(--ui-color-slate-900);
+    --ui-text-muted: var(--ui-color-slate-600);
+    --ui-text-inverse: var(--ui-color-white);
+    --ui-accent: var(--ui-color-blue-600);
+    --ui-accent-hover: var(--ui-color-blue-700);
+    --ui-accent-contrast: var(--ui-color-white);
+    --ui-focus-ring: rgb(from var(--ui-color-blue-500) r g b / 0.45);
+    --ui-status-info: var(--ui-color-blue-600);
+    --ui-status-success: var(--ui-color-green-600);
+    --ui-status-warning: var(--ui-color-amber-500);
+    --ui-status-error: var(--ui-color-red-600);
+    --ui-status-destructive: var(--ui-color-red-600);
+    --ui-header-backdrop: rgb(from var(--ui-color-white) r g b / 0.84);
+    --ui-footer-surface: var(--ui-color-slate-900);
+    --ui-footer-text: rgb(from var(--ui-color-white) r g b / 0.8);
+}
+
+:root[data-density="compact"] {
+    --ui-density-scale: 0.9;
+}
+
+:root[data-theme="dark"] {
+    --ui-surface-page: oklch(20% 0.01 257);
+    --ui-surface-panel: oklch(24% 0.012 257);
+    --ui-surface-panel-muted: oklch(28% 0.014 257);
+    --ui-surface-inverse: var(--ui-color-white);
+    --ui-border-subtle: rgb(from var(--ui-color-slate-700) r g b / 1);
+    --ui-border-strong: rgb(from var(--ui-color-slate-600) r g b / 1);
+    --ui-text-default: oklch(97% 0.004 255);
+    --ui-text-muted: oklch(81% 0.01 255);
+    --ui-text-inverse: var(--ui-color-slate-900);
+    --ui-accent: oklch(69% 0.15 252);
+    --ui-accent-hover: oklch(73% 0.16 252);
+    --ui-accent-contrast: var(--ui-color-slate-900);
+    --ui-focus-ring: rgb(from var(--ui-color-blue-500) r g b / 0.55);
+    --ui-header-backdrop: rgb(from var(--ui-color-slate-900) r g b / 0.78);
+    --ui-footer-surface: oklch(16% 0.008 257);
+    --ui-footer-text: rgb(from var(--ui-color-white) r g b / 0.82);
+}
+
+:root[data-theme-preset="forest"] {
+    --ui-accent: oklch(54% 0.12 158);
+    --ui-accent-hover: oklch(48% 0.11 158);
+    --ui-focus-ring: rgb(34 197 94 / 0.42);
+}
+
+:root[data-theme-preset="violet"] {
+    --ui-accent: oklch(56% 0.19 295);
+    --ui-accent-hover: oklch(50% 0.18 295);
+    --ui-focus-ring: rgb(168 85 247 / 0.42);
+}

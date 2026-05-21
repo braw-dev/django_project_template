@@ -1,7 +1,94 @@
 {% extends "base.html" %}
+{% load core i18n %}
 
 {% block footer %}
 {% endblock footer %}
+
+{% block body %}
+    <div class="ui-app-shell">
+        <div class="ui-container ui-app-shell__frame">
+            <aside class="ui-app-shell__sidebar" aria-label="{% trans 'Team navigation' %}">
+                <div class="ui-stack ui-stack--lg">
+                    {% include "partials/brand.html" with href='/' variant='square' %}
+                    <section class="ui-stack">
+                        <p class="ui-eyebrow">{% trans "Team context" %}</p>
+                        {% if request.team %}
+                            <div class="ui-card">
+                                <div class="ui-card__body ui-stack">
+                                    <div>
+                                        <strong>{{ request.team.name }}</strong>
+                                        <p class="ui-field__help">{% trans "Active Team" %}</p>
+                                    </div>
+                                    <div class="ui-cluster">
+                                        <a class="ui-button ui-button--outline"
+                                           href="{% url 'team_dashboard' team_slug=request.team.slug %}">{% trans "Open team" %}</a>
+                                        <a class="ui-button ui-button--ghost"
+                                           href="{% url 'transfer_team_ownership' team_slug=request.team.slug %}">{% trans "Team settings" %}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="ui-card">
+                                <div class="ui-card__body ui-stack">
+                                    <div>
+                                        <strong>{% trans "Personal workspace" %}</strong>
+                                        <p class="ui-field__help">{% trans "Use this area for account-level pages and starter app navigation." %}</p>
+                                    </div>
+                                    <a class="ui-button ui-button--outline" href="{% url 'account:dashboard' %}">{% trans "Open dashboard" %}</a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </section>
+                    <nav aria-label="{% trans 'Application' %}">
+                        <ul class="ui-nav ui-list-reset">
+                            {% if request.team %}
+                                <li>
+                                    <a class="ui-nav__link"
+                                       href="{% url 'team_dashboard' team_slug=request.team.slug %}">{% trans "Dashboard" %}</a>
+                                </li>
+                            {% endif %}
+                            <li>
+                                <a class="ui-nav__link" href="{% url 'account:dashboard' %}">{% trans "Overview" %}</a>
+                            </li>
+                            <li>
+                                <a class="ui-nav__link" href="{% url 'pricing' %}">{% trans "Billing" %}</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </aside>
+            <div class="ui-app-shell__content">
+                <header class="ui-topbar" aria-label="{% trans 'Application toolbar' %}">
+                    <div>
+                        <p class="ui-eyebrow">{% trans "Application" %}</p>
+                        <h1>{% block app_title %}{% trans "Dashboard" %}{% endblock %}</h1>
+                    </div>
+                    <div class="ui-control-group">
+                        {% include "partials/language-switcher.html" with redirect_to=request.get_full_path %}
+                        {% include "partials/theme-switcher.html" %}
+                        {% trans "Account" as account_label %}
+                        <details class="ui-menu">
+                            <summary class="ui-menu__summary ui-button ui-button--outline">
+                                <span>{{ request.user.email|default:account_label }}</span>
+                            </summary>
+                            <div class="ui-menu__panel">
+                                <div class="ui-stack">
+                                    <a href="{% url 'account_email' %}" class="ui-nav__link">{% trans "Email settings" %}</a>
+                                    <a href="{% url 'account_change_password' %}" class="ui-nav__link">{% trans "Password" %}</a>
+                                    <a href="{% url 'account_logout' %}" class="ui-nav__link">{% trans "Sign out" %}</a>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </header>
+                {% block app_content %}
+                    {% block body_content %}
+                    {% endblock body_content %}
+                {% endblock app_content %}
+            </div>
+        </div>
+    </div>
+{% endblock body %}
 
 {% block third_party_scripts %}
 {% endblock third_party_scripts %}

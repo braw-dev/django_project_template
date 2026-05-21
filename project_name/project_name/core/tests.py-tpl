@@ -624,6 +624,22 @@ class LocaleRenderingTestCase(TestCase):
 
         self.assertContains(response, "src/main.tsx")
 
+    def test_base_template_includes_skip_link_and_theme_toggle(self):
+        response = self.client.get("/")
+
+        self.assertContains(response, 'href="#main-content"')
+        self.assertContains(response, "data-theme-toggle")
+
+    def test_marketing_shell_uses_brand_slot_assets(self):
+        response = self.client.get("/")
+
+        self.assertContains(response, "brand/img/logo--horizontal.svg")
+
+    def test_auth_shell_uses_square_brand_asset(self):
+        response = self.client.get(reverse("account_login"))
+
+        self.assertContains(response, "brand/img/logo--square.svg")
+
     @override_settings(
         CHATWOOT_WEBSITE_TOKEN="test-token",
         PLAUSIBLE_DOMAIN="example.com",

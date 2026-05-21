@@ -9,34 +9,41 @@ Override by setting template_name on the Page instance.
 {% endblock head_title %}
 
 {% block page_content %}
-    <article class="container mx-auto px-4 py-8 max-w-4xl">
-        <header class="mb-8">
-            <h1 class="text-4xl font-bold mb-4">{{ page.title }}</h1>
-            {% if page.meta_description %}<p class="text-lg text-base-content/70">{{ page.meta_description }}</p>{% endif %}
-        </header>
-        {% if page.image %}
-            <figure class="mb-8">
-                <img src="{{ page.image.url }}"
-                     alt="{{ page.title }}"
-                     height="100%"
-                     width="100%"
-                     class="w-full rounded-lg shadow-lg">
-            </figure>
-        {% endif %}
-        <div class="prose prose-lg max-w-none">{{ content_html }}</div>
-        {% if page.slug == "cookies" %}
-            <div class="mt-8 not-prose">
-                <c-consent force_show inline />
-            </div>
-        {% endif %}
-        {% if page.slug == "subprocessors" %}
-            <section class="mt-8 rounded-xl border border-base-300 bg-base-100 p-6 not-prose">
-                <h2 class="text-2xl font-semibold mb-3">{% trans "Get legal update emails" %}</h2>
-                <p class="text-base-content/80 mb-4">
-                    {% trans "Subscribe for important notices about subprocessors, privacy, terms, and related legal updates." %}
-                </p>
-                <a href="{% url 'newsletter:legal_updates_signup' %}" class="btn btn-primary">{% trans "Subscribe to legal updates" %}</a>
-            </section>
-        {% endif %}
+    <article class="ui-page-section ui-page-section--tight">
+        <div class="ui-container ui-container--narrow ui-stack ui-stack--xl">
+            <header class="ui-page-header">
+                <h1>{{ page.title }}</h1>
+                {% if page.meta_description %}<p class="ui-lede">{{ page.meta_description }}</p>{% endif %}
+            </header>
+            {% if page.image %}
+                <figure class="ui-card">
+                    <img src="{{ page.image.url }}"
+                         alt="{{ page.title }}"
+                         height="100%"
+                         width="100%"
+                         style="border-radius: inherit; object-fit: cover;">
+                </figure>
+            {% endif %}
+            <div class="ui-prose">{{ content_html }}</div>
+            {% if page.slug == "cookies" %}
+                <div>
+                    {% include "components/consent.html" with force_show=True inline=True %}
+                </div>
+            {% endif %}
+            {% if page.slug == "subprocessors" %}
+                <section class="ui-card">
+                    <div class="ui-card__body ui-stack">
+                        <h2>{% trans "Get legal update emails" %}</h2>
+                        <p class="ui-field__help">
+                            {% trans "Subscribe for important notices about subprocessors, privacy, terms, and related legal updates." %}
+                        </p>
+                        <div>
+                            <a href="{% url 'newsletter:legal_updates_signup' %}"
+                               class="ui-button ui-button--primary">{% trans "Subscribe to legal updates" %}</a>
+                        </div>
+                    </div>
+                </section>
+            {% endif %}
+        </div>
     </article>
 {% endblock page_content %}

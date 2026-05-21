@@ -1,50 +1,32 @@
-{% load core i18n %}
-<div class="navbar bg-base-100">
-    <div class="navbar-start">
-        <div class="dropdown">
-            <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     class="h-5 w-5"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
-                </svg>
-            </div>
-            <ul tabindex="0"
-                class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
+{% load i18n %}
+<header class="ui-site-header">
+    <div class="ui-container ui-site-header__inner">
+        {% include "partials/brand.html" with href='/' %}
+        <nav aria-label="{% trans 'Primary navigation' %}">
+            <ul class="ui-nav ui-list-reset">
+                <li><a class="ui-nav__link" href="{% url 'homepage' %}">{% trans "Home" %}</a></li>
+                <li><a class="ui-nav__link" href="{% url 'pricing' %}">{% trans "Pricing" %}</a></li>
+                <li><a class="ui-nav__link" href="{% url 'pages:support_index' %}">{% trans "Support" %}</a></li>
             </ul>
-        </div>
-    </div>
-    <div class="navbar-center">
-        <a class="text-xl" href="{% url 'homepage' %}">{% project_display_name %}</a>
-    </div>
-    <div class="navbar-end">
-        {% if user.is_authenticated %}
-            {% url 'account_logout' as logout_url_ %}
-            {% if logout_url_ %}
-                <a class="btn" href="{{ logout_url_ }}">{% trans "Sign Out" %}</a>
-            {% endif %}
-        {% else %}
-            <div class="flex gap-2">
+        </nav>
+        <div class="ui-control-group">
+            {% include "partials/language-switcher.html" with redirect_to=request.get_full_path %}
+            {% include "partials/theme-switcher.html" %}
+            {% if user.is_authenticated %}
+                {% url 'account_logout' as logout_url_ %}
+                {% if logout_url_ %}
+                    <a class="ui-button ui-button--outline" href="{{ logout_url_ }}">{% trans "Sign out" %}</a>
+                {% endif %}
+            {% else %}
                 {% url 'account_login' as login_url_ %}
                 {% if login_url_ %}
-                    <a class="btn btn-primary join-item" href="{{ login_url_ }}">{% trans "Sign In" %}</a>
+                    <a class="ui-button ui-button--ghost" href="{{ login_url_ }}">{% trans "Sign in" %}</a>
                 {% endif %}
                 {% url 'account_signup' as signup_url_ %}
                 {% if signup_url_ %}
-                    <a class="hidden md:flex btn" href="{{ signup_url_ }}">{% trans "Sign Up" %}</a>
+                    <a class="ui-button ui-button--primary" href="{{ signup_url_ }}">{% trans "Get started" %}</a>
                 {% endif %}
-            </div>
-        {% endif %}
-        {% comment %} TODO(kisamoto): implement a user notification system {% endcomment %}
-        {% comment %} <button class="btn btn-ghost btn-circle">
-            <div class="indicator">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <span class="badge badge-xs badge-primary indicator-item"></span>
-            </div>
-        </button> {% endcomment %}
+            {% endif %}
+        </div>
     </div>
-</div>
+</header>

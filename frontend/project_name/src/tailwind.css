@@ -1,10 +1,7 @@
 @import "tailwindcss" source("../../..");
-@plugin "daisyui";
 
-@theme {}
-
-@layer components {
-    .container {
-        @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-    }
-}
+@import "./styles/tokens.css";
+@import "./styles/base.css";
+@import "./styles/layout.css";
+@import "./styles/components.css";
+@import "./styles/patterns.css";
