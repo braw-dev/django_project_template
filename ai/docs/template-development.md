@@ -295,8 +295,8 @@ Update `README.md` and add to `--exclude` list:
 | Variable                          | Usage                     | Example                      |
 | --------------------------------- | ------------------------- | ---------------------------- |
 | `{{ project_name }}`              | Project name in code      | `'{{ project_name }}.urls'`  |
-| `{% templatetag openvariable %}`  | Literal `{{` in templates | For django-cotton components |
-| `{% templatetag closevariable %}` | Literal `}}` in templates | For django-cotton components |
+| `{% templatetag openvariable %}`  | Literal `{{` in templates | For template variable syntax      |
+| `{% templatetag closevariable %}` | Literal `}}` in templates | For template variable syntax      |
 
 ## Debugging Template Issues
 

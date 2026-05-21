@@ -98,8 +98,8 @@ For the full step-by-step setup, see `{{ project_name }}/billing/README.md`.
 - **Testing**: `pytest` + `pytest-django` for backend tests, Django browser tests, and Playwright
   for frontend E2E tests.
 - **Typing**: `ty` static analysis.
-- **Frontend**: WhiteNoise static file serving, Vite + React, Tailwind CSS + Daisy UI, and
-  `django-cotton` components.
+- **Frontend**: WhiteNoise static file serving, Vite + React, and a layered CSS design system
+  (`ui-*` classes) driven by CSS-variable tokens.
 - **Tooling**: `Justfile` command runner, Ruff linting/formatting via `lefthook`.
 
 ### Marketing

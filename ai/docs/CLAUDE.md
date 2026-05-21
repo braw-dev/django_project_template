@@ -208,8 +208,8 @@ project_name/              # Template root (or project root if generated)
 ### Frontend
 
 - **Formatting**: Biome
-- **Framework**: React + Vite + Tailwind CSS + Daisy UI
-- **Components**: django-cotton for reusable HTML components
+- **Framework**: React + Vite + Tailwind CSS (internal tooling only, not public contract)
+- **Components**: Django 6 template partials for reusable UI (see `templates/partials/`)
 
 ### Testing
 

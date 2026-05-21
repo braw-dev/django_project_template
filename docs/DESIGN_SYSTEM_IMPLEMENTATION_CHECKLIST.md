@@ -103,8 +103,8 @@ The first pass is done when:
 - [x] Remove `django-cotton` as a foundational UI dependency if its remaining usage can be replaced
       cleanly
 - [x] Replace `<c-consent />` usage with native template composition
-- [ ] Remove Cotton-oriented docs/instructions once no longer needed
-- [ ] Do not leave Cotton described as the primary component model in agent docs
+- [x] Remove Cotton-oriented docs/instructions once no longer needed
+- [x] Do not leave Cotton described as the primary component model in agent docs
 
 ### Phase 1 verification
 
@@ -317,18 +317,18 @@ Prioritize real shipped pages over a component showcase.
 
 ### 23. Add customization docs
 
-- [ ] Write a dedicated customization guide
-- [ ] Document the stable API vs starter pattern split
-- [ ] Document theme override flow
-- [ ] Document brand asset replacement flow
-- [ ] Document common override recipes:
-    - [ ] change primary color
-    - [ ] swap heading font
-    - [ ] replace logo asset
-    - [ ] change density feel
-    - [ ] disable shadows
-    - [ ] replace a starter pattern
-    - [ ] add a new component variant
+- [x] Write a dedicated customization guide
+- [x] Document the stable API vs starter pattern split
+- [x] Document theme override flow
+- [x] Document brand asset replacement flow
+- [x] Document common override recipes:
+    - [x] change primary color
+    - [x] swap heading font
+    - [x] replace logo asset
+    - [x] change density feel
+    - [x] disable shadows
+    - [x] replace a starter pattern
+    - [x] add a new component variant
 
 ### 24. Add targeted inline comments
 
@@ -338,9 +338,9 @@ Prioritize real shipped pages over a component showcase.
 
 ### 25. Update agent docs
 
-- [ ] Update relevant `AGENTS.md`
-- [ ] Update relevant `ai/` docs
-- [ ] Remove outdated guidance that still presents Cotton or utility-heavy template markup as the
+- [x] Update relevant `AGENTS.md`
+- [x] Update relevant `ai/` docs
+- [x] Remove outdated guidance that still presents Cotton or utility-heavy template markup as the
       preferred default
 - [ ] Document Django 6 template partials as preferred where appropriate
 

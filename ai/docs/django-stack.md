@@ -22,12 +22,10 @@ consistency across all projects.
 ## Core Dependencies
 
 | Package                         | Purpose                             | When to Use                |
-| ------------------------------- | ----------------------------------- | -------------------------- |
 | `django-allauth`                | Authentication (email, social, MFA) | Always (for auth)          |
 | `django-ninja`                  | REST API framework                  | API endpoints              |
 | `django-guardian`               | Row-level permissions               | Object-level permissions   |
 | `django-environ`                | Environment configuration           | Settings management        |
-| `django-cotton`                 | HTML components                     | Reusable UI components     |
 | `celery` + `dragonfly`          | Background tasks                    | Async operations           |
 | `dragonfly` (redis alternative) | Caching                             | Cache expensive operations |
 | `nh3`                           | HTML sanitization                   | User-submitted HTML        |
@@ -365,32 +363,17 @@ def delete_post_view(request, post_id):
         return redirect('post_detail', post_id=post.id)
 ```
 
-## Components (django-cotton)
+## Components
 
-**Use django-cotton for reusable HTML components.**
+**Use Django 6 template partials for reusable UI fragments.**
 
-Components live in `components/` directory.
+The default shipped UI contract is the `ui-*` CSS class system plus reusable partials in
+`templates/partials/`. New reusable components should be added as partial includes, not as
+`django-cotton` components.
 
-```html
-<!-- components/button.html -->
-<c-vars variant="primary" size="md" />
-
-<button class="btn btn-{{ variant }} btn-{{ size }}" {{ attrs }}>
-    <c-slot />
-</button>
-```
-
-**Usage in templates:**
-
-```html
-<c-button variant="primary" size="lg" type="submit">
-    Save Changes
-</c-button>
-
-<c-button variant="ghost" size="sm" @click="handleCancel">
-    Cancel
-</c-button>
-```
+For higher-level composition, Django's built-in block and include tags are the preferred
+authoring patterns. React islands remain available via the vite_asset tag for interactive
+behaviour that cannot be server-rendered.
 
 ## Project Structure
 
@@ -410,21 +393,15 @@ Components live in `components/` directory.
 │   ├── selectors.py              # User queries
 │   ├── views.py                  # User views
 │   └── api.py                    # User API endpoints
-├── posts/                        # Example app
-│   ├── models.py                 # Post, Category models
-│   ├── services.py               # Post CRUD logic
-│   ├── selectors.py              # Post queries
-│   ├── views.py                  # Post views
-│   ├── api.py                    # Post API endpoints
-│   └── tests/                    # Post tests
-├── components/                   # django-cotton components
-│   ├── button.html
-│   ├── card.html
-│   └── modal.html
-└── templates/                    # Django templates
-    ├── base.html
-    ├── posts/
-    └── users/
+├── templates/                    # Django templates
+│   ├── base.html                 # Root base template
+│   ├── app_base.html             # App shell base
+│   └── partials/                 # Shared partials
+└── frontend/                     # Vite + React frontend
+    └── {{ project_name }}/
+        └── src/
+            ├── styles/           # CSS files (tokens, base, layout, components, patterns)
+            └── islands/          # React islands registry
 ```
 
 ## Database Migrations
