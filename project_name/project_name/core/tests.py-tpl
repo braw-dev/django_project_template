@@ -149,7 +149,7 @@ class NewsletterTestCase(TestCase):
             email=self.email,
             consented_at=timezone.now(),
         )
-        token = get_newsletter_confirmation_token(signup)
+        token = get_newsletter_confirmation_token(signup=signup)
 
         response = self.client.get(reverse("newsletter:confirm", kwargs={"token": token}))
 

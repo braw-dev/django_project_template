@@ -53,7 +53,11 @@ class ApiTokenAuthCheckResponse(Schema):
 def list_tokens(request, team_slug: str):
     if request.team is None:
         raise HttpError(404, "Team not found")
-    if not user_has_team_perm(request.user, "tenancy.manage_team_api_tokens", request.team):
+    if not user_has_team_perm(
+        user=request.user,
+        permission_name="tenancy.manage_team_api_tokens",
+        team=request.team,
+    ):
         raise HttpError(403, "Permission denied")
     return selectors.list_tokens_for_team(team=request.team)
 

@@ -31,10 +31,11 @@ def _get_standard_permission_action(permission_name: str) -> str | None:
 
 
 def user_has_team_perm(
+    *,
     user: AbstractBaseUser,
     permission_name: str,
     team: models.Team | None,
-    obj=None,
+    obj: object | None = None,
 ) -> bool:
     """Return whether a user has a permission within a specific team."""
     if not getattr(user, "is_authenticated", False):

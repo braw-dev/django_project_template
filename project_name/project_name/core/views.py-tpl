@@ -48,7 +48,7 @@ def _newsletter_signup_view(
             except ValueError as exc:
                 form.add_error("email", str(exc))
             else:
-                send_newsletter_confirmation_email(signup, request)
+                send_newsletter_confirmation_email(signup=signup, request=request)
                 return redirect(success_url)
     return render(
         request,

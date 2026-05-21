@@ -17,6 +17,7 @@ WebhookEventModel = cast(Any, models.WebhookEvent)
 
 
 def verify_webhook_signature(
+    *,
     body: bytes,
     headers: Mapping[str, str],
 ) -> services.VerifiedWebhookEvent:
@@ -25,7 +26,7 @@ def verify_webhook_signature(
     return provider.verify_webhook_signature(body=body, headers=headers)
 
 
-def process_webhook(body: bytes, headers: Mapping[str, str]) -> str:
+def process_webhook(*, body: bytes, headers: Mapping[str, str]) -> str:
     """Verify, deduplicate, and dispatch a billing webhook event."""
     provider = services.get_billing_provider()
     event = provider.verify_webhook_signature(body=body, headers=headers)

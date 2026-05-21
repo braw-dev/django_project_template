@@ -21,7 +21,7 @@ def flag_enabled_tag(flag_name: str, default: bool = False) -> bool:
             <!-- New checkout UI -->
         {% templatetag openblock %} endif {% templatetag closeblock %}
     """
-    return is_flag_enabled(flag_name, default=default)
+    return is_flag_enabled(flag_key=flag_name, default=default)
 
 
 @register.filter(name="flag_enabled")
@@ -35,4 +35,4 @@ def flag_enabled_filter(flag_name: str, default: bool = False) -> bool:
             <!-- New checkout UI -->
         {% templatetag openblock %} endif {% templatetag closeblock %}
     """
-    return is_flag_enabled(flag_name, default=default)
+    return is_flag_enabled(flag_key=flag_name, default=default)

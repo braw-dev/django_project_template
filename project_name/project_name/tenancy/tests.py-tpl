@@ -48,7 +48,7 @@ class TestTeamServices:
         assert created_event.metadata["invitation_id"] == str(invitation.id)
 
         membership = services.accept_invitation_from_token(
-            token=services.get_invitation_token(invitation),
+            token=services.get_invitation_token(invitation=invitation),
             user=outsider,
         )
 
@@ -75,7 +75,7 @@ class TestTeamServices:
 
         with pytest.raises(ValueError, match="different email"):
             services.accept_invitation_from_token(
-                token=services.get_invitation_token(invitation),
+                token=services.get_invitation_token(invitation=invitation),
                 user=outsider,
             )
 
@@ -90,7 +90,7 @@ class TestTeamServices:
 
         with pytest.raises(ValueError, match="Owner role can only be assigned"):
             services.accept_invitation_from_token(
-                token=services.get_invitation_token(invitation),
+                token=services.get_invitation_token(invitation=invitation),
                 user=outsider,
             )
 
@@ -267,7 +267,7 @@ class TestTeamServices:
         )
         request = rf.get("/")
 
-        services.send_invitation_email(invitation, request)
+        services.send_invitation_email(invitation=invitation, request=request)
 
         assert len(mailoutbox) == 1
         assert "Acme" in mailoutbox[0].subject
@@ -315,19 +315,45 @@ class TestPermissions:
         self, owner, admin_user, member_user, team, admin_membership, member_membership
     ):
 
-        assert permissions.user_has_team_perm(owner, "tenancy.manage_team_billing", team) is True
         assert (
-            permissions.user_has_team_perm(admin_user, "tenancy.manage_team_billing", team) is False
+            permissions.user_has_team_perm(
+                user=owner,
+                permission_name="tenancy.manage_team_billing",
+                team=team,
+            )
+            is True
         )
         assert (
-            permissions.user_has_team_perm(admin_user, "billing.change_subscription", team) is True
-        )
-        assert (
-            permissions.user_has_team_perm(member_user, "billing.change_subscription", team)
+            permissions.user_has_team_perm(
+                user=admin_user,
+                permission_name="tenancy.manage_team_billing",
+                team=team,
+            )
             is False
         )
         assert (
-            permissions.user_has_team_perm(member_user, "billing.view_subscription", team) is True
+            permissions.user_has_team_perm(
+                user=admin_user,
+                permission_name="billing.change_subscription",
+                team=team,
+            )
+            is True
+        )
+        assert (
+            permissions.user_has_team_perm(
+                user=member_user,
+                permission_name="billing.change_subscription",
+                team=team,
+            )
+            is False
+        )
+        assert (
+            permissions.user_has_team_perm(
+                user=member_user,
+                permission_name="billing.view_subscription",
+                team=team,
+            )
+            is True
         )
 
 

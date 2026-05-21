@@ -1,0 +1,30 @@
+"""Read-only selectors for operator-run privacy workflows."""
+
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+
+from django.conf import settings
+from django.db.models import QuerySet
+from django.utils import timezone
+
+from .models import User
+
+
+def get_user_by_identifier(*, identifier: str) -> User:
+    """Look up a user by email address or primary key."""
+    email_match = User.objects.filter(email__iexact=identifier).first()
+    if email_match is not None:
+        return email_match
+    return User.objects.get(pk=identifier)
+
+
+def get_users_pending_deletion(*, now: datetime | None = None) -> QuerySet[User]:
+    """Return users whose deletion grace window has elapsed."""
+    current_time = now or timezone.now()
+    grace_days = getattr(settings, "USER_DELETION_GRACE_DAYS", 30)
+    cutoff = current_time - timedelta(days=grace_days)
+    return User.objects.filter(
+        deletion_requested_at__isnull=False,
+        deletion_requested_at__lte=cutoff,
+    )

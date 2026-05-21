@@ -8,7 +8,9 @@ from . import models
 
 from {{ project_name }}.core.audit import record_audit_event
 from {{ project_name }}.core.models import AuditEventType
+from {{ project_name }}.tenancy import models as tenancy_models
 from {{ project_name }}.tenancy.permissions import user_has_team_perm
+from {{ project_name }}.users import models as user_models
 
 
 @dataclass
@@ -19,15 +21,19 @@ class TokenCreationResult:
 
 def create_api_token(
     *,
-    team,
-    user,
+    team: tenancy_models.Team,
+    user: user_models.User,
     name: str,
     scopes: list[str] | None = None,
     expires_at: datetime | None = None,
     environment: str = models.TokenEnvironment.LIVE,
 ) -> TokenCreationResult:
     """Create a team-scoped API token and return the plaintext once."""
-    if not user_has_team_perm(user, "tenancy.manage_team_api_tokens", team):
+    if not user_has_team_perm(
+        user=user,
+        permission_name="tenancy.manage_team_api_tokens",
+        team=team,
+    ):
         raise ValueError("You do not have permission to manage API tokens.")
 
     lookup_id = models.generate_lookup_id()
@@ -60,10 +66,14 @@ def create_api_token(
     return TokenCreationResult(token=token, plaintext=plaintext)
 
 
-def revoke_api_token(*, token: models.ApiToken, user) -> None:
+def revoke_api_token(*, token: models.ApiToken, user: user_models.User) -> None:
     """Revoke a team-scoped API token."""
     token_model = cast(Any, token)
-    if not user_has_team_perm(user, "tenancy.manage_team_api_tokens", token_model.team):
+    if not user_has_team_perm(
+        user=user,
+        permission_name="tenancy.manage_team_api_tokens",
+        team=token_model.team,
+    ):
         raise ValueError("You do not have permission to manage API tokens.")
     if token.revoked_at is not None:
         raise ValueError("This API token has already been revoked.")

@@ -3,6 +3,7 @@ from typing import Any, cast
 
 from django.conf import settings
 from django.core import signing
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -57,7 +58,7 @@ def create_pending_newsletter_signup(
     return signup
 
 
-def get_newsletter_confirmation_token(signup: models.NewsletterSignup) -> str:
+def get_newsletter_confirmation_token(*, signup: models.NewsletterSignup) -> str:
     return signing.dumps(
         {
             "newsletter_signup_id": cast(Any, signup).id,
@@ -68,12 +69,16 @@ def get_newsletter_confirmation_token(signup: models.NewsletterSignup) -> str:
     )
 
 
-def build_newsletter_confirmation_url(signup: models.NewsletterSignup, request) -> str:
-    token = get_newsletter_confirmation_token(signup)
+def build_newsletter_confirmation_url(
+    *, signup: models.NewsletterSignup, request: HttpRequest
+) -> str:
+    token = get_newsletter_confirmation_token(signup=signup)
     return request.build_absolute_uri(reverse("newsletter:confirm", kwargs={"token": token}))
 
 
-def send_newsletter_confirmation_email(signup: models.NewsletterSignup, request) -> bool:
+def send_newsletter_confirmation_email(
+    *, signup: models.NewsletterSignup, request: HttpRequest
+) -> bool:
     cooldown_minutes = getattr(settings, "NEWSLETTER_CONFIRMATION_RESEND_COOLDOWN_MINUTES", 15)
     if signup.confirmation_email_sent_at is not None:
         resend_after = cast(Any, signup.confirmation_email_sent_at) + timedelta(
@@ -82,7 +87,7 @@ def send_newsletter_confirmation_email(signup: models.NewsletterSignup, request)
         if resend_after > timezone.now():
             return False
 
-    confirmation_url = build_newsletter_confirmation_url(signup, request)
+    confirmation_url = build_newsletter_confirmation_url(signup=signup, request=request)
     subject = _("Confirm your %(subscription_label)s subscription") % {
         "subscription_label": get_newsletter_subscription_label(cast(str, signup.purpose))
     }
@@ -102,7 +107,9 @@ def send_newsletter_confirmation_email(signup: models.NewsletterSignup, request)
     return True
 
 
-def confirm_newsletter_signup(*, token: str, request=None) -> models.NewsletterSignup:
+def confirm_newsletter_signup(
+    *, token: str, request: HttpRequest | None = None
+) -> models.NewsletterSignup:
     max_age = getattr(settings, "NEWSLETTER_CONFIRMATION_EXPIRY_HOURS", 72) * 3600
     try:
         payload = signing.loads(

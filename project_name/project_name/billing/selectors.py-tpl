@@ -20,7 +20,7 @@ ACTIVE_SUBSCRIPTION_STATUSES = [
 ]
 
 
-def has_active_subscription(team: tenancy_models.Team) -> bool:
+def has_active_subscription(*, team: tenancy_models.Team) -> bool:
     """Check if team has an active subscription."""
     now = timezone.now()
     return (
@@ -33,7 +33,7 @@ def has_active_subscription(team: tenancy_models.Team) -> bool:
     )
 
 
-def get_active_subscription(team: tenancy_models.Team) -> models.Subscription | None:
+def get_active_subscription(*, team: tenancy_models.Team) -> models.Subscription | None:
     """Get the most recent active subscription for a team."""
     now = timezone.now()
     return (
@@ -62,7 +62,7 @@ def get_subscription_by_external_id(
         return None
 
 
-def has_entitlement(team: tenancy_models.Team, key: str) -> bool:
+def has_entitlement(*, team: tenancy_models.Team, key: str) -> bool:
     """Return whether a team currently has an active entitlement."""
     now = timezone.now()
     return (

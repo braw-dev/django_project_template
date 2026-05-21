@@ -39,7 +39,7 @@ def polar_webhook(request: HttpRequest) -> WebhookResponse | Status:
         500 Internal Server Error with {"status": "error"} on processing failure
     """
     try:
-        status = webhooks.process_webhook(request.body, request.headers)
+        status = webhooks.process_webhook(body=request.body, headers=request.headers)
         return WebhookResponse(status=status)
     except webhooks.WebhookVerificationError as e:
         logger.error("Webhook signature verification failed", extra={"error": str(e)})

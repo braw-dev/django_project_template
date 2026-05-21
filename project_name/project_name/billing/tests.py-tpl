@@ -313,8 +313,14 @@ class TestWebhookProcessing:
             "{{ project_name }}.billing.webhooks.services.get_billing_provider",
             return_value=provider,
         ):
-            first_result = webhooks.process_webhook(b"body", {"webhook-id": "evt_123"})
-            second_result = webhooks.process_webhook(b"body", {"webhook-id": "evt_123"})
+            first_result = webhooks.process_webhook(
+                body=b"body",
+                headers={"webhook-id": "evt_123"},
+            )
+            second_result = webhooks.process_webhook(
+                body=b"body",
+                headers={"webhook-id": "evt_123"},
+            )
 
         assert first_result == "ok"
         assert second_result == "ignored"
@@ -341,7 +347,10 @@ class TestWebhookProcessing:
             ),
             pytest.raises(RuntimeError, match="boom"),
         ):
-            webhooks.process_webhook(b"body", {"webhook-id": "evt_123"})
+            webhooks.process_webhook(
+                body=b"body",
+                headers={"webhook-id": "evt_123"},
+            )
 
         event = models.WebhookEvent.objects.get(external_event_id="evt_123")
         assert event.status == models.WebhookEvent.ProcessingStatus.FAILED
@@ -351,7 +360,7 @@ class TestWebhookProcessing:
 @pytest.mark.django_db
 class TestBillingSelectors:
     def test_has_active_subscription_true(self, subscription):
-        assert selectors.has_active_subscription(subscription.team) is True
+        assert selectors.has_active_subscription(team=subscription.team) is True
 
     def test_has_active_subscription_false_revoked(self, team):
         models.Subscription.all_objects.create(
@@ -363,10 +372,10 @@ class TestBillingSelectors:
             status=models.SubscriptionStatus.REVOKED,
         )
 
-        assert selectors.has_active_subscription(team) is False
+        assert selectors.has_active_subscription(team=team) is False
 
     def test_get_active_subscription(self, subscription):
-        result = selectors.get_active_subscription(subscription.team)
+        result = selectors.get_active_subscription(team=subscription.team)
         assert result == subscription
 
     def test_get_subscription_by_external_id(self, subscription):
@@ -385,7 +394,7 @@ class TestBillingSelectors:
             is_active=True,
         )
 
-        assert selectors.has_entitlement(team, "analytics") is True
+        assert selectors.has_entitlement(team=team, key="analytics") is True
 
 
 @pytest.mark.django_db

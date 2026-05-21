@@ -30,7 +30,11 @@ def require_team_permission(permission_name: str):
         @wraps(view_func)
         def wrapped(request, *args, **kwargs):
             team = getattr(request, "team", None)
-            if not user_has_team_perm(request.user, permission_name, team):
+            if not user_has_team_perm(
+                user=request.user,
+                permission_name=permission_name,
+                team=team,
+            ):
                 raise Http404()
             return view_func(request, *args, **kwargs)
 

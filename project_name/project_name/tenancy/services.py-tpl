@@ -8,6 +8,7 @@ import httpx
 from django.conf import settings
 from django.core import signing
 from django.db import transaction
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -17,6 +18,7 @@ from . import models, permissions
 from {{ project_name }}.core.audit import record_audit_event
 from {{ project_name }}.core.models import AuditEventType
 from {{ project_name }}.core.reauth import did_recently_reauthenticate
+from {{ project_name }}.users import models as user_models
 from {{ project_name }}.users.emails import send_transactional_email
 
 INVITATION_TOKEN_SALT = "tenancy.team-invitation"
@@ -67,7 +69,7 @@ def _check_vies_vat_number(country_code: str, vat_number: str) -> bool:
     return valid_node is not None and valid_node.text == "true"
 
 
-def create_team(*, name: str, slug: str, owner) -> models.Team:
+def create_team(*, name: str, slug: str, owner: user_models.User) -> models.Team:
     """Create a team and add the owner membership."""
     team = TeamModel.objects.create(name=name, slug=slug)
     TeamMembershipModel.all_objects.create(
@@ -87,14 +89,18 @@ def create_team(*, name: str, slug: str, owner) -> models.Team:
 
 def validate_team_vat_number(
     *,
-    actor,
+    actor: user_models.User,
     team: models.Team,
     billing_country: str,
     vat_number: str,
-    request=None,
+    request: HttpRequest | None = None,
 ) -> models.Team:
     """Validate and persist a team's VAT identity using VIES."""
-    if not permissions.user_has_team_perm(actor, "tenancy.manage_team_billing", team):
+    if not permissions.user_has_team_perm(
+        user=actor,
+        permission_name="tenancy.manage_team_billing",
+        team=team,
+    ):
         raise ValueError(_("You do not have permission to manage team billing."))
 
     normalized_country, normalized_vat_number = _normalize_vat_number(billing_country, vat_number)
@@ -131,9 +137,19 @@ def validate_team_vat_number(
     return team
 
 
-def add_user_to_team(*, actor, team: models.Team, user, role: str) -> models.TeamMembership:
+def add_user_to_team(
+    *,
+    actor: user_models.User,
+    team: models.Team,
+    user: user_models.User,
+    role: str,
+) -> models.TeamMembership:
     """Add a user to a team after verifying member-management permission."""
-    if not permissions.user_has_team_perm(actor, "tenancy.manage_team_members", team):
+    if not permissions.user_has_team_perm(
+        user=actor,
+        permission_name="tenancy.manage_team_members",
+        team=team,
+    ):
         raise ValueError(_("You do not have permission to manage team members."))
     if role == models.TeamRole.OWNER:
         raise ValueError(
@@ -160,13 +176,17 @@ def add_user_to_team(*, actor, team: models.Team, user, role: str) -> models.Tea
 
 def transfer_team_ownership(
     *,
-    actor,
+    actor: user_models.User,
     team: models.Team,
-    new_owner,
-    request=None,
+    new_owner: user_models.User,
+    request: HttpRequest | None = None,
 ) -> models.TeamMembership:
     """Transfer team ownership to a different existing team member."""
-    if not permissions.user_has_team_perm(actor, "tenancy.transfer_team_ownership", team):
+    if not permissions.user_has_team_perm(
+        user=actor,
+        permission_name="tenancy.transfer_team_ownership",
+        team=team,
+    ):
         raise ValueError(_("You do not have permission to transfer team ownership."))
     if (
         request is None
@@ -221,14 +241,19 @@ def transfer_team_ownership(
     return new_owner_membership
 
 
-def get_user_teams(user):
-    """Return all teams the user belongs to."""
-    return TeamModel.objects.filter(teammemberships__user=user).distinct()
-
-
-def create_invitation(*, actor, team: models.Team, email: str, role: str) -> models.TeamInvitation:
+def create_invitation(
+    *,
+    actor: user_models.User,
+    team: models.Team,
+    email: str,
+    role: str,
+) -> models.TeamInvitation:
     """Create a team invitation after verifying member-management permission."""
-    if not permissions.user_has_team_perm(actor, "tenancy.manage_team_members", team):
+    if not permissions.user_has_team_perm(
+        user=actor,
+        permission_name="tenancy.manage_team_members",
+        team=team,
+    ):
         raise ValueError(_("You do not have permission to manage team members."))
     if role == models.TeamRole.OWNER:
         raise ValueError(
@@ -267,7 +292,7 @@ def create_invitation(*, actor, team: models.Team, email: str, role: str) -> mod
     return invitation
 
 
-def get_invitation_token(invitation: models.TeamInvitation) -> str:
+def get_invitation_token(*, invitation: models.TeamInvitation) -> str:
     """Create a signed invitation token."""
     invitation_model = cast(Any, invitation)
     return signing.dumps(
@@ -280,15 +305,15 @@ def get_invitation_token(invitation: models.TeamInvitation) -> str:
     )
 
 
-def build_invitation_accept_url(invitation: models.TeamInvitation, request) -> str:
+def build_invitation_accept_url(*, invitation: models.TeamInvitation, request: HttpRequest) -> str:
     """Build an absolute invitation acceptance URL."""
-    token = get_invitation_token(invitation)
+    token = get_invitation_token(invitation=invitation)
     return request.build_absolute_uri(reverse("accept_team_invitation", kwargs={"token": token}))
 
 
-def send_invitation_email(invitation: models.TeamInvitation, request) -> None:
+def send_invitation_email(*, invitation: models.TeamInvitation, request: HttpRequest) -> None:
     """Render and send a team invitation email."""
-    accept_url = build_invitation_accept_url(invitation, request)
+    accept_url = build_invitation_accept_url(invitation=invitation, request=request)
     subject = _("You have been invited to join %(team_name)s") % {"team_name": invitation.team.name}
     send_transactional_email(
         subject=subject,
@@ -303,7 +328,7 @@ def send_invitation_email(invitation: models.TeamInvitation, request) -> None:
     )
 
 
-def accept_invitation_from_token(*, token: str, user) -> models.TeamMembership:
+def accept_invitation_from_token(*, token: str, user: user_models.User) -> models.TeamMembership:
     """Validate a signed token and create the membership if allowed."""
     max_age = getattr(settings, "TEAM_INVITATION_EXPIRY_HOURS", 168) * 3600
     try:
@@ -325,7 +350,7 @@ def accept_invitation_from_token(*, token: str, user) -> models.TeamMembership:
         raise ValueError(_("This invitation has been revoked."))
     if invitation.is_expired:
         raise ValueError(_("This invitation has expired."))
-    if _normalize_email(user.email) != _normalize_email(invitation.email):
+    if _normalize_email(cast(str, user.email)) != _normalize_email(invitation.email):
         raise ValueError(_("This invitation was sent to a different email address."))
     if invitation.role == models.TeamRole.OWNER:
         raise ValueError(

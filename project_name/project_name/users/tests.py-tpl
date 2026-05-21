@@ -14,7 +14,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .admin import UserAdmin
-from .privacy import (
+from .privacy_services import (
     PrivacyOperationError,
     delete_user_data,
     export_user_data,

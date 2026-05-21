@@ -1,0 +1,16 @@
+"""Read-only selectors for team tenancy."""
+
+from typing import Any, cast
+
+from django.db.models import QuerySet
+
+from . import models
+
+from {{ project_name }}.users import models as user_models
+
+TeamModel = cast(Any, models.Team)
+
+
+def get_user_teams(*, user: user_models.User) -> QuerySet[models.Team]:
+    """Return all teams the user belongs to."""
+    return TeamModel.objects.filter(teammemberships__user=user).distinct()

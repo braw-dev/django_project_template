@@ -2,6 +2,8 @@
 
 from typing import Any, cast
 
+from django.db.models import QuerySet
+
 from . import models
 
 from {{ project_name }}.tenancy import models as tenancy_models
@@ -9,7 +11,7 @@ from {{ project_name }}.tenancy import models as tenancy_models
 ApiTokenModel = cast(Any, models.ApiToken)
 
 
-def list_tokens_for_team(*, team: tenancy_models.Team):
+def list_tokens_for_team(*, team: tenancy_models.Team) -> QuerySet[models.ApiToken]:
     """List all API tokens for a team."""
     return ApiTokenModel.all_objects.filter(team=team).order_by("-created_at")
 

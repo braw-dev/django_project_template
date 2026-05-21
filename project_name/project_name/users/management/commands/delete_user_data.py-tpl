@@ -4,11 +4,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.core.serializers.json import DjangoJSONEncoder
 
 from {{ project_name }}.users.models import User
-from {{ project_name }}.users.privacy import (
-    PrivacyOperationError,
-    delete_user_data,
-    get_user_by_identifier,
-)
+from {{ project_name }}.users.privacy_selectors import get_user_by_identifier
+from {{ project_name }}.users.privacy_services import PrivacyOperationError, delete_user_data
 
 
 class Command(BaseCommand):
@@ -28,7 +25,7 @@ class Command(BaseCommand):
             raise CommandError("Refusing to delete user data without --yes")
 
         try:
-            user = get_user_by_identifier(identifier)
+            user = get_user_by_identifier(identifier=identifier)
         except getattr(User, "DoesNotExist", Exception) as exc:
             raise CommandError(f"User not found: {identifier}") from exc
 

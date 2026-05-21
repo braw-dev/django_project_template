@@ -69,10 +69,14 @@ def get_subscription(
     request_user = cast(Any, request).user
     if not request_user.is_authenticated:
         return Status(403, ErrorResponse(error="Authentication required"))
-    if not user_has_team_perm(request_user, "tenancy.manage_team_billing", team):
+    if not user_has_team_perm(
+        user=request_user,
+        permission_name="tenancy.manage_team_billing",
+        team=team,
+    ):
         return Status(403, ErrorResponse(error="Permission denied"))
 
-    subscription = selectors.get_active_subscription(team)
+    subscription = selectors.get_active_subscription(team=team)
 
     if not subscription:
         return SubscriptionDetailResponse(subscription=None)
@@ -127,7 +131,11 @@ def create_checkout(
     request_user = cast(Any, request).user
     if not request_user.is_authenticated:
         return Status(403, ErrorResponse(error="Authentication required"))
-    if not user_has_team_perm(request_user, "tenancy.manage_team_billing", team):
+    if not user_has_team_perm(
+        user=request_user,
+        permission_name="tenancy.manage_team_billing",
+        team=team,
+    ):
         return Status(403, ErrorResponse(error="Permission denied"))
 
     try:
@@ -186,7 +194,11 @@ def create_customer_portal(
     request_user = cast(Any, request).user
     if not request_user.is_authenticated:
         return Status(403, ErrorResponse(error="Authentication required"))
-    if not user_has_team_perm(request_user, "tenancy.manage_team_billing", team):
+    if not user_has_team_perm(
+        user=request_user,
+        permission_name="tenancy.manage_team_billing",
+        team=team,
+    ):
         return Status(403, ErrorResponse(error="Permission denied"))
     if not did_recently_reauthenticate(request):
         return Status(403, ErrorResponse(error=REAUTHENTICATION_REQUIRED_ERROR))

@@ -46,7 +46,7 @@ def feature_flag(
     def decorator(view_func: Callable) -> Callable:
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
-            if is_flag_enabled(flag_name):
+            if is_flag_enabled(flag_key=flag_name):
                 return view_func(request, *args, **kwargs)
 
             if raise_404:
