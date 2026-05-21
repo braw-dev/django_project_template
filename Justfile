@@ -14,8 +14,8 @@ install-dev: install-python-dev install-frontend-dev
 
 # Generates a self-signed certificate for the development server
 mkcert:
-    @if [ ! -f /tmp/{{project_name}}.crt ]; then \
-        mkcert -cert-file=/tmp/{{project_name}}.crt -key-file=/tmp/{{project_name}}.key localhost 127.0.0.1; \
+    @if [ ! -f /tmp/{{ project_name }}.crt ]; then \
+        mkcert -cert-file=/tmp/{{ project_name }}.crt -key-file=/tmp/{{ project_name }}.key localhost 127.0.0.1; \
     fi
 
 # Link the AI folders
@@ -85,9 +85,10 @@ manage +ARGS:
 # Run the development server with HTTPS
 [working-directory('{{ project_name }}')]
 runserver: mkcert
-    @{% templatetag openvariable %} manage {% templatetag closevariable %} runserver_plus --cert-file=/tmp/{{project_name}}.crt --key-file=/tmp/{{project_name}}.key
+    @{% templatetag openvariable %} manage {% templatetag closevariable %} runserver_plus --cert-file=/tmp/{{ project_name }}.crt --key-file=/tmp/{{ project_name }}.key
 
 # Runs the development server without HTTPS
+[working-directory('{{ project_name }}')]
 runserver-no-https:
     @{% templatetag openvariable %} manage {% templatetag closevariable %} runserver
 
