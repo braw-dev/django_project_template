@@ -92,7 +92,8 @@
 }
 
 .ui-pricing-grid,
-.ui-feature-grid {
+.ui-feature-grid,
+.ui-stat-grid {
     display: grid;
     gap: var(--ui-space-6);
 }
@@ -209,6 +210,7 @@
     .ui-hero__layout,
     .ui-pricing-grid,
     .ui-feature-grid,
+    .ui-stat-grid,
     .ui-footer__grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -219,7 +221,8 @@
         grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 28rem);
     }
 
-    .ui-pricing-grid {
+    .ui-pricing-grid,
+    .ui-stat-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 

@@ -10,6 +10,7 @@ from {{ project_name }}.core.consent import (
     get_optional_tracking_consent,
     has_optional_tracking_consent,
 )
+from {{ project_name }}.tenancy import selectors as tenancy_selectors
 
 register = template.Library()
 
@@ -52,6 +53,13 @@ def react_island(component_name: str, props=None):
         component_name,
         json.dumps(props or {}),
     )
+
+
+@register.simple_tag
+def user_teams(user):
+    if not getattr(user, "is_authenticated", False):
+        return []
+    return tenancy_selectors.get_user_teams(user=user)
 
 
 class ConsentRequiredNode(template.Node):

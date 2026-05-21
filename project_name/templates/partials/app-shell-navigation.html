@@ -1,0 +1,109 @@
+{% load i18n %}
+<div class="ui-stack ui-stack--lg">
+    {% include "partials/brand.html" with href='/' variant='square' %}
+    <section class="ui-app-nav__section ui-stack" aria-label="{% trans 'Team context' %}">
+        <div class="ui-stack">
+            <p class="ui-eyebrow">{% trans "Team context" %}</p>
+            {% if request.team %}
+                <div class="ui-card">
+                    <div class="ui-card__body ui-stack">
+                        <div class="ui-stack">
+                            <div class="ui-cluster ui-cluster--between">
+                                <strong>{{ request.team.name }}</strong>
+                                {% if request.team_membership %}
+                                    <span class="ui-badge ui-badge--accent">
+                                        {% if request.team_membership.role == "owner" %}
+                                            {% trans "Owner" %}
+                                        {% elif request.team_membership.role == "admin" %}
+                                            {% trans "Admin" %}
+                                        {% else %}
+                                            {% trans "Member" %}
+                                        {% endif %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <p class="ui-field__help">{% trans "Active Team" %}</p>
+                        </div>
+                        {% if app_user_teams|length > 1 %}
+                            <details class="ui-menu ui-team-switcher" data-testid="team-switcher">
+                                <summary class="ui-menu__summary ui-button ui-button--outline">
+                                    <span>{% trans "Switch team" %}</span>
+                                </summary>
+                                <div class="ui-menu__panel">
+                                    <ul class="ui-team-switcher__list ui-list-reset">
+                                        {% for team in app_user_teams %}
+                                            <li>
+                                                <a class="ui-team-switcher__option {% if request.team and request.team.slug == team.slug %}is-current{% endif %}"
+                                                   href="{% url 'team_dashboard' team_slug=team.slug %}">
+                                                    <span>
+                                                        <strong>{{ team.name }}</strong>
+                                                        <span class="ui-field__help">/{{ team.slug }}</span>
+                                                    </span>
+                                                    {% if request.team and request.team.slug == team.slug %}
+                                                        <span class="ui-badge">{% trans "Current" %}</span>
+                                                    {% endif %}
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </details>
+                        {% endif %}
+                        <div class="ui-control-group">
+                            <a class="ui-button ui-button--outline"
+                               href="{% url 'team_dashboard' team_slug=request.team.slug %}">{% trans "Open team" %}</a>
+                            <a class="ui-button ui-button--ghost" href="{% url 'pricing' %}">{% trans "Billing" %}</a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="ui-card">
+                    <div class="ui-card__body ui-stack">
+                        <div>
+                            <strong>{% trans "Personal workspace" %}</strong>
+                            <p class="ui-field__help">{% trans "Use this area for account-level pages and starter app navigation." %}</p>
+                        </div>
+                        {% if app_user_teams %}
+                            <ul class="ui-team-switcher__list ui-list-reset">
+                                {% for team in app_user_teams %}
+                                    <li>
+                                        <a class="ui-team-switcher__option"
+                                           href="{% url 'team_dashboard' team_slug=team.slug %}">
+                                            <span>
+                                                <strong>{{ team.name }}</strong>
+                                                <span class="ui-field__help">/{{ team.slug }}</span>
+                                            </span>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        <a class="ui-button ui-button--outline" href="{% url 'account:dashboard' %}">{% trans "Open dashboard" %}</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+    <nav class="ui-app-nav__section" aria-label="{% trans 'Application' %}">
+        <ul class="ui-app-nav ui-list-reset">
+            <li>
+                <a class="ui-app-nav__link {% if request.resolver_match and request.resolver_match.view_name == 'account:dashboard' and not request.team %}is-current{% endif %}"
+                   href="{% url 'account:dashboard' %}">{% trans "Overview" %}</a>
+            </li>
+            {% if request.team %}
+                <li>
+                    <a class="ui-app-nav__link {% if request.resolver_match and request.resolver_match.view_name == 'team_dashboard' %}is-current{% endif %}"
+                       href="{% url 'team_dashboard' team_slug=request.team.slug %}">{% trans "Team dashboard" %}</a>
+                </li>
+            {% endif %}
+            <li>
+                <a class="ui-app-nav__link {% if request.resolver_match and request.resolver_match.view_name == 'pricing' %}is-current{% endif %}"
+                   href="{% url 'pricing' %}">{% trans "Billing" %}</a>
+            </li>
+            <li>
+                <a class="ui-app-nav__link"
+                   href="{% url 'account_email' %}">{% trans "Security & account" %}</a>
+            </li>
+        </ul>
+    </nav>
+</div>

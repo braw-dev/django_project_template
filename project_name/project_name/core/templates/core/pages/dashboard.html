@@ -16,26 +16,98 @@
                 {% endif %}
             </p>
         </header>
-        <div class="ui-feature-grid">
-            <article class="ui-card">
-                <div class="ui-card__body ui-stack">
-                    <h3>{% trans "Billing" %}</h3>
-                    <p class="ui-field__help">{% trans "Billing belongs to the active team context and should be discoverable from app settings." %}</p>
-                    <a class="ui-button ui-button--outline" href="{% url 'pricing' %}">{% trans "Review plans" %}</a>
-                </div>
-            </article>
-            <article class="ui-card">
-                <div class="ui-card__body ui-stack">
-                    <h3>{% trans "Members" %}</h3>
-                    <p class="ui-field__help">{% trans "Use this area as the starting point for invitation and membership-management starter screens." %}</p>
+        <div class="ui-stat-grid">
+            <article class="ui-stat-card">
+                <span class="ui-stat-card__label">{% trans "Context" %}</span>
+                <strong class="ui-stat-card__value">
                     {% if request.team %}
-                        <a class="ui-button ui-button--outline"
-                           href="{% url 'transfer_team_ownership' team_slug=request.team.slug %}">{% trans "Manage team" %}</a>
+                        {{ request.team.name }}
                     {% else %}
-                        <span class="ui-badge">{% trans "No active team" %}</span>
+                        {% trans "Account" %}
                     {% endif %}
-                </div>
+                </strong>
+                <p class="ui-field__help">
+                    {% if request.team_membership %}
+                        {% if request.team_membership.role == "owner" %}
+                            {% trans "Owner role" %}
+                        {% elif request.team_membership.role == "admin" %}
+                            {% trans "Admin role" %}
+                        {% else %}
+                            {% trans "Member role" %}
+                        {% endif %}
+                    {% else %}
+                        {% trans "No active team selected" %}
+                    {% endif %}
+                </p>
             </article>
+            <article class="ui-stat-card">
+                <span class="ui-stat-card__label">{% trans "Billing" %}</span>
+                <strong class="ui-stat-card__value">{% trans "Team-owned" %}</strong>
+                <p class="ui-field__help">{% trans "Subscription and invoice flows should live with the active team context." %}</p>
+            </article>
+            <article class="ui-stat-card">
+                <span class="ui-stat-card__label">{% trans "Support" %}</span>
+                <strong class="ui-stat-card__value">{% trans "Ready" %}</strong>
+                <p class="ui-field__help">{% trans "Help, legal, and contact flows ship as starter surfaces by default." %}</p>
+            </article>
+        </div>
+        <div class="ui-feature-grid">
+            <section class="ui-settings-section ui-card">
+                <div class="ui-card__body ui-stack ui-stack--lg">
+                    <div class="ui-page-header">
+                        <h3>{% trans "Team settings" %}</h3>
+                        <p class="ui-field__help">{% trans "Use this section for billing, membership management, and other active-team settings." %}</p>
+                    </div>
+                    <dl class="ui-detail-summary">
+                        <div class="ui-detail-summary__row">
+                            <dt class="ui-detail-summary__term">{% trans "Billing" %}</dt>
+                            <dd>{% trans "Keep subscription management discoverable from the team context area." %}</dd>
+                        </div>
+                        <div class="ui-detail-summary__row">
+                            <dt class="ui-detail-summary__term">{% trans "Members" %}</dt>
+                            <dd>{% trans "Present Owner, Admin, and Member roles clearly in starter management screens." %}</dd>
+                        </div>
+                        <div class="ui-detail-summary__row">
+                            <dt class="ui-detail-summary__term">{% trans "Invitations" %}</dt>
+                            <dd>{% trans "Invitation states should be visible and distinct in the member-management flow." %}</dd>
+                        </div>
+                    </dl>
+                    <div class="ui-page-header__actions">
+                        {% if request.team %}
+                            <a class="ui-button ui-button--outline" href="{% url 'pricing' %}">{% trans "Review plans" %}</a>
+                            <a class="ui-button ui-button--ghost" href="{% url 'pages:support_index' %}">{% trans "Open help center" %}</a>
+                        {% else %}
+                            <span class="ui-badge">{% trans "No active team" %}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+            <section class="ui-settings-section ui-card">
+                <div class="ui-card__body ui-stack ui-stack--lg">
+                    <div class="ui-page-header">
+                        <h3>{% trans "Account and security" %}</h3>
+                        <p class="ui-field__help">{% trans "Account-level settings should stay separate from team-scoped administration." %}</p>
+                    </div>
+                    <dl class="ui-detail-summary">
+                        <div class="ui-detail-summary__row">
+                            <dt class="ui-detail-summary__term">{% trans "Email settings" %}</dt>
+                            <dd>{% trans "Manage verified addresses and notification delivery preferences." %}</dd>
+                        </div>
+                        <div class="ui-detail-summary__row">
+                            <dt class="ui-detail-summary__term">{% trans "Password and MFA" %}</dt>
+                            <dd>{% trans "Authentication hardening should remain easy to find from the account menu." %}</dd>
+                        </div>
+                        <div class="ui-detail-summary__row">
+                            <dt class="ui-detail-summary__term">{% trans "Support" %}</dt>
+                            <dd>{% trans "Link back to the help center when users need documentation or direct contact." %}</dd>
+                        </div>
+                    </dl>
+                    <div class="ui-page-header__actions">
+                        <a class="ui-button ui-button--outline" href="{% url 'account_email' %}">{% trans "Open account settings" %}</a>
+                        <a class="ui-button ui-button--ghost" href="{% url 'pages:support_index' %}">{% trans "Browse support" %}</a>
+                    </div>
+                </div>
+            </section>
         </div>
     </section>
 {% endblock app_content %}

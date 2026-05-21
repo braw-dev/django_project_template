@@ -5,57 +5,24 @@
 {% endblock footer %}
 
 {% block body %}
+    {% user_teams request.user as app_user_teams %}
     <div class="ui-app-shell">
+        <header class="ui-app-shell__mobile-bar">
+            <div class="ui-container ui-app-shell__mobile-bar-inner">
+                {% include "partials/brand.html" with href='/' variant='square' %}
+                <details class="ui-app-drawer" data-testid="app-mobile-nav">
+                    <summary class="ui-app-drawer__summary ui-button ui-button--outline">
+                        <span>{% trans "Navigation" %}</span>
+                    </summary>
+                    <div class="ui-app-drawer__panel">
+                        {% include "partials/app-shell-navigation.html" %}
+                    </div>
+                </details>
+            </div>
+        </header>
         <div class="ui-container ui-app-shell__frame">
             <aside class="ui-app-shell__sidebar" aria-label="{% trans 'Team navigation' %}">
-                <div class="ui-stack ui-stack--lg">
-                    {% include "partials/brand.html" with href='/' variant='square' %}
-                    <section class="ui-stack">
-                        <p class="ui-eyebrow">{% trans "Team context" %}</p>
-                        {% if request.team %}
-                            <div class="ui-card">
-                                <div class="ui-card__body ui-stack">
-                                    <div>
-                                        <strong>{{ request.team.name }}</strong>
-                                        <p class="ui-field__help">{% trans "Active Team" %}</p>
-                                    </div>
-                                    <div class="ui-cluster">
-                                        <a class="ui-button ui-button--outline"
-                                           href="{% url 'team_dashboard' team_slug=request.team.slug %}">{% trans "Open team" %}</a>
-                                        <a class="ui-button ui-button--ghost"
-                                           href="{% url 'transfer_team_ownership' team_slug=request.team.slug %}">{% trans "Team settings" %}</a>
-                                    </div>
-                                </div>
-                            </div>
-                        {% else %}
-                            <div class="ui-card">
-                                <div class="ui-card__body ui-stack">
-                                    <div>
-                                        <strong>{% trans "Personal workspace" %}</strong>
-                                        <p class="ui-field__help">{% trans "Use this area for account-level pages and starter app navigation." %}</p>
-                                    </div>
-                                    <a class="ui-button ui-button--outline" href="{% url 'account:dashboard' %}">{% trans "Open dashboard" %}</a>
-                                </div>
-                            </div>
-                        {% endif %}
-                    </section>
-                    <nav aria-label="{% trans 'Application' %}">
-                        <ul class="ui-nav ui-list-reset">
-                            {% if request.team %}
-                                <li>
-                                    <a class="ui-nav__link"
-                                       href="{% url 'team_dashboard' team_slug=request.team.slug %}">{% trans "Dashboard" %}</a>
-                                </li>
-                            {% endif %}
-                            <li>
-                                <a class="ui-nav__link" href="{% url 'account:dashboard' %}">{% trans "Overview" %}</a>
-                            </li>
-                            <li>
-                                <a class="ui-nav__link" href="{% url 'pricing' %}">{% trans "Billing" %}</a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
+                {% include "partials/app-shell-navigation.html" %}
             </aside>
             <div class="ui-app-shell__content">
                 <header class="ui-topbar" aria-label="{% trans 'Application toolbar' %}">
@@ -63,19 +30,19 @@
                         <p class="ui-eyebrow">{% trans "Application" %}</p>
                         <h1>{% block app_title %}{% trans "Dashboard" %}{% endblock %}</h1>
                     </div>
-                    <div class="ui-control-group">
+                    <div class="ui-control-group ui-control-group--toolbar">
                         {% include "partials/language-switcher.html" with redirect_to=request.get_full_path %}
                         {% include "partials/theme-switcher.html" %}
                         {% trans "Account" as account_label %}
-                        <details class="ui-menu">
+                        <details class="ui-menu" data-testid="account-menu">
                             <summary class="ui-menu__summary ui-button ui-button--outline">
                                 <span>{{ request.user.email|default:account_label }}</span>
                             </summary>
                             <div class="ui-menu__panel">
                                 <div class="ui-stack">
-                                    <a href="{% url 'account_email' %}" class="ui-nav__link">{% trans "Email settings" %}</a>
-                                    <a href="{% url 'account_change_password' %}" class="ui-nav__link">{% trans "Password" %}</a>
-                                    <a href="{% url 'account_logout' %}" class="ui-nav__link">{% trans "Sign out" %}</a>
+                                    <a href="{% url 'account_email' %}" class="ui-app-nav__link">{% trans "Email settings" %}</a>
+                                    <a href="{% url 'account_change_password' %}" class="ui-app-nav__link">{% trans "Password" %}</a>
+                                    <a href="{% url 'account_logout' %}" class="ui-app-nav__link">{% trans "Sign out" %}</a>
                                 </div>
                             </div>
                         </details>

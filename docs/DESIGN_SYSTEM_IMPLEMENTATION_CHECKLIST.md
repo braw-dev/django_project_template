@@ -43,49 +43,49 @@ The first pass is done when:
 
 ### 1. Create the CSS architecture
 
-- [ ] Add a layered stylesheet structure for the frontend design system
-- [ ] Separate files by concern, not by individual component explosion
+- [x] Add a layered stylesheet structure for the frontend design system
+- [x] Separate files by concern, not by individual component explosion
 - [ ] Prefer a structure like:
-    - [ ] `tokens.css`
-    - [ ] `base.css`
-    - [ ] `layout.css`
-    - [ ] `components.css`
-    - [ ] `patterns.css`
+    - [x] `tokens.css`
+    - [x] `base.css`
+    - [x] `layout.css`
+    - [x] `components.css`
+    - [x] `patterns.css`
     - [ ] optional tiny `utilities.css` only if truly needed
 - [ ] Ensure the final import path from the existing Vite entrypoint is clear and documented
 
 ### 2. Define the token system
 
-- [ ] Create raw palette tokens
-- [ ] Create semantic tokens consumed by components directly
+- [x] Create raw palette tokens
+- [x] Create semantic tokens consumed by components directly
 - [ ] Add tokens for at least:
-    - [ ] primary/secondary surfaces
-    - [ ] text/default/muted
-    - [ ] border
-    - [ ] info/success/warning/error
-    - [ ] destructive action styling needs
-    - [ ] focus ring
-    - [ ] radius
-    - [ ] shadow
-    - [ ] typography roles
-    - [ ] content widths
-    - [ ] spacing rhythm
-    - [ ] density scale
-- [ ] Keep the token model to two layers by default: raw palette + semantic tokens
+    - [x] primary/secondary surfaces
+    - [x] text/default/muted
+    - [x] border
+    - [x] info/success/warning/error
+    - [x] destructive action styling needs
+    - [x] focus ring
+    - [x] radius
+    - [x] shadow
+    - [x] typography roles
+    - [x] content widths
+    - [x] spacing rhythm
+    - [x] density scale
+- [x] Keep the token model to two layers by default: raw palette + semantic tokens
 
 ### 3. Implement theme selection
 
-- [ ] Drive theme selection through HTML attributes and CSS variables
-- [ ] Follow system light/dark preference by default
-- [ ] Persist explicit user choice when set
-- [ ] Avoid frontend boot dependency for initial theme render
-- [ ] Respect `prefers-reduced-motion`
+- [x] Drive theme selection through HTML attributes and CSS variables
+- [x] Follow system light/dark preference by default
+- [x] Persist explicit user choice when set
+- [x] Avoid frontend boot dependency for initial theme render
+- [x] Respect `prefers-reduced-motion`
 
 ### 4. Create starter theme presets
 
-- [ ] Ship one canonical default theme
-- [ ] Ship a very small number of additional starter presets
-- [ ] Keep downstream token overrides as the main customization path
+- [x] Ship one canonical default theme
+- [x] Ship a very small number of additional starter presets
+- [x] Keep downstream token overrides as the main customization path
 - [ ] Do not build a theme gallery
 
 ### 5. Establish brand asset conventions
@@ -100,16 +100,16 @@ The first pass is done when:
 
 ### 6. Replace Cotton as a foundation
 
-- [ ] Remove `django-cotton` as a foundational UI dependency if its remaining usage can be replaced
+- [x] Remove `django-cotton` as a foundational UI dependency if its remaining usage can be replaced
       cleanly
-- [ ] Replace `<c-consent />` usage with native template composition
+- [x] Replace `<c-consent />` usage with native template composition
 - [ ] Remove Cotton-oriented docs/instructions once no longer needed
 - [ ] Do not leave Cotton described as the primary component model in agent docs
 
 ### Phase 1 verification
 
-- [ ] Fresh generated project builds successfully
-- [ ] Theme switching works without flash on first render
+- [x] Fresh generated project builds successfully
+- [x] Theme switching works without flash on first render
 - [ ] Token overrides can visibly restyle the generated project
 - [ ] Brand asset override points are discoverable and functional
 
@@ -119,18 +119,18 @@ The first pass is done when:
 
 ### 7. Build layout primitives
 
-- [ ] Canonical containers for narrow/default/wide/full widths
-- [ ] Stack/cluster/section/page spacing primitives
-- [ ] Responsive width conventions exposed through both classes and shells
+- [x] Canonical containers for narrow/default/wide/full widths
+- [x] Stack/cluster/section/page spacing primitives
+- [x] Responsive width conventions exposed through both classes and shells
 - [ ] Logical start/end naming where appropriate
 
 ### 8. Build typography and prose layer
 
-- [ ] Body/UI typography role
-- [ ] Heading/emphasis typography role
-- [ ] Marketing and major structural heading treatment
-- [ ] Canonical prose styling for long-form content
-- [ ] Inline code and code block styling
+- [x] Body/UI typography role
+- [x] Heading/emphasis typography role
+- [x] Marketing and major structural heading treatment
+- [x] Canonical prose styling for long-form content
+- [x] Inline code and code block styling
 - [ ] Embedded prose callout/notice pattern
 
 ### 9. Build feedback primitives
@@ -146,7 +146,7 @@ The first pass is done when:
 
 ### 10. Build form primitives
 
-- [ ] Buttons and button variants
+- [x] Buttons and button variants
 - [ ] Destructive action variant naming
 - [ ] Field wrapper pattern
 - [ ] Input, textarea, select, checkbox, radio
@@ -171,26 +171,26 @@ The first pass is done when:
 - [ ] Metadata Row pattern
 - [ ] Identity Row pattern
 - [ ] File Row pattern
-- [ ] Detail summary pattern using `dl` semantics where appropriate
+- [x] Detail summary pattern using `dl` semantics where appropriate
 - [ ] Inline metadata/status row guidance
 - [ ] Optional list selection support where appropriate
 
 ### 13. Build supporting stable subpatterns
 
-- [ ] Page header/toolbar
+- [x] Page header/toolbar
 - [ ] Optional breadcrumb slot
 - [ ] Settings section pattern
 - [ ] Danger zone section
 - [ ] Copy action primitive
-- [ ] Keyboard shortcut hint style
-- [ ] Icon slot contract
+- [x] Keyboard shortcut hint style
+- [x] Icon slot contract
 - [ ] Upload surface pattern
-- [ ] Accessibility helpers including skip-link expectations and screen-reader-only helpers
+- [x] Accessibility helpers including skip-link expectations and screen-reader-only helpers
 
 ### 14. Accessibility and internationalization pass
 
-- [ ] Visible focus treatment is explicit and themeable
-- [ ] Stable patterns use semantic landmarks and semantics by default
+- [x] Visible focus treatment is explicit and themeable
+- [x] Stable patterns use semantic landmarks and semantics by default
 - [ ] RTL is considered in layout, separators, icon slots, and directional icon behavior
 - [ ] Directional icons flip/adapt logically where meaning depends on direction
 - [ ] Avoid left/right language in the stable API where leading/trailing or start/end is better
@@ -201,7 +201,7 @@ The first pass is done when:
 - [ ] Stable primitives can be restyled through tokens
 - [ ] Basic responsive behavior is correct on narrow screens
 - [ ] Accessibility review on core primitives passes manual inspection
-- [ ] Generated project lint/format/tests still pass
+- [x] Generated project lint/format/tests still pass
 
 ---
 
@@ -209,41 +209,41 @@ The first pass is done when:
 
 ### 15. Marketing shell
 
-- [ ] Production-ready header/nav
-- [ ] Brand slot with logo/text fallback
-- [ ] Production-ready footer
-- [ ] Trust/legal link cluster
-- [ ] Support/contact/help CTA support
-- [ ] Responsive mobile-first navigation behavior
+- [x] Production-ready header/nav
+- [x] Brand slot with logo/text fallback
+- [x] Production-ready footer
+- [x] Trust/legal link cluster
+- [x] Support/contact/help CTA support
+- [x] Responsive mobile-first navigation behavior
 
 ### 16. Auth shell
 
-- [ ] Production-ready auth layout using new brand asset conventions
-- [ ] Message/toast rendering consistent with system feedback patterns
-- [ ] Narrow content width and strong task focus
-- [ ] Replace hardcoded logo path conventions with new brand slot/asset model
+- [x] Production-ready auth layout using new brand asset conventions
+- [x] Message/toast rendering consistent with system feedback patterns
+- [x] Narrow content width and strong task focus
+- [x] Replace hardcoded logo path conventions with new brand slot/asset model
 
 ### 17. App shell
 
-- [ ] Sidebar-first desktop navigation
-- [ ] Drawer/mobile nav on small screens
-- [ ] Top bar for context/actions
-- [ ] Skip link
-- [ ] Semantic landmarks (`header`, `nav`, `main`, etc.)
-- [ ] Production-ready account menu
-- [ ] Production-ready language switcher if shipped
-- [ ] Production-ready theme switcher if shipped
-- [ ] Canonical team-context area
-- [ ] Active Team switcher control
+- [x] Sidebar-first desktop navigation
+- [x] Drawer/mobile nav on small screens
+- [x] Top bar for context/actions
+- [x] Skip link
+- [x] Semantic landmarks (`header`, `nav`, `main`, etc.)
+- [x] Production-ready account menu
+- [x] Production-ready language switcher if shipped
+- [x] Production-ready theme switcher if shipped
+- [x] Canonical team-context area
+- [x] Active Team switcher control
 - [ ] Discoverable team settings/member-management/billing access points
-- [ ] Do not ship fake notifications entry UI
+- [x] Do not ship fake notifications entry UI
 
 ### Phase 3 verification
 
 - [ ] Shells are coherent across marketing/auth/app contexts
 - [ ] Mobile nav/drawer works accessibly
-- [ ] Account menu and team switcher work coherently
-- [ ] Skip link and landmarks are present and useful
+- [x] Account menu and team switcher work coherently
+- [x] Skip link and landmarks are present and useful
 
 ---
 
@@ -253,15 +253,15 @@ The first pass is done when:
 
 Prioritize real shipped pages over a component showcase.
 
-- [ ] `base.html`
-- [ ] `app_base.html`
-- [ ] shared header/footer areas
-- [ ] allauth/auth layouts
-- [ ] homepage
-- [ ] pricing page
-- [ ] support/help pages
-- [ ] page detail / long-form content pages
-- [ ] at least one app/dashboard/settings-style page
+- [x] `base.html`
+- [x] `app_base.html`
+- [x] shared header/footer areas
+- [x] allauth/auth layouts
+- [x] homepage
+- [x] pricing page
+- [x] support/help pages
+- [x] page detail / long-form content pages
+- [x] at least one app/dashboard/settings-style page
 
 ### 19. Remove visible legacy public contract
 
@@ -282,17 +282,17 @@ Prioritize real shipped pages over a component showcase.
 
 ### 20. Marketing starter patterns
 
-- [ ] Hero
-- [ ] Feature grid
-- [ ] Pricing presentation
-- [ ] FAQ presentation
+- [x] Hero
+- [x] Feature grid
+- [x] Pricing presentation
+- [x] FAQ presentation
 - [ ] CTA band
-- [ ] Support/contact starter pattern
+- [x] Support/contact starter pattern
 
 ### 21. App starter patterns
 
-- [ ] KPI/stat cards
-- [ ] Dashboard widgets
+- [x] KPI/stat cards
+- [x] Dashboard widgets
 - [ ] First-run/onboarding starter screen if useful
 - [ ] Billing/plan summary starter pattern
 - [ ] Invitation/member-management screen pattern
@@ -346,14 +346,14 @@ Prioritize real shipped pages over a component showcase.
 
 ### 26. Record the ADR
 
-- [ ] Add an ADR for the design-system direction
+- [x] Add an ADR for the design-system direction
 - [ ] Capture at least:
-    - [ ] semantic `ui-*` public API
-    - [ ] CSS-token theme model
-    - [ ] Django-first composition model
-    - [ ] stable API vs starter patterns split
-    - [ ] Tailwind retained only as tooling
-    - [ ] Cotton no longer foundational
+    - [x] semantic `ui-*` public API
+    - [x] CSS-token theme model
+    - [x] Django-first composition model
+    - [x] stable API vs starter patterns split
+    - [x] Tailwind retained only as tooling
+    - [x] Cotton no longer foundational
 
 ### Phase 6 verification
 
@@ -369,24 +369,24 @@ Prioritize real shipped pages over a component showcase.
 
 Always verify a freshly generated project, not just the template source.
 
-- [ ] Generate a fresh project from the template
-- [ ] Install dependencies
-- [ ] Run generated-project lint checks
-- [ ] Run generated-project formatting checks
-- [ ] Run generated-project backend tests
+- [x] Generate a fresh project from the template
+- [x] Install dependencies
+- [x] Run generated-project lint checks
+- [x] Run generated-project formatting checks
+- [x] Run generated-project backend tests
 
 ### 28. Add critical Playwright coverage
 
 Prefer critical-path shell/system coverage over exhaustive component browser testing.
 
-- [ ] theme selection / persistence
+- [x] theme selection / persistence
 - [ ] mobile nav drawer behavior
 - [ ] account menu behavior
 - [ ] Active Team switcher behavior if implemented in browser flows
 - [ ] dialog/menu accessibility-critical behavior
 - [ ] copy action feedback
-- [ ] brand slot/logo fallback rendering where practical
-- [ ] auth shell renders correctly
+- [x] brand slot/logo fallback rendering where practical
+- [x] auth shell renders correctly
 
 ### 29. Keep lower-level testing pragmatic
 
@@ -395,10 +395,10 @@ Prefer critical-path shell/system coverage over exhaustive component browser tes
 
 ### Final verification checklist
 
-- [ ] Fresh generated project passes lint
-- [ ] Fresh generated project passes format checks
-- [ ] Fresh generated project passes backend tests
-- [ ] Critical Playwright tests pass
+- [x] Fresh generated project passes lint
+- [x] Fresh generated project passes format checks
+- [x] Fresh generated project passes backend tests
+- [x] Critical Playwright tests pass
 - [ ] Core pages and shells look coherent in both light and dark themes
 - [ ] Mobile-first behavior is acceptable across shells and key pages
 - [ ] Accessibility basics are intact after migration
