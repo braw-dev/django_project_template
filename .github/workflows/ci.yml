@@ -58,7 +58,7 @@ jobs:
 
             - name: Sync Python dependencies
               working-directory: ${{ env.GENERATED_PROJECT_DIR }}
-              run: uv sync --frozen --python 3.13
+              run: uv sync --frozen --python 3.14
 
             - name: Install frontend deps
               working-directory: ${{ env.GENERATED_PROJECT_DIR }}/frontend/${{ env.GENERATED_PROJECT_NAME }}
