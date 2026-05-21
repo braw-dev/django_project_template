@@ -1,0 +1,13 @@
+{
+  "name": "template-design-system-e2e",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.0",
+    "typescript": "~6.0.3"
+  }
+}
