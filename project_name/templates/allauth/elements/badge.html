@@ -1,5 +1,5 @@
 {% load allauth %}
-<span class="badge"
+<span class="ui-badge{% if 'success' in attrs.tags or 'verified' in attrs.tags %} ui-badge--success{% elif 'warning' in attrs.tags %} ui-badge--warning{% elif 'error' in attrs.tags or 'danger' in attrs.tags %} ui-badge--error{% elif 'primary' in attrs.tags or 'accent' in attrs.tags %} ui-badge--accent{% endif %}"
       {% if attrs.title %}title="{{ attrs.title }}"{% endif %}>
     {% slot %}
     {% endslot %}

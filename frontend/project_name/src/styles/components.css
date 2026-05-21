@@ -166,6 +166,15 @@
     color: var(--ui-color-white);
 }
 
+.ui-button--destructive:hover,
+.btn-error:hover {
+    background: oklch(from var(--ui-status-destructive) calc(l - 0.06) c h);
+}
+
+.ui-button--block {
+    width: 100%;
+}
+
 .ui-input,
 .ui-select,
 .ui-textarea,
@@ -236,19 +245,47 @@ textarea::placeholder {
 }
 
 .ui-alert,
-.alert {
+.alert,
+.ui-toast {
     display: grid;
-    grid-template-columns: auto 1fr;
     gap: var(--ui-space-3);
     padding: 1rem 1.1rem;
     border: 1px solid var(--ui-border-subtle);
     border-radius: var(--ui-radius-lg);
     background: var(--ui-surface-panel-muted);
+    box-shadow: var(--ui-shadow-sm);
 }
 
 .ui-alert--info,
-.alert-info {
+.alert-info,
+.ui-toast--info {
     border-color: rgb(from var(--ui-status-info) r g b / 0.24);
+}
+
+.ui-alert--success,
+.ui-toast--success {
+    border-color: rgb(from var(--ui-status-success) r g b / 0.26);
+    background: rgb(from var(--ui-status-success) r g b / 0.08);
+}
+
+.ui-alert--warning,
+.ui-toast--warning {
+    border-color: rgb(from var(--ui-status-warning) r g b / 0.32);
+    background: rgb(from var(--ui-status-warning) r g b / 0.08);
+}
+
+.ui-alert--error,
+.ui-toast--error {
+    border-color: rgb(from var(--ui-status-error) r g b / 0.3);
+    background: rgb(from var(--ui-status-error) r g b / 0.08);
+}
+
+.ui-alert__content {
+    min-width: 0;
+}
+
+.ui-toast {
+    align-items: start;
 }
 
 .ui-badge,

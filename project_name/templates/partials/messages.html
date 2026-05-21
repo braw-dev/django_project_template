@@ -1,0 +1,36 @@
+{% load i18n %}
+{% if messages %}
+    <div class="ui-toast-stack" aria-live="polite" aria-atomic="false">
+        {% for message in messages %}
+            {% if 'error' in message.tags %}
+                <div class="ui-toast ui-toast--error" role="alert">
+                    <span class="ui-badge ui-badge--error">{% trans "Error" %}</span>
+                    <div class="ui-stack">
+                        <p>{{ message }}</p>
+                    </div>
+                </div>
+            {% elif 'warning' in message.tags %}
+                <div class="ui-toast ui-toast--warning" role="status">
+                    <span class="ui-badge ui-badge--warning">{% trans "Warning" %}</span>
+                    <div class="ui-stack">
+                        <p>{{ message }}</p>
+                    </div>
+                </div>
+            {% elif 'success' in message.tags %}
+                <div class="ui-toast ui-toast--success" role="status">
+                    <span class="ui-badge ui-badge--success">{% trans "Success" %}</span>
+                    <div class="ui-stack">
+                        <p>{{ message }}</p>
+                    </div>
+                </div>
+            {% else %}
+                <div class="ui-toast ui-toast--info" role="status">
+                    <span class="ui-badge">{% trans "Notice" %}</span>
+                    <div class="ui-stack">
+                        <p>{{ message }}</p>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}

@@ -5,7 +5,7 @@
 {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
 {% if attrs.value %}value="{{ attrs.value }}"{% endif %}
 {% if attrs.type %}type="{{ attrs.type }}"{% endif %}
-class="ui-button {% if 'primary' in attrs.tags or 'prominent' in attrs.tags %}ui-button--primary{% elif 'outline' in attrs.tags %}ui-button--outline{% elif 'link' in attrs.tags or 'cancel' in attrs.tags %}ui-button--ghost{% endif %}{% if not attrs.href %} w-full{% endif %}">
+class="ui-button {% if 'danger' in attrs.tags or 'delete' in attrs.tags %}ui-button--destructive{% elif 'primary' in attrs.tags or 'prominent' in attrs.tags %}ui-button--primary{% elif 'outline' in attrs.tags %}ui-button--outline{% elif 'link' in attrs.tags or 'cancel' in attrs.tags or 'secondary' in attrs.tags or 'tool' in attrs.tags %}ui-button--ghost{% endif %}{% if not attrs.href %} ui-button--block{% endif %}">
 {% slot %}
 {% endslot %}
 </{% if attrs.href %}a{% else %}button{% endif %}>

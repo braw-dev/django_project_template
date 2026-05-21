@@ -1,16 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% block body %}
-    {% if messages %}
-        <div class="ui-toast-stack" aria-live="polite">
-            {% for message in messages %}
-                <div class="ui-alert ui-alert--info">
-                    <span class="ui-badge">{% trans "Notice" %}</span>
-                    <span>{{ message }}</span>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
     <div class="ui-auth-shell">
         <div class="ui-auth-panel">
             <div class="ui-auth-panel__header">

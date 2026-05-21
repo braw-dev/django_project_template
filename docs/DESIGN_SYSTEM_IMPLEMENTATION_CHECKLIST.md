@@ -135,31 +135,31 @@ The first pass is done when:
 
 ### 9. Build feedback primitives
 
-- [ ] Alerts using canonical status hierarchy
-- [ ] Badges/tags using canonical status hierarchy
-- [ ] Toast presentation pattern
+- [x] Alerts using canonical status hierarchy
+- [x] Badges/tags using canonical status hierarchy
+- [x] Toast presentation pattern
 - [ ] Spinner and linear progress bar
 - [ ] Skeleton primitives
-- [ ] Empty state structure
+- [x] Empty state structure
 - [ ] Error state structure
 - [ ] Retry/reload affordance pattern
 
 ### 10. Build form primitives
 
 - [x] Buttons and button variants
-- [ ] Destructive action variant naming
-- [ ] Field wrapper pattern
-- [ ] Input, textarea, select, checkbox, radio
-- [ ] Help text, error text, required/optional affordances
+- [x] Destructive action variant naming
+- [x] Field wrapper pattern
+- [x] Input, textarea, select, checkbox, radio
+- [x] Help text, error text, required/optional affordances
 - [ ] Disabled/read-only styling
 - [ ] Form error summary pattern
-- [ ] Search/input-with-actions structural pattern
+- [x] Search/input-with-actions structural pattern
 
 ### 11. Build overlay and menu primitives
 
-- [ ] Accessible dropdown/menu button pattern
+- [x] Accessible dropdown/menu button pattern
 - [ ] Dialog primitive
-- [ ] Drawer/sheet primitive
+- [x] Drawer/sheet primitive
 - [ ] Destructive confirmation dialog pattern
 - [ ] Keyboard/focus handling expectations documented
 
@@ -179,7 +179,7 @@ The first pass is done when:
 
 - [x] Page header/toolbar
 - [ ] Optional breadcrumb slot
-- [ ] Settings section pattern
+- [x] Settings section pattern
 - [ ] Danger zone section
 - [ ] Copy action primitive
 - [x] Keyboard shortcut hint style
@@ -240,8 +240,8 @@ The first pass is done when:
 
 ### Phase 3 verification
 
-- [ ] Shells are coherent across marketing/auth/app contexts
-- [ ] Mobile nav/drawer works accessibly
+- [x] Shells are coherent across marketing/auth/app contexts
+- [x] Mobile nav/drawer works accessibly
 - [x] Account menu and team switcher work coherently
 - [x] Skip link and landmarks are present and useful
 
@@ -380,7 +380,7 @@ Always verify a freshly generated project, not just the template source.
 Prefer critical-path shell/system coverage over exhaustive component browser testing.
 
 - [x] theme selection / persistence
-- [ ] mobile nav drawer behavior
+- [x] mobile nav drawer behavior
 - [ ] account menu behavior
 - [ ] Active Team switcher behavior if implemented in browser flows
 - [ ] dialog/menu accessibility-critical behavior

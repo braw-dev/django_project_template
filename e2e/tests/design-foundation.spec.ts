@@ -1,4 +1,22 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+
+const sessionKey = process.env.E2E_SESSION_KEY
+const teamSlug = process.env.E2E_TEAM_SLUG
+const baseURL = process.env.E2E_BASE_URL
+
+async function signInWithSeededSession(page: Page) {
+  if (!sessionKey || !baseURL) {
+    throw new Error('E2E_SESSION_KEY and E2E_BASE_URL are required for authenticated app-shell checks')
+  }
+
+  await page.context().addCookies([
+    {
+      name: 'sessionid',
+      value: sessionKey,
+      url: baseURL,
+    },
+  ])
+}
 
 test.describe('design foundation', () => {
   test('homepage exposes skip link, theme toggle, and legal footer links', async ({ page }) => {
@@ -35,5 +53,28 @@ test.describe('design foundation', () => {
 
     await expect(page.locator('.ui-auth-panel .ui-brand')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible()
+  })
+
+  test('authenticated app shell exposes mobile navigation and account controls', async ({ page }) => {
+    test.skip(!teamSlug, 'E2E_TEAM_SLUG is required for authenticated app-shell checks')
+    await signInWithSeededSession(page)
+    await page.setViewportSize({ width: 390, height: 844 })
+
+    await page.goto(`/t/${teamSlug}/dashboard`)
+
+    const mobileNav = page.getByTestId('app-mobile-nav')
+    await expect(mobileNav).toBeVisible()
+    await mobileNav.locator('summary').first().click()
+    await expect(mobileNav.getByTestId('team-switcher')).toBeVisible()
+    await expect(page.getByTestId('account-menu')).toBeVisible()
+  })
+
+  test('server-rendered error messages use the shared toast surface', async ({ page }) => {
+    await signInWithSeededSession(page)
+
+    await page.goto('/teams/invitations/accept/invalid-token/')
+
+    await expect(page.locator('.ui-toast-stack')).toBeVisible()
+    await expect(page.locator('.ui-toast--error')).toBeVisible()
   })
 })
