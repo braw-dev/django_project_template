@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from . import selectors
-from .pages.faq import get_featured_faqs
+from .pages.faq_selectors import get_featured_faqs
 
 
 def homepage(request):

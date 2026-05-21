@@ -33,7 +33,7 @@ from .consent import OPTIONAL_TRACKING_CONSENT_ACCEPTED, OPTIONAL_TRACKING_CONSE
 from .forms import NewsletterSignupForm
 from .middleware import RequestPerformanceLoggingMiddleware, TrustedProxyHeadersMiddleware
 from .network import get_client_ip
-from .newsletter import get_newsletter_confirmation_token
+from .newsletter_services import get_newsletter_confirmation_token
 
 from {{ project_name }}.tenancy import services as tenancy_services
 
@@ -143,7 +143,7 @@ class NewsletterTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 0)
         self.assertEqual(signup.confirmation_email_sent_at, sent_at)
 
-    @patch("{{ project_name }}.core.newsletter.track_plausible_event")
+    @patch("{{ project_name }}.core.newsletter_services.track_plausible_event")
     def test_newsletter_confirmation_marks_signup_confirmed(self, mock_track_plausible_event):
         signup = core_models.NewsletterSignup.objects.create(
             email=self.email,

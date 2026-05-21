@@ -2,7 +2,7 @@ from django.http import Http404
 from django.utils.translation import gettext as _
 from django.views.generic import DetailView, TemplateView
 
-from .faq import get_categorized_faqs
+from .faq_selectors import get_categorized_faqs
 from .markdown_utils import render_markdown_html
 from .models import Page
 

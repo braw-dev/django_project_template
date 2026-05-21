@@ -1,0 +1,79 @@
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+from .markdown_utils import render_markdown_html
+from .models import Page
+
+FAQ_CATEGORY_LABELS = {
+    "account": _("Account and access"),
+    "billing": _("Billing"),
+    "security": _("Security"),
+    "performance": _("Performance and reliability"),
+}
+
+FEATURED_FAQ_SLUGS = (
+    "faq-security",
+    "faq-security-support-access",
+    "faq-performance-uptime",
+)
+
+
+def _faq_category_from_slug(slug: str) -> str:
+    if not slug.startswith("faq-"):
+        return "general"
+
+    category, _, _rest = slug.removeprefix("faq-").partition("-")
+    return category or "general"
+
+
+def get_faq_entries(*, search_query: str = "") -> list[dict[str, object]]:
+    faq_pages = Page.objects.published().filter(slug__startswith="faq-")
+
+    if search_query:
+        faq_pages = faq_pages.filter(
+            models.Q(translations__title__icontains=search_query)
+            | models.Q(translations__content__icontains=search_query)
+        ).distinct()
+
+    return [
+        {
+            "slug": page.slug,
+            "question": page.title,
+            "rendered_answer": render_markdown_html(page.content),
+            "category": _faq_category_from_slug(page.slug),
+        }
+        for page in faq_pages.order_by("slug")
+    ]
+
+
+def get_categorized_faqs(*, search_query: str = "") -> list[dict[str, object]]:
+    faq_entries = get_faq_entries(search_query=search_query)
+    grouped_faqs = []
+
+    for category_key, category_title in FAQ_CATEGORY_LABELS.items():
+        category_faqs = [faq for faq in faq_entries if faq["category"] == category_key]
+        if category_faqs:
+            grouped_faqs.append(
+                {
+                    "key": category_key,
+                    "title": category_title,
+                    "faqs": category_faqs,
+                }
+            )
+
+    uncategorized_faqs = [faq for faq in faq_entries if faq["category"] not in FAQ_CATEGORY_LABELS]
+    if uncategorized_faqs:
+        grouped_faqs.append(
+            {
+                "key": "general",
+                "title": _("General"),
+                "faqs": uncategorized_faqs,
+            }
+        )
+
+    return grouped_faqs
+
+
+def get_featured_faqs() -> list[dict[str, object]]:
+    faqs_by_slug = {faq["slug"]: faq for faq in get_faq_entries()}
+    return [faqs_by_slug[slug] for slug in FEATURED_FAQ_SLUGS if slug in faqs_by_slug]

@@ -11,7 +11,7 @@ from meta.views import Meta
 from . import models
 from .consent import set_optional_tracking_consent
 from .forms import NewsletterSignupForm
-from .newsletter import (
+from .newsletter_services import (
     confirm_newsletter_signup,
     create_pending_newsletter_signup,
     get_newsletter_subscription_label,

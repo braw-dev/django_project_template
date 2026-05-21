@@ -1,0 +1,141 @@
+from datetime import timedelta
+from typing import Any, cast
+
+from django.conf import settings
+from django.core import signing
+from django.http import HttpRequest
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.translation import gettext as _
+
+from . import models
+
+from {{ project_name }}.core.analytics import track_plausible_event
+from {{ project_name }}.users.emails import send_transactional_email
+
+NEWSLETTER_CONFIRMATION_TOKEN_SALT = "core.newsletter-confirmation"
+
+
+def _normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
+def get_newsletter_subscription_label(purpose: str) -> str:
+    if purpose == models.NewsletterSignupPurpose.LEGAL_UPDATES:
+        return _("legal updates")
+    return _("newsletter")
+
+
+def create_pending_newsletter_signup(
+    *,
+    email: str,
+    purpose: str = models.NewsletterSignupPurpose.MARKETING,
+) -> models.NewsletterSignup:
+    normalized_email = _normalize_email(email)
+    signup, created = models.NewsletterSignup.objects.get_or_create(
+        email=normalized_email,
+        purpose=purpose,
+        defaults={
+            "consented_at": timezone.now(),
+        },
+    )
+
+    if not created and signup.confirmed_at and signup.unsubscribed_at is None:
+        raise ValueError(_("You are already subscribed."))
+
+    signup.consented_at = timezone.now()
+    signup.confirmed_at = None
+    signup.unsubscribed_at = None
+    signup.unsubscribe_reason = ""
+    signup.save(
+        update_fields=[
+            "consented_at",
+            "confirmed_at",
+            "unsubscribed_at",
+            "unsubscribe_reason",
+        ]
+    )
+    return signup
+
+
+def get_newsletter_confirmation_token(*, signup: models.NewsletterSignup) -> str:
+    return signing.dumps(
+        {
+            "newsletter_signup_id": cast(Any, signup).id,
+            "email": signup.email,
+            "purpose": signup.purpose,
+        },
+        salt=NEWSLETTER_CONFIRMATION_TOKEN_SALT,
+    )
+
+
+def build_newsletter_confirmation_url(
+    *, signup: models.NewsletterSignup, request: HttpRequest
+) -> str:
+    token = get_newsletter_confirmation_token(signup=signup)
+    return request.build_absolute_uri(reverse("newsletter:confirm", kwargs={"token": token}))
+
+
+def send_newsletter_confirmation_email(
+    *, signup: models.NewsletterSignup, request: HttpRequest
+) -> bool:
+    cooldown_minutes = getattr(settings, "NEWSLETTER_CONFIRMATION_RESEND_COOLDOWN_MINUTES", 15)
+    if signup.confirmation_email_sent_at is not None:
+        resend_after = cast(Any, signup.confirmation_email_sent_at) + timedelta(
+            minutes=cooldown_minutes
+        )
+        if resend_after > timezone.now():
+            return False
+
+    confirmation_url = build_newsletter_confirmation_url(signup=signup, request=request)
+    subject = _("Confirm your %(subscription_label)s subscription") % {
+        "subscription_label": get_newsletter_subscription_label(cast(str, signup.purpose))
+    }
+    send_transactional_email(
+        subject=subject,
+        template_prefix="core/email/newsletter_confirmation",
+        recipient_list=[cast(str, signup.email)],
+        context={
+            "confirmation_url": confirmation_url,
+            "signup": signup,
+            "subscription_label": get_newsletter_subscription_label(cast(str, signup.purpose)),
+        },
+        from_email=settings.DEFAULT_FROM_EMAIL,
+    )
+    signup.confirmation_email_sent_at = timezone.now()
+    signup.save(update_fields=["confirmation_email_sent_at"])
+    return True
+
+
+def confirm_newsletter_signup(
+    *, token: str, request: HttpRequest | None = None
+) -> models.NewsletterSignup:
+    max_age = getattr(settings, "NEWSLETTER_CONFIRMATION_EXPIRY_HOURS", 72) * 3600
+    try:
+        payload = signing.loads(
+            token,
+            salt=NEWSLETTER_CONFIRMATION_TOKEN_SALT,
+            max_age=max_age,
+        )
+    except signing.SignatureExpired as exc:
+        raise ValueError(_("This confirmation link has expired.")) from exc
+    except signing.BadSignature as exc:
+        raise ValueError(_("This confirmation link is invalid or has expired.")) from exc
+
+    signup = models.NewsletterSignup.objects.filter(id=payload.get("newsletter_signup_id")).first()
+    if signup is None:
+        raise ValueError(_("This newsletter signup no longer exists."))
+    if signup.email != payload.get("email"):
+        raise ValueError(_("This confirmation link is invalid."))
+    if signup.purpose != payload.get("purpose"):
+        raise ValueError(_("This confirmation link is invalid."))
+
+    if signup.confirmed_at is None:
+        signup.confirmed_at = timezone.now()
+        signup.save(update_fields=["confirmed_at"])
+        track_plausible_event(
+            event_name="Newsletter confirmed",
+            request=request,
+            props={"purpose": signup.purpose},
+        )
+    return signup
