@@ -3,6 +3,7 @@
 import secrets
 import string
 from datetime import timedelta
+from typing import Self
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
@@ -32,13 +33,13 @@ class TokenEnvironment(models.TextChoices):
 class ApiTokenQuerySet(models.QuerySet):
     """QuerySet helpers for API tokens."""
 
-    def active(self):
+    def active(self) -> Self:
         now = timezone.now()
         return self.filter(revoked_at__isnull=True).filter(
             models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=now)
         )
 
-    def for_token_auth(self):
+    def for_token_auth(self) -> Self:
         return self.active().select_related("team", "created_by")
 
 

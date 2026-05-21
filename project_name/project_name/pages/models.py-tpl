@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, cast
 
 from django.db import models
@@ -13,7 +15,7 @@ from {{ project_name }}.utils.models import BaseModel
 class PageManager(models.Manager):
     """Custom manager for Page model with publishing logic."""
 
-    def published(self):
+    def published(self) -> models.QuerySet[Page]:
         """Return only published pages that are within their publish window."""
         now = timezone.now()
         return self.filter(
@@ -108,17 +110,17 @@ class Page(TranslatableModel, ModelMeta, BaseModel):
     def __str__(self):
         return self.safe_translation_getter("title", default=self.slug)
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("pages:page_detail", kwargs={"slug": self.slug})
 
-    def get_meta_image(self):
+    def get_meta_image(self) -> str | None:
         """Return the image URL for meta tags."""
         if self.image:
             # TODO: Remove this workaround when ty supports Django field attributes.
             return cast(Any, self.image).url
         return None
 
-    def is_visible(self):
+    def is_visible(self) -> bool:
         """Check if the page is currently visible based on publish settings."""
         if not self.is_published:
             return False

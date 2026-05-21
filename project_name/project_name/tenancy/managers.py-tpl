@@ -4,7 +4,10 @@ Important: these helpers are convenience only. Security-critical code should use
 explicit membership checks and explicit team filtering via `all_objects`.
 """
 
+from typing import Any, Self
+
 from django.db import models
+from django.http import HttpRequest
 
 from .context import get_current_team_id
 
@@ -12,25 +15,25 @@ from .context import get_current_team_id
 class TenantScopedQuerySet(models.QuerySet):
     """QuerySet helpers for team-owned models."""
 
-    def for_team(self, team):
+    def for_team(self, team: Any | None) -> Self:
         if team is None:
             return self.none()
         return self.filter(team=team)
 
-    def for_request(self, request):
+    def for_request(self, request: HttpRequest) -> Self:
         return self.for_team(getattr(request, "team", None))
 
 
 class TenantScopedManager(models.Manager.from_queryset(TenantScopedQuerySet)):
     """Default manager that applies the active team context when present."""
 
-    def get_queryset(self):
+    def get_queryset(self) -> models.QuerySet:
         queryset = super().get_queryset()
         current_team_id = get_current_team_id()
         if current_team_id is None:
             return queryset
         return queryset.filter(team_id=current_team_id)
 
-    def unscoped(self):
+    def unscoped(self) -> models.QuerySet:
         """Return the base queryset without applying active-team filtering."""
         return super().get_queryset()
