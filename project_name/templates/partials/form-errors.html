@@ -1,0 +1,15 @@
+{% load i18n %}
+{% if form.non_field_errors %}
+    <div class="ui-form-errors" role="alert" data-testid="form-error-summary">
+        <div class="ui-alert ui-alert--error">
+            <div class="ui-stack ui-stack--lg">
+                <strong>{% trans "There was a problem with your submission" %}</strong>
+                <ul class="ui-field__error-list">
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endif %}

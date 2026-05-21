@@ -750,6 +750,53 @@ class LocaleRenderingTestCase(TestCase):
         )
 
 
+class FormsAndOverlaysTestCase(TestCase):
+    def test_dialog_partial_renders(self):
+        rendered = Template(
+            "{" + "% load i18n %}" + "{" + "% include 'partials/dialog.html' %}"
+        ).render(Context())
+
+        self.assertIn('class="ui-dialog"', rendered)
+        self.assertIn('data-testid="ui-dialog"', rendered)
+        self.assertIn('class="ui-dialog__panel"', rendered)
+
+    def test_destructive_confirm_partial_renders(self):
+        rendered = Template(
+            "{" + "% load i18n %}" + "{" + "% include 'partials/destructive-confirm.html' %}"
+        ).render(Context())
+
+        self.assertIn('class="ui-dialog"', rendered)
+        self.assertIn("ui-button--destructive", rendered)
+        self.assertIn("ui-alert--error", rendered)
+
+    def test_form_errors_partial_renders_with_errors(self):
+        from django.forms import CharField, Form
+
+        class TestForm(Form):
+            name = CharField()
+
+        form = TestForm(data={})
+        form.add_error(None, "A form-level error")
+
+        rendered = Template(
+            "{" + "% load i18n %}" + "{" + "% include 'partials/form-errors.html' %}"
+        ).render(Context({"form": form}))
+
+        self.assertIn('data-testid="form-error-summary"', rendered)
+        self.assertIn("A form-level error", rendered)
+
+    def test_form_errors_partial_empty_without_errors(self):
+        from django.forms import Form
+
+        form = Form(data={})
+
+        rendered = Template(
+            "{" + "% load i18n %}" + "{" + "% include 'partials/form-errors.html' %}"
+        ).render(Context({"form": form}))
+
+        self.assertEqual(rendered.strip(), "")
+
+
 class AppShellRenderingTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(email="shell@example.com", password="password")

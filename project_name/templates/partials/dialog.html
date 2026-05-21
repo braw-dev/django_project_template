@@ -1,0 +1,28 @@
+{% load i18n %}
+<dialog class="ui-dialog" data-testid="ui-dialog">
+    <div class="ui-dialog__panel">
+        <div class="ui-dialog__header">
+            {% block dialog_title %}
+                <h2>{% trans "Confirm" %}</h2>
+            {% endblock dialog_title %}
+            <form method="dialog">
+                <button type="submit" class="ui-button ui-button--ghost" aria-label="{% trans 'Close dialog' %}">
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+        <div class="ui-dialog__body ui-stack ui-stack--lg">
+            {% block dialog_body %}
+            {% endblock dialog_body %}
+        </div>
+        <div class="ui-dialog__footer ui-control-group">
+            {% block dialog_actions %}
+                <form method="dialog">
+                    <button type="submit" class="ui-button ui-button--outline">{% trans "Cancel" %}</button>
+                </form>
+            {% endblock dialog_actions %}
+        </div>
+    </div>
+</dialog>

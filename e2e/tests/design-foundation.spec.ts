@@ -77,4 +77,14 @@ test.describe('design foundation', () => {
     await expect(page.locator('.ui-toast-stack')).toBeVisible()
     await expect(page.locator('.ui-toast--error')).toBeVisible()
   })
+
+  test('login form shows error summary on invalid credentials', async ({ page }) => {
+    await page.goto('/accounts/login/')
+
+    await page.locator('input[name="login"]').fill('wrong@example.com')
+    await page.locator('input[name="password"]').fill('wrongpassword')
+    await page.locator('form.allauth-form button[type="submit"]').first().click()
+
+    await expect(page.getByTestId('form-error-summary')).toBeVisible()
+  })
 })

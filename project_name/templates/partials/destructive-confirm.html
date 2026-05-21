@@ -1,0 +1,28 @@
+{% extends "partials/dialog.html" %}
+{% load i18n %}
+
+{% block dialog_title %}
+    <h2>{% trans "Confirm destructive action" %}</h2>
+{% endblock dialog_title %}
+
+{% block dialog_body %}
+    <div class="ui-alert ui-alert--error">
+        <div class="ui-stack">
+            <strong>{% trans "Warning" %}</strong>
+            {% block destructive_warning %}
+                <p>{% trans "This action cannot be undone." %}</p>
+            {% endblock destructive_warning %}
+        </div>
+    </div>
+{% endblock dialog_body %}
+
+{% block dialog_actions %}
+    <form method="dialog">
+        <button type="submit" class="ui-button ui-button--outline">{% trans "Cancel" %}</button>
+    </form>
+    {% block destructive_button %}
+        <button type="submit" class="ui-button ui-button--destructive" data-dialog-confirm>
+            {% trans "Confirm" %}
+        </button>
+    {% endblock destructive_button %}
+{% endblock dialog_actions %}
